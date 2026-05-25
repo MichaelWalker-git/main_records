@@ -1,0 +1,42 @@
+[
+  {
+    "id": "b2c3d4e5-2222-4000-8000-000000000001",
+    "email": "sarah.chen@maine.gov",
+    "firstName": "Sarah",
+    "lastName": "Chen",
+    "role": "SYSTEM_ADMIN",
+    "agencyId": null,
+    "cognitoSub": "cognito-sub-placeholder-001",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "b2c3d4e5-2222-4000-8000-000000000002",
+    "email": "michael.torres@maine.gov",
+    "firstName": "Michael",
+    "lastName": "Torres",
+    "role": "ARCHIVES_STAFF",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000001",
+    "cognitoSub": "cognito-sub-placeholder-002",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "b2c3d4e5-2222-4000-8000-000000000003",
+    "email": "diana.patel@maine.gov",
+    "firstName": "Diana",
+    "lastName": "Patel",
+    "role": "RECORDS_OFFICER",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000002",
+    "cognitoSub": "cognito-sub-placeholder-003",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "b2c3d4e5-2222-4000-8000-000000000004",
+    "email": "james.wright@maine.gov",
+    "firstName": "James",
+    "lastName": "Wright",
+    "role": "AGENCY_STAFF",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000002",
+    "cognitoSub": "cognito-sub-placeholder-004",
+    "status": "ACTIVE"
+  }
+]

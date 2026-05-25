@@ -1,0 +1,19 @@
+{
+  "name": "@maine-rms/notification-send",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.600.0",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.140",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5.5.0"
+  }
+}

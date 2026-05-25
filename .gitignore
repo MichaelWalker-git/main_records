@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.js.map
+*.d.ts
+!packages/infrastructure/jest.config.js
+cdk.out/
+.cdk.staging/
+coverage/
+.DS_Store
+*.log
+.idea/
+.vscode/

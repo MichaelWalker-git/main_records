@@ -1,0 +1,9 @@
+{
+  "app": "npx ts-node bin/app.ts",
+  "context": {
+    "stage": "dev",
+    "account": "000000000000",
+    "region": "us-east-1",
+    "replicaRegion": "us-west-2"
+  }
+}

@@ -1,0 +1,163 @@
+[
+  {
+    "id": "a7b8c9d0-7777-4000-8000-000000000001",
+    "transmittalNumber": "TR-2024-0001",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000002",
+    "status": "SHELVED",
+    "submittedBy": "b2c3d4e5-2222-4000-8000-000000000003",
+    "submittedAt": "2024-01-15T14:30:00.000Z",
+    "approvedBy": "b2c3d4e5-2222-4000-8000-000000000002",
+    "approvedAt": "2024-01-16T09:00:00.000Z",
+    "receivedAt": "2024-01-18T10:00:00.000Z",
+    "shelvedAt": "2024-01-19T11:00:00.000Z",
+    "totalBoxes": 3,
+    "notes": "Annual Medicaid eligibility records transfer",
+    "items": [
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000001",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000001",
+        "boxNumber": "0001",
+        "seriesTitle": "Medicaid Eligibility Files",
+        "dateFrom": "2023-01-01",
+        "dateTo": "2023-12-31",
+        "locationCode": "01010101"
+      },
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000002",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000002",
+        "boxNumber": "0002",
+        "seriesTitle": "Medicaid Eligibility Files",
+        "dateFrom": "2023-01-01",
+        "dateTo": "2023-06-30",
+        "locationCode": "01010102"
+      },
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000003",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000003",
+        "boxNumber": "0003",
+        "seriesTitle": "Medicaid Eligibility Files",
+        "dateFrom": "2023-07-01",
+        "dateTo": "2023-12-31",
+        "locationCode": "01010201"
+      }
+    ]
+  },
+  {
+    "id": "a7b8c9d0-7777-4000-8000-000000000002",
+    "transmittalNumber": "TR-2024-0002",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000004",
+    "status": "RECEIVED",
+    "submittedBy": "b2c3d4e5-2222-4000-8000-000000000004",
+    "submittedAt": "2024-02-10T09:00:00.000Z",
+    "approvedBy": "b2c3d4e5-2222-4000-8000-000000000002",
+    "approvedAt": "2024-02-11T10:00:00.000Z",
+    "receivedAt": "2024-02-14T14:00:00.000Z",
+    "shelvedAt": null,
+    "totalBoxes": 2,
+    "notes": "Bridge inspection records 2023",
+    "items": [
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000004",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000004",
+        "boxNumber": "0004",
+        "seriesTitle": "Bridge Inspection Reports",
+        "dateFrom": "2023-01-01",
+        "dateTo": "2023-12-31",
+        "locationCode": null
+      },
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000005",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000005",
+        "boxNumber": "0005",
+        "seriesTitle": "Bridge Inspection Reports",
+        "dateFrom": "2023-01-01",
+        "dateTo": "2023-12-31",
+        "locationCode": null
+      }
+    ]
+  },
+  {
+    "id": "a7b8c9d0-7777-4000-8000-000000000003",
+    "transmittalNumber": "TR-2024-0003",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000005",
+    "status": "APPROVED",
+    "submittedBy": "b2c3d4e5-2222-4000-8000-000000000004",
+    "submittedAt": "2024-03-01T11:00:00.000Z",
+    "approvedBy": "b2c3d4e5-2222-4000-8000-000000000002",
+    "approvedAt": "2024-03-02T08:30:00.000Z",
+    "receivedAt": null,
+    "shelvedAt": null,
+    "totalBoxes": 4,
+    "notes": "Environmental permits batch transfer",
+    "items": [
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000006",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000006",
+        "boxNumber": "0006",
+        "seriesTitle": "Environmental Permits",
+        "dateFrom": "2022-01-01",
+        "dateTo": "2022-12-31",
+        "locationCode": null
+      }
+    ]
+  },
+  {
+    "id": "a7b8c9d0-7777-4000-8000-000000000004",
+    "transmittalNumber": "TR-2024-0004",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000003",
+    "status": "SUBMITTED",
+    "submittedBy": "b2c3d4e5-2222-4000-8000-000000000004",
+    "submittedAt": "2024-04-15T16:00:00.000Z",
+    "approvedBy": null,
+    "approvedAt": null,
+    "receivedAt": null,
+    "shelvedAt": null,
+    "totalBoxes": 5,
+    "notes": "School funding allocation records FY2023",
+    "items": [
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000007",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000007",
+        "boxNumber": "0007",
+        "seriesTitle": "School Funding Allocations",
+        "dateFrom": "2022-07-01",
+        "dateTo": "2023-06-30",
+        "locationCode": null
+      }
+    ]
+  },
+  {
+    "id": "a7b8c9d0-7777-4000-8000-000000000005",
+    "transmittalNumber": "TR-2024-0005",
+    "agencyId": "a1b2c3d4-1111-4000-8000-000000000008",
+    "status": "UNDER_REVIEW",
+    "submittedBy": "b2c3d4e5-2222-4000-8000-000000000004",
+    "submittedAt": "2024-05-01T10:00:00.000Z",
+    "approvedBy": null,
+    "approvedAt": null,
+    "receivedAt": null,
+    "shelvedAt": null,
+    "totalBoxes": 2,
+    "notes": "Attorney General opinions and legal case files",
+    "items": [
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000008",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000008",
+        "boxNumber": "0008",
+        "seriesTitle": "Attorney General Opinions",
+        "dateFrom": "2020-01-01",
+        "dateTo": "2023-12-31",
+        "locationCode": null
+      },
+      {
+        "id": "b8c9d0e1-8888-4000-8000-000000000009",
+        "recordId": "e5f6a7b8-5555-4000-8000-000000000009",
+        "boxNumber": "0009",
+        "seriesTitle": "Legal Case Files",
+        "dateFrom": "2021-01-01",
+        "dateTo": "2023-12-31",
+        "locationCode": null
+      }
+    ]
+  }
+]

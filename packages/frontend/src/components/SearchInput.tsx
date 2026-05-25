@@ -1,0 +1,62 @@
+import { useState, useEffect, useRef } from 'react';
+import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+
+interface SearchInputProps {
+  placeholder?: string;
+  onSearch: (query: string) => void;
+  debounceMs?: number;
+  showSemanticToggle?: boolean;
+  onSemanticToggle?: (enabled: boolean) => void;
+}
+
+export function SearchInput({
+  placeholder = 'Search...',
+  onSearch,
+  debounceMs = 300,
+  showSemanticToggle,
+  onSemanticToggle,
+}: SearchInputProps) {
+  const [value, setValue] = useState('');
+  const [semantic, setSemantic] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      onSearch(value);
+    }, debounceMs);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [value, debounceMs, onSearch]);
+
+  return (
+    <div className="flex items-center gap-2" data-testid="search-input">
+      <div className="relative flex-1">
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" aria-hidden="true" />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={placeholder}
+          className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 focus:border-navy-500"
+          data-testid="search-input-field"
+        />
+      </div>
+      {showSemanticToggle && (
+        <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer" data-testid="semantic-toggle">
+          <input
+            type="checkbox"
+            checked={semantic}
+            onChange={(e) => {
+              setSemantic(e.target.checked);
+              onSemanticToggle?.(e.target.checked);
+            }}
+            className="rounded border-slate-300 text-navy-500 focus:ring-navy-500"
+          />
+          AI Search
+        </label>
+      )}
+    </div>
+  );
+}

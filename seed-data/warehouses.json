@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c3d4e5f6-3333-4000-8000-000000000001",
+    "name": "State Records Center - Augusta",
+    "code": "01",
+    "address": "230 State Street, Augusta, ME 04330",
+    "totalCapacity": 5000,
+    "isActive": true
+  },
+  {
+    "id": "c3d4e5f6-3333-4000-8000-000000000002",
+    "name": "State Records Center - Bangor",
+    "code": "02",
+    "address": "45 Commerce Drive, Bangor, ME 04401",
+    "totalCapacity": 3000,
+    "isActive": true
+  },
+  {
+    "id": "c3d4e5f6-3333-4000-8000-000000000003",
+    "name": "State Records Center - Portland",
+    "code": "03",
+    "address": "125 Presumpscot Street, Portland, ME 04103",
+    "totalCapacity": 2000,
+    "isActive": true
+  }
+]

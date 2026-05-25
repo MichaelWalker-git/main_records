@@ -1,0 +1,47 @@
+[
+  {
+    "id": "f6a7b8c9-6666-4000-8000-000000000001",
+    "name": "General Administrative",
+    "seriesCode": "ADM-001",
+    "retentionPeriodDays": 2555,
+    "dispositionAction": "DESTROY",
+    "legalAuthority": "5 MRSA Section 95-B; State Archives General Schedule GS-1",
+    "alertThresholds": [90, 30, 7]
+  },
+  {
+    "id": "f6a7b8c9-6666-4000-8000-000000000002",
+    "name": "Financial Records",
+    "seriesCode": "FIN-001",
+    "retentionPeriodDays": 3650,
+    "dispositionAction": "DESTROY",
+    "legalAuthority": "5 MRSA Section 95-B; State Archives General Schedule GS-4",
+    "alertThresholds": [90, 30, 7]
+  },
+  {
+    "id": "f6a7b8c9-6666-4000-8000-000000000003",
+    "name": "Personnel Records",
+    "seriesCode": "PER-001",
+    "retentionPeriodDays": 27375,
+    "dispositionAction": "TRANSFER_TO_ARCHIVES",
+    "legalAuthority": "5 MRSA Section 95-B; State Archives General Schedule GS-7",
+    "alertThresholds": [90, 30, 7]
+  },
+  {
+    "id": "f6a7b8c9-6666-4000-8000-000000000004",
+    "name": "Legal Case Files",
+    "seriesCode": "LEG-001",
+    "retentionPeriodDays": null,
+    "dispositionAction": "TRANSFER_TO_ARCHIVES",
+    "legalAuthority": "5 MRSA Section 95-B; Permanent Retention per Archives directive",
+    "alertThresholds": [90, 30, 7]
+  },
+  {
+    "id": "f6a7b8c9-6666-4000-8000-000000000005",
+    "name": "Correspondence",
+    "seriesCode": "COR-001",
+    "retentionPeriodDays": 1095,
+    "dispositionAction": "DESTROY",
+    "legalAuthority": "5 MRSA Section 95-B; State Archives General Schedule GS-2",
+    "alertThresholds": [90, 30, 7]
+  }
+]

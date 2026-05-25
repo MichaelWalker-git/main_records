@@ -1,0 +1,58 @@
+[
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000001",
+    "code": "MSA",
+    "name": "Maine State Archives",
+    "abbreviation": "MSA",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000002",
+    "code": "DHH",
+    "name": "Department of Health and Human Services",
+    "abbreviation": "DHHS",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000003",
+    "code": "DOE",
+    "name": "Department of Education",
+    "abbreviation": "DOE",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000004",
+    "code": "DOT",
+    "name": "Department of Transportation",
+    "abbreviation": "DOT",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000005",
+    "code": "DEP",
+    "name": "Department of Environmental Protection",
+    "abbreviation": "DEP",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000006",
+    "code": "DOL",
+    "name": "Department of Labor",
+    "abbreviation": "DOL",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000007",
+    "code": "DPS",
+    "name": "Department of Public Safety",
+    "abbreviation": "DPS",
+    "status": "ACTIVE"
+  },
+  {
+    "id": "a1b2c3d4-1111-4000-8000-000000000008",
+    "code": "AGO",
+    "name": "Office of the Attorney General",
+    "abbreviation": "AG",
+    "status": "ACTIVE"
+  }
+]
