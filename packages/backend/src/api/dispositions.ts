@@ -31,7 +31,7 @@ const createLegalHoldSchema = z.object({
 
 router.get('/', authorize('dispositions:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const dispositions = isAdmin
       ? await dispositionsRepo.findAll()
       : await dispositionsRepo.findByAgency(req.user!.agencyId);

@@ -18,6 +18,18 @@ function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Local development bypass - mock admin user
+  if (config.stage === 'development' && config.cognito.userPoolId === 'local-dev') {
+    req.user = {
+      id: 'b2c3d4e5-2222-4000-8000-000000000001',
+      email: 'sarah.chen@maine.gov',
+      roles: ['SYSTEM_ADMIN'],
+      agencyId: '',
+      agencyScope: [],
+    };
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing or invalid authorization header' });

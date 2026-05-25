@@ -83,7 +83,7 @@ router.post('/checkin', authorize('inventory:write'), async (req: Request, res: 
 
 router.get('/overdue', authorize('inventory:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const overdue = await inventoryService.getOverdue(isAdmin ? undefined : req.user!.agencyId);
     res.json({ data: overdue });
   } catch (err) { next(err); }

@@ -40,7 +40,10 @@ export function LegalHoldsPage() {
   return (
     <div data-testid="legal-holds-page">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Legal Holds</h1>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Legal Holds</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Records exempt from disposition</p>
+        </div>
         {isAdmin && (
           <button
             onClick={() => setShowCreate(true)}

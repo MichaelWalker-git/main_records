@@ -137,11 +137,13 @@ export interface AuditEvent {
 
 export interface Notification {
   id: string;
-  type: 'info' | 'warning' | 'action' | 'success';
+  type: string;
   title: string;
   message: string;
-  read: boolean;
-  actionUrl?: string;
+  isRead: boolean;
+  readAt?: string;
+  entityType?: string;
+  entityId?: string;
   createdAt: string;
 }
 

@@ -7,7 +7,7 @@ import { Construct } from 'constructs';
 import { NagSuppressions } from 'cdk-nag';
 
 export interface DatabaseStackProps extends cdk.StackProps {
-  vpc: ec2.Vpc;
+  vpc: ec2.IVpc;
   ecsSg: ec2.SecurityGroup;
   lambdaSg: ec2.SecurityGroup;
 }
@@ -47,7 +47,7 @@ export class DatabaseStack extends cdk.Stack {
 
     this.dbCluster = new rds.DatabaseCluster(this, 'AuroraCluster', {
       engine: rds.DatabaseClusterEngine.auroraPostgres({
-        version: rds.AuroraPostgresEngineVersion.VER_15_4,
+        version: rds.AuroraPostgresEngineVersion.VER_16_4,
       }),
       credentials: rds.Credentials.fromSecret(dbSecret),
       serverlessV2MinCapacity: 0.5,
@@ -55,7 +55,7 @@ export class DatabaseStack extends cdk.Stack {
       writer: rds.ClusterInstance.serverlessV2('writer'),
       readers: [rds.ClusterInstance.serverlessV2('reader', { scaleWithWriter: true })],
       vpc: props.vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       securityGroups: [this.rdsSg],
       port: 5433,
       storageEncrypted: true,

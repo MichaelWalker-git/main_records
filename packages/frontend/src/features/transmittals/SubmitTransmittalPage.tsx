@@ -18,6 +18,7 @@ export function SubmitTransmittalPage() {
   const [items, setItems] = useState<BoxItem[]>([
     { id: '1', boxNumber: '', description: '', seriesTitle: '', dateRange: '' },
   ]);
+  const [submitted, setSubmitted] = useState(false);
 
   const mutation = useApiMutation<Transmittal, object>('/transmittals', 'post', {
     onSuccess: (data) => navigate(`/transmittals/${data.id}`),
@@ -35,48 +36,60 @@ export function SubmitTransmittalPage() {
     setItems(items.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
   }
 
+  function hasItemErrors(): boolean {
+    return items.some((i) => !i.boxNumber.trim() || !i.description.trim() || !i.seriesTitle.trim());
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setSubmitted(true);
+    if (hasItemErrors()) return;
     mutation.mutate({ notes, items });
+  }
+
+  function itemFieldClass(value: string): string {
+    return `w-full px-2 py-1.5 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+      submitted && !value.trim() ? 'border-red-300 bg-red-50/30' : 'border-slate-300'
+    }`;
   }
 
   return (
     <div data-testid="submit-transmittal-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Submit Transmittal</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Boxes / Items</h2>
-          <div className="space-y-4">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Submit Transmittal</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Transfer records to the State Archives</p>
+      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-white border border-slate-200 rounded-md p-6">
+          <h2 className="text-sm font-semibold text-slate-800 uppercase tracking-wide mb-4">Boxes / Items</h2>
+          <div className="space-y-3">
             {items.map((item, idx) => (
               <div key={item.id} className="grid grid-cols-12 gap-3 items-end" data-testid={`transmittal-item-${idx}`}>
                 <div className="col-span-2">
-                  <label className="block text-xs text-slate-500 mb-1">Box #</label>
+                  <label className="block text-xs text-slate-500 mb-1">Box # <span className="text-red-400">*</span></label>
                   <input
                     type="text"
                     value={item.boxNumber}
                     onChange={(e) => updateItem(item.id, 'boxNumber', e.target.value)}
-                    className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
-                    required
+                    className={itemFieldClass(item.boxNumber)}
                   />
                 </div>
                 <div className="col-span-3">
-                  <label className="block text-xs text-slate-500 mb-1">Description</label>
+                  <label className="block text-xs text-slate-500 mb-1">Description <span className="text-red-400">*</span></label>
                   <input
                     type="text"
                     value={item.description}
                     onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                    className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
-                    required
+                    className={itemFieldClass(item.description)}
                   />
                 </div>
                 <div className="col-span-3">
-                  <label className="block text-xs text-slate-500 mb-1">Series</label>
+                  <label className="block text-xs text-slate-500 mb-1">Series <span className="text-red-400">*</span></label>
                   <input
                     type="text"
                     value={item.seriesTitle}
                     onChange={(e) => updateItem(item.id, 'seriesTitle', e.target.value)}
-                    className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
-                    required
+                    className={itemFieldClass(item.seriesTitle)}
                   />
                 </div>
                 <div className="col-span-3">
@@ -94,7 +107,7 @@ export function SubmitTransmittalPage() {
                     type="button"
                     onClick={() => removeItem(item.id)}
                     disabled={items.length === 1}
-                    className="p-1.5 text-slate-400 hover:text-red-500 disabled:opacity-30"
+                    className="p-1.5 text-slate-400 hover:text-red-500 disabled:opacity-30 transition-colors"
                     aria-label="Remove item"
                     data-testid={`remove-item-${idx}`}
                   >
@@ -104,10 +117,13 @@ export function SubmitTransmittalPage() {
               </div>
             ))}
           </div>
+          {submitted && hasItemErrors() && (
+            <p className="text-xs text-red-500 mt-2">Please fill in all required fields for each box.</p>
+          )}
           <button
             type="button"
             onClick={addItem}
-            className="mt-4 flex items-center gap-1 text-sm text-navy-500 hover:text-navy-600 font-medium"
+            className="mt-4 flex items-center gap-1 text-sm text-navy-500 hover:text-navy-600 font-medium transition-colors"
             data-testid="add-item-button"
           >
             <PlusIcon className="w-4 h-4" />
@@ -115,7 +131,7 @@ export function SubmitTransmittalPage() {
           </button>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="bg-white border border-slate-200 rounded-md p-6">
           <label htmlFor="notes" className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
           <textarea
             id="notes"
@@ -131,7 +147,7 @@ export function SubmitTransmittalPage() {
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50"
+            className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors"
             data-testid="submit-transmittal-form-button"
           >
             {mutation.isPending ? 'Submitting...' : 'Submit Transmittal'}
@@ -139,7 +155,7 @@ export function SubmitTransmittalPage() {
           <button
             type="button"
             onClick={() => navigate('/transmittals')}
-            className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50"
+            className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50 transition-colors"
           >
             Cancel
           </button>

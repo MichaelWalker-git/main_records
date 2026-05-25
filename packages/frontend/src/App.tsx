@@ -16,6 +16,7 @@ import { LegalHoldsPage } from './features/dispositions/LegalHoldsPage';
 import { InventoryPage } from './features/inventory/InventoryPage';
 import { BarcodeScanPage } from './features/inventory/BarcodeScanPage';
 import { UtilizationPage } from './features/inventory/UtilizationPage';
+import { CirculationPage } from './features/inventory/CirculationPage';
 import { SearchPage } from './features/search/SearchPage';
 import { DashboardPage } from './features/analytics/DashboardPage';
 import { ReportsPage } from './features/analytics/ReportsPage';
@@ -23,6 +24,7 @@ import { UsersPage } from './features/admin/UsersPage';
 import { RetentionSchedulesPage } from './features/admin/RetentionSchedulesPage';
 import { AuditLogPage } from './features/admin/AuditLogPage';
 import { IntegrationsPage } from './features/admin/IntegrationsPage';
+import { NotificationsPage } from './features/admin/NotificationsPage';
 import { AgencyDashboardPage } from './features/agency-portal/AgencyDashboardPage';
 import { SubmitAccessionPage } from './features/agency-portal/SubmitAccessionPage';
 import { ReferenceRequestPage } from './features/agency-portal/ReferenceRequestPage';
@@ -85,6 +87,7 @@ export function App() {
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/inventory/scan" element={<BarcodeScanPage />} />
           <Route path="/inventory/utilization" element={<UtilizationPage />} />
+          <Route path="/inventory/circulation" element={<CirculationPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/analytics" element={<DashboardPage />} />
           <Route path="/analytics/reports" element={<ReportsPage />} />
@@ -93,6 +96,7 @@ export function App() {
           <Route path="/admin/retention" element={<RoleRoute allowedRoles={['admin', 'staff']}><RetentionSchedulesPage /></RoleRoute>} />
           <Route path="/admin/audit" element={<RoleRoute allowedRoles={['admin']}><AuditLogPage /></RoleRoute>} />
           <Route path="/admin/integrations" element={<RoleRoute allowedRoles={['admin']}><IntegrationsPage /></RoleRoute>} />
+          <Route path="/admin/notifications" element={<NotificationsPage />} />
           <Route path="/agency" element={<RoleRoute allowedRoles={['agency_user', 'admin']}><AgencyDashboardPage /></RoleRoute>} />
           <Route path="/agency/accession" element={<RoleRoute allowedRoles={['agency_user', 'admin']}><SubmitAccessionPage /></RoleRoute>} />
           <Route path="/agency/reference" element={<RoleRoute allowedRoles={['agency_user', 'admin']}><ReferenceRequestPage /></RoleRoute>} />

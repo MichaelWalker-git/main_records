@@ -1,5 +1,5 @@
-import { Client } from '@opensearch-project/opensearch';
-import { config } from '../config';
+import { db } from '../config/database';
+import { EmbeddingService } from './EmbeddingService';
 
 export interface SearchParams {
   query: string;
@@ -14,91 +14,197 @@ export interface SearchParams {
 }
 
 export class SearchService {
-  private client: Client;
-
-  constructor() {
-    this.client = new Client({
-      node: config.opensearchEndpoint,
-    });
-  }
+  private embeddingService = new EmbeddingService();
 
   async search(params: SearchParams) {
     const { query, type = 'fulltext', agency_id, record_type, date_from, date_to, tags, page = 1, size = 20 } = params;
+    const offset = (page - 1) * size;
 
-    const must: any[] = [];
-    const filter: any[] = [];
+    let baseQuery = db('records')
+      .leftJoin('agencies', 'records.agency_id', 'agencies.id')
+      .leftJoin('record_tags', 'records.id', 'record_tags.record_id');
 
-    if (type === 'semantic') {
-      must.push({ neural: { content_embedding: { query, model_id: 'bedrock-embedding', k: size } } });
+    // Apply filters
+    if (agency_id) {
+      baseQuery = baseQuery.where('records.agency_id', agency_id);
+    }
+    if (record_type) {
+      baseQuery = baseQuery.where('records.media_type', record_type);
+    }
+    if (date_from) {
+      baseQuery = baseQuery.where('records.created_at', '>=', date_from);
+    }
+    if (date_to) {
+      baseQuery = baseQuery.where('records.created_at', '<=', date_to);
+    }
+    if (tags?.length) {
+      baseQuery = baseQuery.whereIn('record_tags.tag', tags);
+    }
+
+    // Build search condition based on type
+    const tsQuery = query
+      .trim()
+      .split(/\s+/)
+      .map(term => term + ':*')
+      .join(' & ');
+
+    let searchQuery;
+    if (type === 'metadata') {
+      // Search title, series_title, media_type
+      searchQuery = baseQuery.clone()
+        .whereRaw(
+          `to_tsvector('english', coalesce(records.title, '') || ' ' || coalesce(records.series_title, '') || ' ' || coalesce(records.media_type, '')) @@ to_tsquery('english', ?)`,
+          [tsQuery]
+        );
     } else if (type === 'ocr') {
-      must.push({ match: { ocr_text: { query, fuzziness: 'AUTO' } } });
-    } else if (type === 'metadata') {
-      must.push({
-        multi_match: { query, fields: ['title^3', 'description^2', 'tags', 'record_type'], type: 'best_fields' },
-      });
+      // Search description (where OCR text would be stored)
+      searchQuery = baseQuery.clone()
+        .whereRaw(
+          `to_tsvector('english', coalesce(records.description, '')) @@ to_tsquery('english', ?)`,
+          [tsQuery]
+        );
+    } else if (type === 'semantic') {
+      // Semantic search via pgvector + Bedrock Titan Embeddings
+      const semanticResults = await this.embeddingService.semanticSearch(query, size, offset, { agency_id });
+      return {
+        hits: semanticResults.map((hit: any) => ({
+          id: hit.id,
+          score: parseFloat(hit.score) || 0,
+          title: hit.title,
+          description: hit.description,
+          series_title: hit.series_title,
+          media_type: hit.media_type,
+          status: hit.status,
+          agency_id: hit.agency_id,
+          agency_name: null,
+          agency_code: hit.agency_code,
+          location_code: hit.location_code,
+          created_at: hit.created_at,
+          highlights: {},
+        })),
+        total: semanticResults.length,
+        facets: { record_types: [], agencies: [], date_histogram: [] },
+      };
     } else {
-      must.push({ multi_match: { query, fields: ['title^3', 'description^2', 'content', 'ocr_text', 'tags'] } });
+      // fulltext — search across all text fields
+      searchQuery = baseQuery.clone()
+        .whereRaw(
+          `to_tsvector('english', coalesce(records.title, '') || ' ' || coalesce(records.description, '') || ' ' || coalesce(records.series_title, '')) @@ to_tsquery('english', ?)`,
+          [tsQuery]
+        );
     }
 
-    if (agency_id) filter.push({ term: { agency_id } });
-    if (record_type) filter.push({ term: { record_type } });
-    if (tags?.length) filter.push({ terms: { tags } });
-    if (date_from || date_to) {
-      const range: any = {};
-      if (date_from) range.gte = date_from;
-      if (date_to) range.lte = date_to;
-      filter.push({ range: { created_at: range } });
-    }
+    // Count total results
+    const countResult = await searchQuery.clone()
+      .countDistinct('records.id as count')
+      .first();
+    const total = parseInt((countResult as any)?.count || '0', 10);
 
-    const body: any = {
-      from: (page - 1) * size,
-      size,
-      query: { bool: { must, filter } },
-      highlight: { fields: { content: {}, title: {}, description: {} } },
-      aggs: {
-        record_types: { terms: { field: 'record_type', size: 20 } },
-        agencies: { terms: { field: 'agency_id', size: 50 } },
-        date_histogram: { date_histogram: { field: 'created_at', calendar_interval: 'month' } },
-      },
-    };
+    // Fetch results with ranking
+    const hits = await searchQuery.clone()
+      .select(
+        'records.id',
+        'records.title',
+        'records.description',
+        'records.series_title',
+        'records.media_type',
+        'records.status',
+        'records.agency_id',
+        'records.agency_code',
+        'records.created_at',
+        'records.location_code',
+        'agencies.name as agency_name',
+        db.raw(
+          `ts_rank(to_tsvector('english', coalesce(records.title, '') || ' ' || coalesce(records.description, '') || ' ' || coalesce(records.series_title, '')), to_tsquery('english', ?)) as score`,
+          [tsQuery]
+        ),
+        db.raw(
+          `ts_headline('english', coalesce(records.title, '') || ' ' || coalesce(records.description, ''), to_tsquery('english', ?), 'MaxFragments=2,MaxWords=30') as headline`,
+          [tsQuery]
+        )
+      )
+      .groupBy('records.id', 'agencies.name')
+      .orderBy('score', 'desc')
+      .limit(size)
+      .offset(offset);
 
-    const response = await this.client.search({ index: 'records', body });
+    // Get facets (aggregations)
+    const [typeFacets, agencyFacets] = await Promise.all([
+      db('records')
+        .select('media_type')
+        .count('* as doc_count')
+        .groupBy('media_type')
+        .orderBy('doc_count', 'desc')
+        .limit(20),
+      db('records')
+        .select('agency_id')
+        .count('* as doc_count')
+        .groupBy('agency_id')
+        .orderBy('doc_count', 'desc')
+        .limit(50),
+    ]);
 
     return {
-      hits: response.body.hits.hits.map((hit: any) => ({
-        id: hit._id,
-        score: hit._score,
-        ...hit._source,
-        highlights: hit.highlight,
+      hits: hits.map((hit: any) => ({
+        id: hit.id,
+        score: parseFloat(hit.score) || 0,
+        title: hit.title,
+        description: hit.description,
+        series_title: hit.series_title,
+        media_type: hit.media_type,
+        status: hit.status,
+        agency_id: hit.agency_id,
+        agency_name: hit.agency_name,
+        agency_code: hit.agency_code,
+        location_code: hit.location_code,
+        created_at: hit.created_at,
+        highlights: { title: [hit.headline] },
       })),
-      total: response.body.hits.total.value,
+      total,
       facets: {
-        record_types: response.body.aggregations?.record_types?.buckets || [],
-        agencies: response.body.aggregations?.agencies?.buckets || [],
-        date_histogram: response.body.aggregations?.date_histogram?.buckets || [],
+        record_types: typeFacets.map((r: any) => ({ key: r.media_type, doc_count: parseInt(r.doc_count) })),
+        agencies: agencyFacets.map((r: any) => ({ key: r.agency_id, doc_count: parseInt(r.doc_count) })),
+        date_histogram: [],
       },
     };
   }
 
   async getFacets(agencyId?: string) {
-    const body: any = {
-      size: 0,
-      aggs: {
-        record_types: { terms: { field: 'record_type', size: 50 } },
-        tags: { terms: { field: 'tags', size: 100 } },
-        statuses: { terms: { field: 'status', size: 10 } },
-      },
-    };
-
+    let query = db('records');
     if (agencyId) {
-      body.query = { term: { agency_id: agencyId } };
+      query = query.where('agency_id', agencyId);
     }
 
-    const response = await this.client.search({ index: 'records', body });
+    const [typeFacets, tagFacets, statusFacets] = await Promise.all([
+      query.clone()
+        .select('media_type as key')
+        .count('* as doc_count')
+        .groupBy('media_type')
+        .orderBy('doc_count', 'desc')
+        .limit(50),
+      db('record_tags')
+        .modify((qb) => {
+          if (agencyId) {
+            qb.whereIn('record_id', db('records').select('id').where('agency_id', agencyId));
+          }
+        })
+        .select('tag as key')
+        .count('* as doc_count')
+        .groupBy('tag')
+        .orderBy('doc_count', 'desc')
+        .limit(100),
+      query.clone()
+        .select('status as key')
+        .count('* as doc_count')
+        .groupBy('status')
+        .orderBy('doc_count', 'desc')
+        .limit(10),
+    ]);
+
     return {
-      record_types: response.body.aggregations?.record_types?.buckets || [],
-      tags: response.body.aggregations?.tags?.buckets || [],
-      statuses: response.body.aggregations?.statuses?.buckets || [],
+      record_types: typeFacets.map((r: any) => ({ key: r.key, doc_count: parseInt(r.doc_count) })),
+      tags: tagFacets.map((r: any) => ({ key: r.key, doc_count: parseInt(r.doc_count) })),
+      statuses: statusFacets.map((r: any) => ({ key: r.key, doc_count: parseInt(r.doc_count) })),
     };
   }
 }

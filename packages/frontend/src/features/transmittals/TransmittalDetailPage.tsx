@@ -35,7 +35,7 @@ export function TransmittalDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="text-sm text-slate-500 font-mono">{transmittal.trackingNumber}</p>
-          <h1 className="text-2xl font-bold text-slate-800 mt-1">Transmittal Detail</h1>
+          <h1 className="text-xl font-bold text-slate-800 mt-1">Transmittal Detail</h1>
         </div>
         <StatusBadge status={transmittal.status} />
       </div>

@@ -25,7 +25,7 @@ const updateRolesSchema = z.object({
 
 router.get('/', authorize('users:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const users = await authService.listUsers(isAdmin ? undefined : req.user!.agencyId);
     res.json({ data: users });
   } catch (err) { next(err); }

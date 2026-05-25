@@ -14,29 +14,27 @@ export class ReportService {
     const baseQuery = agencyId ? this.db('records').where({ agency_id: agencyId }) : this.db('records');
 
     const [totalRecords] = await baseQuery.clone().count('* as count');
-    const [activeRecords] = await baseQuery.clone().where({ status: 'active' }).count('* as count');
+    const [activeRecords] = await baseQuery.clone().where({ status: 'ACTIVE' }).count('* as count');
     const [pendingTransmittals] = await this.db('transmittals')
-      .where(agencyId ? { agency_id: agencyId, status: 'submitted' } : { status: 'submitted' })
+      .where(agencyId ? { agency_id: agencyId, status: 'SUBMITTED' } : { status: 'SUBMITTED' })
       .count('* as count');
     const [pendingDispositions] = await this.db('dispositions')
-      .where(agencyId ? { agency_id: agencyId, status: 'pending_approval' } : { status: 'pending_approval' })
+      .where(agencyId ? { agency_id: agencyId, status: 'PENDING_APPROVAL' } : { status: 'PENDING_APPROVAL' })
       .count('* as count');
     const [overdueCheckouts] = await this.db('circulation_events')
-      .where({ event_type: 'checkout' })
-      .whereNull('checked_in_at')
+      .where({ event_type: 'CHECKOUT' })
+      .whereNull('returned_at')
       .where('due_date', '<', new Date())
-      .modify((qb: any) => { if (agencyId) qb.where({ agency_id: agencyId }); })
       .count('* as count');
 
     const recentActivity = await this.db('audit_events')
-      .modify((qb: any) => { if (agencyId) qb.where({ agency_id: agencyId }); })
       .orderBy('created_at', 'desc')
       .limit(10);
 
     const recordsByType = await baseQuery.clone()
-      .select('record_type')
+      .select('media_type')
       .count('* as count')
-      .groupBy('record_type');
+      .groupBy('media_type');
 
     const metrics = {
       totalRecords: Number(totalRecords.count),
@@ -59,9 +57,9 @@ export class ReportService {
 
     const query = this.db('records')
       .join('retention_schedules', 'records.retention_schedule_id', 'retention_schedules.id')
-      .select('retention_schedules.name', 'retention_schedules.code')
+      .select('retention_schedules.name', 'retention_schedules.series_code as code')
       .count('records.id as count')
-      .groupBy('retention_schedules.name', 'retention_schedules.code');
+      .groupBy('retention_schedules.name', 'retention_schedules.series_code');
 
     if (agencyId) query.where('records.agency_id', agencyId);
 

@@ -1,5 +1,22 @@
 import axios from 'axios';
 
+function snakeToCamel(str: string): string {
+  return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+function transformKeys(obj: unknown): unknown {
+  if (Array.isArray(obj)) return obj.map(transformKeys);
+  if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
+    return Object.fromEntries(
+      Object.entries(obj as Record<string, unknown>).map(([key, value]) => [
+        snakeToCamel(key),
+        transformKeys(value),
+      ])
+    );
+  }
+  return obj;
+}
+
 const api = axios.create({
   baseURL: '/api',
   headers: {
@@ -16,7 +33,12 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data) {
+      response.data = transformKeys(response.data);
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token');

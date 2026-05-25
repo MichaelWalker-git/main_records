@@ -20,7 +20,7 @@ const searchSchema = z.object({
 
 router.post('/', authorize('search:read'), validate(searchSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const results = await searchService.search({
       ...req.body,
       agency_id: isAdmin ? undefined : req.user!.agencyId,
@@ -31,7 +31,7 @@ router.post('/', authorize('search:read'), validate(searchSchema), async (req: R
 
 router.get('/facets', authorize('search:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const facets = await searchService.getFacets(isAdmin ? undefined : req.user!.agencyId);
     res.json({ data: facets });
   } catch (err) { next(err); }
