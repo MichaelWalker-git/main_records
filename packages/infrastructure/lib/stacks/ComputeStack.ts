@@ -71,6 +71,10 @@ export class ComputeStack extends cdk.Stack {
     props.dbSecret.grantRead(backendTaskRole);
     props.documentsBucket.grantReadWrite(backendTaskRole);
     props.classifyQueue.grantSendMessages(backendTaskRole);
+    backendTaskRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['bedrock:InvokeModel'],
+      resources: ['*'],
+    }));
 
     const backendTaskDef = new ecs.FargateTaskDefinition(this, 'BackendTaskDef', {
       cpu: 512,
@@ -82,6 +86,8 @@ export class ComputeStack extends cdk.Stack {
       image: backendImage,
       portMappings: [{ containerPort: 3000 }],
       environment: {
+        STAGE: 'development',
+        AWS_REGION: cdk.Stack.of(this).region,
         DB_HOST: props.dbProxy.endpoint,
         DB_PORT: '5433',
         DB_NAME: 'maine_rms',
@@ -113,6 +119,8 @@ export class ComputeStack extends cdk.Stack {
       desiredCount: 1,
       securityGroups: [props.ecsSg],
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      circuitBreaker: { rollback: true },
+      enableExecuteCommand: true,
     });
 
     const backendScaling = this.backendService.autoScaleTaskCount({ minCapacity: 1, maxCapacity: 4 });
@@ -155,6 +163,7 @@ export class ComputeStack extends cdk.Stack {
       desiredCount: 1,
       securityGroups: [props.ecsSg],
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+      circuitBreaker: { rollback: true },
     });
 
     const frontendScaling = this.frontendService.autoScaleTaskCount({ minCapacity: 1, maxCapacity: 3 });

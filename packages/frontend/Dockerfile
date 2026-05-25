@@ -24,16 +24,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
 
-    # API reverse proxy (ECS service discovery or ALB)
-    location /api {
-        proxy_pass http://backend:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # SPA fallback
+    # SPA fallback — ALB routes /api/* to backend service directly
     location / {
         try_files $uri $uri/ /index.html;
     }

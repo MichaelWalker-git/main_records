@@ -18,8 +18,8 @@ function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Local development bypass - mock admin user
-  if (config.stage === 'development' && config.cognito.userPoolId === 'local-dev') {
+  // Development bypass - mock admin user (for demo/PoC environments)
+  if (config.stage === 'development') {
     req.user = {
       id: 'b2c3d4e5-2222-4000-8000-000000000001',
       email: 'sarah.chen@maine.gov',

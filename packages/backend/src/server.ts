@@ -43,34 +43,35 @@ app.use('/api/notifications', authMiddleware, notificationsRouter);
 
 app.use(errorHandler);
 
-async function start() {
-  // Auto-run migrations on startup using same connection as the app
+// Start server immediately so health checks pass
+app.listen(config.port, () => {
+  console.log(`Server running on port ${config.port} [${config.stage}]`);
+});
+
+// Run migrations in background (non-blocking)
+(async () => {
   try {
-    const db = knex({
+    const migrationDb = knex({
       client: 'pg',
       connection: config.databaseUrl,
+      pool: { min: 0, max: 1, acquireTimeoutMillis: 10000 },
+      acquireConnectionTimeout: 10000,
       migrations: {
         directory: '../migrations',
       },
     });
 
     console.log('Running database migrations...');
-    const [batch, migrations] = await db.migrate.latest();
+    const [batch, migrations] = await migrationDb.migrate.latest();
     if (migrations.length > 0) {
       console.log(`Migrations applied (batch ${batch}):`, migrations);
     } else {
       console.log('Database already up to date.');
     }
-    await db.destroy();
+    await migrationDb.destroy();
   } catch (err) {
-    console.error('Migration failed (server will start anyway):', err);
+    console.error('Migration failed (non-fatal):', err);
   }
-
-  app.listen(config.port, () => {
-    console.log(`Server running on port ${config.port} [${config.stage}]`);
-  });
-}
-
-start();
+})();
 
 export default app;
