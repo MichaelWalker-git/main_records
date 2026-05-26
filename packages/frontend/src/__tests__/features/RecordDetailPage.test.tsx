@@ -98,8 +98,6 @@ describe('RecordDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByTestId('record-detail-page')).toBeInTheDocument();
     });
-    // Click the ellipsis menu
-    const moreBtn = screen.getByRole('button', { name: '' });
     // Find the ellipsis button (it's the one without text, just an icon)
     const buttons = screen.getAllByRole('button');
     const ellipsisBtn = buttons.find(b => b.querySelector('.w-4.h-4'));
