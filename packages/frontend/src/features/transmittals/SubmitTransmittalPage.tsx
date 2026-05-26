@@ -2,7 +2,6 @@ import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useApiMutation } from '../../hooks/useApi';
-import { Transmittal } from '../../types';
 
 interface BoxItem {
   id: string;
@@ -14,14 +13,18 @@ interface BoxItem {
 
 export function SubmitTransmittalPage() {
   const navigate = useNavigate();
+  const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<BoxItem[]>([
     { id: '1', boxNumber: '', description: '', seriesTitle: '', dateRange: '' },
   ]);
   const [submitted, setSubmitted] = useState(false);
 
-  const mutation = useApiMutation<Transmittal, object>('/transmittals', 'post', {
-    onSuccess: (data) => navigate(`/transmittals/${data.id}`),
+  const mutation = useApiMutation<any, object>('/transmittals', 'post', {
+    onSuccess: (resp) => {
+      const t = resp?.data ?? resp;
+      navigate(`/transmittals/${t.id}`);
+    },
   });
 
   function addItem() {
@@ -44,7 +47,7 @@ export function SubmitTransmittalPage() {
     e.preventDefault();
     setSubmitted(true);
     if (hasItemErrors()) return;
-    mutation.mutate({ notes, items });
+    mutation.mutate({ title: title || `Records Transfer - ${new Date().toLocaleDateString()}`, description: notes, items });
   }
 
   function itemFieldClass(value: string): string {
@@ -60,6 +63,20 @@ export function SubmitTransmittalPage() {
         <p className="text-sm text-slate-500 mt-0.5">Transfer records to the State Archives</p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="bg-white border border-slate-200 rounded-md p-6">
+          <div className="mb-4">
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+              placeholder="e.g. Q1 2024 Records Transfer"
+              data-testid="transmittal-title"
+            />
+          </div>
+        </div>
         <div className="bg-white border border-slate-200 rounded-md p-6">
           <h2 className="text-sm font-semibold text-slate-800 uppercase tracking-wide mb-4">Boxes / Items</h2>
           <div className="space-y-3">

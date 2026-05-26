@@ -34,7 +34,7 @@ export function BarcodeScanPage() {
       <div className="max-w-xl mx-auto space-y-6">
         <BarcodeScanner onScan={handleScan} />
 
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-white border border-slate-200 rounded-md p-4">
           <label htmlFor="manual-barcode" className="block text-sm font-medium text-slate-700 mb-1">
             Manual Entry
           </label>
@@ -65,7 +65,7 @@ export function BarcodeScanPage() {
 
         {result && (
           <div className="space-y-3" data-testid="scan-result">
-            <div className={`p-4 rounded-lg ${result.record ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+            <div className={`p-4 rounded-md ${result.record ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
               <p className="text-sm font-medium">{result.message}</p>
               {result.action && <p className="text-xs text-slate-500 mt-1">Action: {result.action}</p>}
             </div>

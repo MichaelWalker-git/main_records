@@ -25,23 +25,23 @@ export function UtilizationPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="bg-white border border-slate-200 rounded-md p-5">
           <p className="text-sm text-slate-500">Total Capacity</p>
           <p className="text-2xl font-bold text-slate-800">{data?.totalCapacity?.toLocaleString() ?? '-'}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="bg-white border border-slate-200 rounded-md p-5">
           <p className="text-sm text-slate-500">Total Occupied</p>
           <p className="text-2xl font-bold text-slate-800">{data?.totalOccupied?.toLocaleString() ?? '-'}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="bg-white border border-slate-200 rounded-md p-5">
           <p className="text-sm text-slate-500">Overall Utilization</p>
           <p className="text-2xl font-bold text-slate-800">{overallPercent}%</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-slate-200 rounded-lg p-6" data-testid="capacity-bar-chart">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Capacity by Warehouse</h2>
+        <div className="bg-white border border-slate-200 rounded-md p-6" data-testid="capacity-bar-chart">
+          <h2 className="text-sm font-semibold text-slate-800 mb-4">Capacity by Warehouse</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={warehouseData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -54,8 +54,8 @@ export function UtilizationPage() {
           </ResponsiveContainer>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg p-6" data-testid="type-pie-chart">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Records by Type</h2>
+        <div className="bg-white border border-slate-200 rounded-md p-6" data-testid="type-pie-chart">
+          <h2 className="text-sm font-semibold text-slate-800 mb-4">Records by Type</h2>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie data={typeData} dataKey="count" nameKey="type" cx="50%" cy="50%" outerRadius={100} label>

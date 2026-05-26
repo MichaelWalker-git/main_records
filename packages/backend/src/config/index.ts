@@ -5,17 +5,17 @@ function buildDatabaseUrl(): string {
 
   // ECS: build from DB Proxy + Secrets Manager secret (injected as DB_SECRET env var)
   const endpoint = process.env.DB_HOST || process.env.DB_PROXY_ENDPOINT;
-  const port = process.env.DB_PORT || '5433';
+  const port = process.env.DB_PORT || '5432';
   if (endpoint && process.env.DB_SECRET) {
     try {
       const secret = JSON.parse(process.env.DB_SECRET);
-      return `postgresql://${secret.username}:${secret.password}@${endpoint}:${port}/maine_rms?sslmode=require`;
+      return `postgresql://${secret.username}:${secret.password}@${endpoint}:${port}/maine_rms`;
     } catch {
       // fallback if secret isn't JSON
     }
   }
   if (endpoint) {
-    return `postgresql://${endpoint}:${port}/maine_rms?sslmode=require`;
+    return `postgresql://${endpoint}:${port}/maine_rms`;
   }
   return 'postgresql://localhost:5432/maine_rms';
 }

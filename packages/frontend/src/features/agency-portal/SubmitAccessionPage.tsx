@@ -96,11 +96,11 @@ export function SubmitAccessionPage() {
             <input id="acc-phone" type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500" data-testid="accession-phone-input" />
           </div>
         </div>
-        <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-          <button type="submit" disabled={mutation.isPending} className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors" data-testid="submit-accession-button">
+        <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+          <button type="submit" disabled={mutation.isPending} className="h-9 px-4 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors" data-testid="submit-accession-button">
             {mutation.isPending ? 'Submitting...' : 'Submit Request'}
           </button>
-          <button type="button" onClick={() => navigate('/agency')} className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50 transition-colors">Cancel</button>
+          <button type="button" onClick={() => navigate('/agency')} className="h-9 px-3 border border-slate-200 rounded text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
         </div>
       </form>
     </div>

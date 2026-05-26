@@ -44,7 +44,7 @@ function TreeNode({ location, onSelect, selectedId, depth }: TreeNodeProps) {
         )}
         <span className="truncate">{location.name}</span>
         <span className="ml-auto text-xs text-slate-400">
-          {location.occupied}/{location.capacity}
+          {location.currentCount}/{location.capacity}
         </span>
       </button>
       {isExpanded && hasChildren && (

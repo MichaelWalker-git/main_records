@@ -132,7 +132,7 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
 
       // Log the classification event for audit
       await db.query(
-        `INSERT INTO audit_events (event_type, entity_type, entity_id, metadata, created_at)
+        `INSERT INTO audit_events (action, resource_type, resource_id, metadata, created_at)
          VALUES ('AI_CLASSIFICATION', 'record', $1, $2, NOW())`,
         [
           message.recordId,

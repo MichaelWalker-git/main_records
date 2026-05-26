@@ -48,22 +48,22 @@ export function AgencyDashboardPage() {
       <div className="flex items-center gap-3 mb-6">
         <Link
           to="/agency/accession"
-          className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600"
+          className="inline-flex items-center h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
           data-testid="submit-accession-link"
         >
           Submit Accession
         </Link>
         <Link
           to="/agency/reference"
-          className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50"
+          className="inline-flex items-center h-9 px-3 border border-slate-200 rounded text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
           data-testid="reference-request-link"
         >
           Reference Request
         </Link>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-lg p-6">
-        <h2 className="text-lg font-semibold text-slate-800 mb-4">Recent Transmittals</h2>
+      <div className="bg-white border border-slate-200 rounded-md p-5">
+        <h2 className="text-sm font-semibold text-slate-800 mb-4">Recent Transmittals</h2>
         <DataTable columns={columns} data={data?.recentTransmittals ?? []} keyExtractor={(t) => t.id} />
       </div>
     </div>

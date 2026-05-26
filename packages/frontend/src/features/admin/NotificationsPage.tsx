@@ -42,7 +42,7 @@ export function NotificationsPage() {
         </div>
         <button
           onClick={handleSave}
-          className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 transition-colors"
+          className="h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
           data-testid="save-prefs-button"
         >
           Save Preferences

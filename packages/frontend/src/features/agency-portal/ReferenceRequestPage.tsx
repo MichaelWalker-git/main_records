@@ -42,8 +42,8 @@ export function ReferenceRequestPage() {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Submit New Request</h2>
-          <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-6 space-y-4">
+          <h2 className="text-sm font-semibold text-slate-800 mb-4">Submit New Request</h2>
+          <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-md p-5 space-y-4">
             <div>
               <label htmlFor="ref-subject" className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
               <input id="ref-subject" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500" required data-testid="reference-subject-input" />
@@ -62,10 +62,10 @@ export function ReferenceRequestPage() {
               </select>
             </div>
             <div className="flex items-center gap-3 pt-2">
-              <button type="submit" disabled={mutation.isPending} className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50" data-testid="submit-reference-button">
+              <button type="submit" disabled={mutation.isPending} className="h-9 px-4 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors" data-testid="submit-reference-button">
                 {mutation.isPending ? 'Submitting...' : 'Submit Request'}
               </button>
-              <button type="button" onClick={() => navigate('/agency')} className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50">Back</button>
+              <button type="button" onClick={() => navigate('/agency')} className="h-9 px-3 border border-slate-200 rounded text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">Back</button>
             </div>
             {mutation.isSuccess && (
               <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm">
@@ -76,13 +76,13 @@ export function ReferenceRequestPage() {
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">My Requests</h2>
+          <h2 className="text-sm font-semibold text-slate-800 mb-4">My Requests</h2>
           <div className="space-y-3">
             {existingRequests.length === 0 ? (
               <p className="text-sm text-slate-500">No reference requests yet.</p>
             ) : (
               existingRequests.map((req) => (
-                <div key={req.id} className="bg-white border border-slate-200 rounded-lg p-4" data-testid={`reference-request-${req.id}`}>
+                <div key={req.id} className="bg-white border border-slate-200 rounded-md p-4" data-testid={`reference-request-${req.id}`}>
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-medium text-slate-800">{req.subject}</h3>
                     <StatusBadge status={req.status} variant="small" />

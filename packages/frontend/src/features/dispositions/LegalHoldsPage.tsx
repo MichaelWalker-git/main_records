@@ -10,26 +10,34 @@ import { format } from 'date-fns';
 export function LegalHoldsPage() {
   const { isAdmin } = useAuth();
   const [showCreate, setShowCreate] = useState(false);
-  const [title, setTitle] = useState('');
+  const [recordId, setRecordId] = useState('');
   const [reason, setReason] = useState('');
 
-  const { data: holds = [], refetch } = useApiQuery<LegalHold[]>(['legal-holds'], '/legal-holds');
+  const { data: holds = [], refetch } = useApiQuery<LegalHold[]>(['legal-holds'], '/dispositions/legal-holds');
 
-  const createMutation = useApiMutation<LegalHold, object>('/legal-holds', 'post', {
+  const createMutation = useApiMutation<LegalHold, object>('/dispositions/legal-holds', 'post', {
     onSuccess: () => {
       setShowCreate(false);
-      setTitle('');
+      setRecordId('');
       setReason('');
       refetch();
     },
   });
 
   const columns = [
-    { key: 'title', label: 'Title', sortable: true },
-    { key: 'reason', label: 'Reason' },
-    { key: 'issuedBy', label: 'Issued By' },
-    { key: 'issuedAt', label: 'Issued', render: (h: LegalHold) => format(new Date(h.issuedAt), 'MMM d, yyyy') },
-    { key: 'recordIds', label: 'Records', render: (h: LegalHold) => h.recordIds.length },
+    { key: 'reason', label: 'Reason', sortable: true, render: (h: LegalHold) => (
+      <span className="text-sm font-medium text-slate-800 truncate block max-w-[250px]">{h.reason}</span>
+    )},
+    { key: 'recordId', label: 'Record', render: (h: LegalHold) => (
+      <span className="font-mono text-xs">{h.recordId?.slice(0, 8) || '—'}</span>
+    )},
+    { key: 'placedBy', label: 'Placed By', render: (h: LegalHold) => (
+      <span className="text-xs">{h.placedBy?.slice(0, 8) || '—'}</span>
+    )},
+    { key: 'placedAt', label: 'Placed', render: (h: LegalHold) => {
+      try { return <span>{format(new Date(h.placedAt), 'MMM d, yyyy')}</span>; }
+      catch { return <span>—</span>; }
+    }},
     { key: 'isActive', label: 'Status', render: (h: LegalHold) => (
       <span className={`text-xs font-medium ${h.isActive ? 'text-orange-600' : 'text-slate-500'}`}>
         {h.isActive ? 'Active' : 'Released'}
@@ -47,7 +55,7 @@ export function LegalHoldsPage() {
         {isAdmin && (
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600"
+            className="flex items-center gap-2 h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
             data-testid="create-hold-button"
           >
             <PlusIcon className="w-4 h-4" />
@@ -61,20 +69,21 @@ export function LegalHoldsPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            createMutation.mutate({ title, reason });
+            createMutation.mutate({ recordId, reason });
           }}
           className="space-y-4"
         >
           <div>
-            <label htmlFor="hold-title" className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+            <label htmlFor="hold-record" className="block text-sm font-medium text-slate-700 mb-1">Record ID</label>
             <input
-              id="hold-title"
+              id="hold-record"
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={recordId}
+              onChange={(e) => setRecordId(e.target.value)}
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+              placeholder="Enter record UUID"
               required
-              data-testid="hold-title-input"
+              data-testid="hold-record-input"
             />
           </div>
           <div>
@@ -93,14 +102,14 @@ export function LegalHoldsPage() {
             <button
               type="button"
               onClick={() => setShowCreate(false)}
-              className="px-3 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50"
+              className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-600 hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createMutation.isPending}
-              className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50"
+              className="h-9 px-4 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors"
               data-testid="submit-hold-button"
             >
               Apply Hold

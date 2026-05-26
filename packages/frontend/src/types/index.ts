@@ -13,7 +13,7 @@ export interface User {
   createdAt: string;
 }
 
-export type RecordStatus = 'active' | 'inactive' | 'pending_disposition' | 'transferred' | 'destroyed' | 'on_hold';
+export type RecordStatus = 'active' | 'inactive' | 'draft' | 'checked_out' | 'in_transit' | 'on_hold' | 'pending_disposition' | 'disposed' | 'transferred' | 'destroyed' | 'archived';
 
 export interface RMSRecord {
   id: string;
@@ -35,6 +35,8 @@ export interface RMSRecord {
   updatedAt: string;
   tags: string[];
   metadata: Record<string, unknown> | object;
+  documentKey?: string;
+  hasDocument?: boolean;
 }
 
 export type TransmittalStatus = 'draft' | 'submitted' | 'received' | 'approved' | 'rejected';
@@ -65,7 +67,7 @@ export interface TransmittalItem {
   dateRange: string;
 }
 
-export type DispositionStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'on_hold';
+export type DispositionStatus = 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'completed' | 'on_hold';
 
 export interface Disposition {
   id: string;
@@ -93,12 +95,12 @@ export interface ApprovalStep {
 
 export interface LegalHold {
   id: string;
-  title: string;
+  recordId: string;
   reason: string;
-  issuedBy: string;
-  issuedAt: string;
-  expiresAt?: string;
-  recordIds: string[];
+  placedBy: string;
+  placedAt: string;
+  releasedBy?: string;
+  releasedAt?: string;
   isActive: boolean;
 }
 
@@ -107,32 +109,31 @@ export interface Location {
   name: string;
   code: string;
   parentId?: string;
-  type: 'warehouse' | 'room' | 'aisle' | 'shelf' | 'position';
+  locationType: string;
   capacity: number;
-  occupied: number;
+  currentCount: number;
   children?: Location[];
 }
 
 export interface RetentionSchedule {
   id: string;
   code: string;
-  title: string;
+  name: string;
   description: string;
   retentionYears: number;
-  dispositionMethod: 'destroy' | 'transfer' | 'archive';
+  dispositionAction: string;
   isActive: boolean;
 }
 
 export interface AuditEvent {
   id: string;
   action: string;
-  entityType: string;
-  entityId: string;
+  resourceType: string;
+  resourceId: string;
   userId: string;
-  userName: string;
-  timestamp: string;
-  details: object;
-  ipAddress?: string;
+  userEmail: string;
+  createdAt: string;
+  metadata?: object;
 }
 
 export interface Notification {

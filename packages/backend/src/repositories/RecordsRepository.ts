@@ -7,13 +7,27 @@ export interface Record {
   description: string;
   record_type: string;
   agency_id: string;
+  agency_code: string;
   template_id?: string;
   retention_schedule_id?: string;
+  series_title: string;
+  media_type: string;
+  tracking_number: string;
   barcode: string;
   status: string;
-  metadata: any;
-  tags: string[];
+  disposition_date?: Date;
+  container_number?: string;
+  box_number?: string;
+  location_code?: string;
   location_id?: string;
+  transmittal_number?: string;
+  date_from?: string;
+  date_to?: string;
+  metadata: any;
+  custom_metadata?: any;
+  tags: string[];
+  document_key?: string;
+  has_document?: boolean;
   created_by: string;
   created_at: Date;
   updated_at: Date;
@@ -33,7 +47,12 @@ export class RecordsRepository extends BaseRepository<Record> {
   }
 
   async findByBarcode(barcode: string): Promise<Record | undefined> {
-    return this.db(this.tableName).where({ barcode }).first();
+    // BAR-05: Query barcode, tracking_number, and container_number (legacy support)
+    return this.db(this.tableName)
+      .where({ barcode })
+      .orWhere({ tracking_number: barcode })
+      .orWhere({ container_number: barcode })
+      .first();
   }
 
   async findByTags(tags: string[], agencyId?: string): Promise<Record[]> {
@@ -52,6 +71,16 @@ export class RecordsRepository extends BaseRepository<Record> {
 
   async findByRetentionSchedule(scheduleId: string): Promise<Record[]> {
     return this.db(this.tableName).where({ retention_schedule_id: scheduleId });
+  }
+
+  async count(): Promise<number> {
+    const [{ count }] = await this.db(this.tableName).count('* as count');
+    return Number(count);
+  }
+
+  async countByAgency(agencyId: string): Promise<number> {
+    const [{ count }] = await this.db(this.tableName).where({ agency_id: agencyId }).count('* as count');
+    return Number(count);
   }
 
   async batchCreate(records: Partial<Record>[]): Promise<Record[]> {

@@ -244,14 +244,14 @@ function parseToolResponse(response: any): ExtractionResult {
 function buildDatabaseUrl(): string {
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
   const endpoint = process.env.DB_PROXY_ENDPOINT;
-  const port = process.env.DB_PORT || "5433";
+  const port = process.env.DB_PORT || "5432";
   if (endpoint && process.env.DB_SECRET) {
     try {
       const secret = JSON.parse(process.env.DB_SECRET);
-      return `postgresql://${secret.username}:${secret.password}@${endpoint}:${port}/maine_rms?sslmode=require`;
+      return `postgresql://${secret.username}:${secret.password}@${endpoint}:${port}/maine_rms`;
     } catch { /* fallback */ }
   }
-  if (endpoint) return `postgresql://${endpoint}:${port}/maine_rms?sslmode=require`;
+  if (endpoint) return `postgresql://${endpoint}:${port}/maine_rms`;
   return "postgresql://localhost:5432/maine_rms";
 }
 
@@ -329,7 +329,7 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
 
       // Audit trail
       await db.query(
-        `INSERT INTO audit_events (event_type, entity_type, entity_id, metadata, created_at)
+        `INSERT INTO audit_events (action, resource_type, resource_id, metadata, created_at)
          VALUES ('OCR_PROCESSED', 'record', $1, $2, NOW())`,
         [
           message.recordId,

@@ -11,7 +11,7 @@ export function RetentionSchedulesPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [years, setYears] = useState('');
-  const [method, setMethod] = useState<'destroy' | 'transfer' | 'archive'>('destroy');
+  const [method, setMethod] = useState<string>('destroy');
 
   const { data: schedules = [], refetch } = useApiQuery<RetentionSchedule[]>(['retention-schedules'], '/admin/retention-schedules');
 
@@ -28,10 +28,10 @@ export function RetentionSchedulesPage() {
 
   const columns = [
     { key: 'code', label: 'Code', sortable: true },
-    { key: 'title', label: 'Title', sortable: true },
+    { key: 'name', label: 'Name', sortable: true },
     { key: 'retentionYears', label: 'Retention (Years)' },
-    { key: 'dispositionMethod', label: 'Disposition', render: (s: RetentionSchedule) => (
-      <span className="capitalize">{s.dispositionMethod}</span>
+    { key: 'dispositionAction', label: 'Disposition', render: (s: RetentionSchedule) => (
+      <span className="capitalize">{(s.dispositionAction || '').replace(/_/g, ' ').toLowerCase()}</span>
     )},
     { key: 'isActive', label: 'Active', render: (s: RetentionSchedule) => (
       <span className={`text-xs font-medium ${s.isActive ? 'text-green-600' : 'text-slate-500'}`}>
@@ -52,7 +52,7 @@ export function RetentionSchedulesPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600"
+          className="flex items-center gap-2 h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
           data-testid="create-schedule-button"
         >
           <PlusIcon className="w-4 h-4" />
@@ -65,7 +65,7 @@ export function RetentionSchedulesPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            createMutation.mutate({ code, title, description, retentionYears: Number(years), dispositionMethod: method });
+            createMutation.mutate({ code, name: title, description, retentionYears: Number(years), dispositionAction: method });
           }}
           className="space-y-4"
         >
@@ -89,15 +89,15 @@ export function RetentionSchedulesPage() {
           </div>
           <div>
             <label htmlFor="sched-method" className="block text-sm font-medium text-slate-700 mb-1">Disposition Method</label>
-            <select id="sched-method" value={method} onChange={(e) => setMethod(e.target.value as 'destroy' | 'transfer' | 'archive')} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500" data-testid="schedule-method-select">
+            <select id="sched-method" value={method} onChange={(e) => setMethod(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500" data-testid="schedule-method-select">
               <option value="destroy">Destroy</option>
               <option value="transfer">Transfer</option>
               <option value="archive">Archive</option>
             </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setShowCreate(false)} className="px-3 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={createMutation.isPending} className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50" data-testid="submit-schedule-button">Create</button>
+            <button type="button" onClick={() => setShowCreate(false)} className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+            <button type="submit" disabled={createMutation.isPending} className="h-9 px-4 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors" data-testid="submit-schedule-button">Create</button>
           </div>
         </form>
       </Modal>

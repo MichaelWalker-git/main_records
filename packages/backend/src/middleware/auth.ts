@@ -18,10 +18,13 @@ function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
-  // Development bypass - mock admin user (for demo/PoC environments)
+  // Development bypass - mock user from token (for demo/PoC environments)
   if (config.stage === 'development') {
+    const token = req.headers.authorization?.replace('Bearer ', '') || '';
+    const userId = token.replace('dev-token-', '') || 'b2c3d4e5-2222-4000-8000-000000000001';
+    // Default admin user — agency resolved at service layer
     req.user = {
-      id: 'b2c3d4e5-2222-4000-8000-000000000001',
+      id: userId,
       email: 'sarah.chen@maine.gov',
       roles: ['SYSTEM_ADMIN'],
       agencyId: '',

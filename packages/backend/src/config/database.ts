@@ -1,9 +1,14 @@
 import knex, { Knex } from 'knex';
 import { config } from './index';
 
+const isEcs = !!process.env.DB_HOST;
+
 const knexConfig: Knex.Config = {
   client: 'pg',
-  connection: config.databaseUrl,
+  connection: {
+    connectionString: config.databaseUrl,
+    ssl: isEcs ? { rejectUnauthorized: false } : false,
+  },
   pool: {
     min: 0,
     max: 10,

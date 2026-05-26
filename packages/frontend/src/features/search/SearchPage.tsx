@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { SearchInput } from '../../components/SearchInput';
-import { RecordCard } from '../../components/RecordCard';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { useApiMutation } from '../../hooks/useApi';
@@ -14,7 +14,7 @@ export function SearchPage() {
   const [agencyFilter, setAgencyFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const searchMutation = useApiMutation<{ results: SearchResult[] }, { query: string; type: SearchTab; filters: object }>(
+  const searchMutation = useApiMutation<SearchResult[], { query: string; type: SearchTab; agency?: string; status?: string }>(
     '/search',
     'post'
   );
@@ -25,10 +25,12 @@ export function SearchPage() {
       searchMutation.mutate({
         query,
         type: activeTab,
-        filters: { agency: agencyFilter || undefined, status: statusFilter || undefined },
+        ...(agencyFilter ? { agency: agencyFilter } : {}),
+        ...(statusFilter ? { status: statusFilter } : {}),
       });
     },
-    [activeTab, agencyFilter, statusFilter, searchMutation]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeTab, agencyFilter, statusFilter]
   );
 
   const tabs: { key: SearchTab; label: string }[] = [
@@ -38,7 +40,8 @@ export function SearchPage() {
     { key: 'ocr', label: 'OCR' },
   ];
 
-  const results = searchMutation.data?.results ?? [];
+  const rawData = searchMutation.data as any;
+  const results: SearchResult[] = rawData?.data?.hits ?? rawData?.hits ?? rawData?.data ?? rawData ?? [];
 
   return (
     <div data-testid="search-page">
@@ -118,16 +121,21 @@ export function SearchPage() {
             {results.length > 0 && (
               <div className="space-y-2" data-testid="search-results">
                 <p className="text-xs text-slate-500 font-medium">{results.length} results</p>
-                {results.map((result) =>
-                  result.record ? (
-                    <RecordCard key={result.id} record={result.record} />
-                  ) : (
-                    <div key={result.id} className="bg-white border border-slate-200 rounded-md p-4">
-                      <h3 className="text-sm font-medium text-slate-800">{result.title}</h3>
-                      <p className="text-xs text-slate-500 mt-1">{result.snippet}</p>
+                {results.map((result: any) => (
+                  <Link key={result.id} to={`/records/${result.id}`} className="block bg-white border border-slate-200 rounded-md p-4 hover:border-navy-300 hover:shadow-sm transition-all">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium text-navy-600">{result.title}</h3>
+                      {result.score && <span className="text-[10px] text-slate-400 font-mono">{(result.score * 100).toFixed(1)}%</span>}
                     </div>
-                  )
-                )}
+                    {result.description && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{result.description}</p>}
+                    <div className="flex items-center gap-3 mt-2">
+                      {result.agencyCode && <span className="text-[10px] font-medium bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{result.agencyCode}</span>}
+                      {result.mediaType && <span className="text-[10px] text-slate-400">{result.mediaType}</span>}
+                      {result.seriesTitle && <span className="text-[10px] text-slate-400">{result.seriesTitle}</span>}
+                      {result.status && <span className="text-[10px] text-slate-400 capitalize">{result.status}</span>}
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </div>

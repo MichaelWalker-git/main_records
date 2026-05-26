@@ -21,6 +21,7 @@ export function SearchInput({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (!value.trim()) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       onSearch(value);
@@ -28,7 +29,8 @@ export function SearchInput({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [value, debounceMs, onSearch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, debounceMs]);
 
   return (
     <div className="flex items-center gap-2" role="search" aria-label="Search records" data-testid="search-input">

@@ -42,6 +42,15 @@ export class StorageStack extends cdk.Stack {
       autoDeleteObjects: true,
       serverAccessLogsBucket: this.accessLogsBucket,
       serverAccessLogsPrefix: 'documents/',
+      cors: [
+        {
+          allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST],
+          allowedOrigins: ['*'],
+          allowedHeaders: ['*'],
+          exposedHeaders: ['ETag'],
+          maxAge: 3600,
+        },
+      ],
     });
 
     this.exportsBucket = new s3.Bucket(this, 'ExportsBucket', {

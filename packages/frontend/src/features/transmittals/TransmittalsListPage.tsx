@@ -18,16 +18,24 @@ export function TransmittalsListPage() {
   );
 
   const columns = [
-    { key: 'trackingNumber', label: 'Tracking #', sortable: true, render: (t: Transmittal) => (
-      <span className="font-mono text-xs text-slate-500">{t.trackingNumber}</span>
+    { key: 'title', label: 'Title', sortable: true, render: (t: any) => (
+      <Link to={`/transmittals/${t.id}`} className="text-navy-500 hover:text-navy-700 font-medium text-sm" data-testid={`transmittal-link-${t.id}`}>
+        {t.title || t.trackingNumber || '—'}
+      </Link>
     )},
-    { key: 'agencyName', label: 'Agency', sortable: true },
-    { key: 'itemCount', label: 'Items', render: (t: Transmittal) => (
-      <span className="tabular-nums">{t.itemCount}</span>
+    { key: 'agencyId', label: 'Agency', sortable: true, render: (t: any) => (
+      <span className="text-sm">{t.agencyName || t.agencyId || '—'}</span>
     )},
-    { key: 'status', label: 'Status', render: (t: Transmittal) => <StatusBadge status={t.status} /> },
-    { key: 'submittedAt', label: 'Submitted', render: (t: Transmittal) => t.submittedAt ? format(new Date(t.submittedAt), 'MMM d, yyyy') : <span className="text-slate-400">—</span> },
-    { key: 'actions', label: '', render: (t: Transmittal) => (
+    { key: 'itemCount', label: 'Items', render: (t: any) => (
+      <span className="tabular-nums">{t.itemCount ?? 0}</span>
+    )},
+    { key: 'status', label: 'Status', render: (t: any) => <StatusBadge status={t.status} /> },
+    { key: 'submittedAt', label: 'Submitted', render: (t: any) => {
+      if (!t.submittedAt) return <span className="text-slate-400">—</span>;
+      try { return <span>{format(new Date(t.submittedAt), 'MMM d, yyyy')}</span>; }
+      catch { return <span className="text-slate-400">—</span>; }
+    }},
+    { key: 'actions', label: '', render: (t: any) => (
       <Link to={`/transmittals/${t.id}`} className="text-navy-500 hover:text-navy-700 text-sm font-medium" data-testid={`view-transmittal-${t.id}`}>
         View
       </Link>

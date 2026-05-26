@@ -5,10 +5,10 @@ import { Location } from '../../types';
 
 export function InventoryPage() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const { data: locations = [] } = useApiQuery<Location[]>(['locations'], '/locations');
+  const { data: locations = [] } = useApiQuery<Location[]>(['locations'], '/inventory/locations');
 
   const utilization = selectedLocation
-    ? Math.round((selectedLocation.occupied / selectedLocation.capacity) * 100)
+    ? Math.round((selectedLocation.currentCount / selectedLocation.capacity) * 100)
     : 0;
 
   return (
@@ -33,7 +33,7 @@ export function InventoryPage() {
             <div className="bg-white border border-slate-200 rounded-md p-5" data-testid="location-detail">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-slate-800">{selectedLocation.name}</h2>
-                <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{selectedLocation.type}</span>
+                <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{selectedLocation.locationType}</span>
               </div>
               <dl className="grid grid-cols-2 gap-4 mb-4">
                 <div>
@@ -46,11 +46,11 @@ export function InventoryPage() {
                 </div>
                 <div>
                   <dt className="text-[11px] text-slate-400 uppercase font-medium">Occupied</dt>
-                  <dd className="mt-0.5 text-sm text-slate-700 tabular-nums">{selectedLocation.occupied} units</dd>
+                  <dd className="mt-0.5 text-sm text-slate-700 tabular-nums">{selectedLocation.currentCount} units</dd>
                 </div>
                 <div>
                   <dt className="text-[11px] text-slate-400 uppercase font-medium">Available</dt>
-                  <dd className="mt-0.5 text-sm text-slate-700 tabular-nums">{selectedLocation.capacity - selectedLocation.occupied} units</dd>
+                  <dd className="mt-0.5 text-sm text-slate-700 tabular-nums">{selectedLocation.capacity - selectedLocation.currentCount} units</dd>
                 </div>
               </dl>
 

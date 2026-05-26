@@ -89,7 +89,7 @@ export class ComputeStack extends cdk.Stack {
         STAGE: 'development',
         AWS_REGION: cdk.Stack.of(this).region,
         DB_HOST: props.dbProxy.endpoint,
-        DB_PORT: '5433',
+        DB_PORT: '5432',
         DB_NAME: 'maine_rms',
         COGNITO_USER_POOL_ID: props.userPool.userPoolId,
         COGNITO_CLIENT_ID: props.userPoolClient.userPoolClientId,
@@ -166,7 +166,7 @@ export class ComputeStack extends cdk.Stack {
       circuitBreaker: { rollback: true },
     });
 
-    const frontendScaling = this.frontendService.autoScaleTaskCount({ minCapacity: 1, maxCapacity: 3 });
+    const frontendScaling = this.frontendService.autoScaleTaskCount({ minCapacity: 1, maxCapacity: 2 });
     frontendScaling.scaleOnCpuUtilization('CpuScaling', { targetUtilizationPercent: 70 });
 
     httpsListener.addTargets('FrontendTarget', {

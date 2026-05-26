@@ -14,6 +14,9 @@ export interface Disposition {
   first_approved_at?: Date;
   second_approver_id?: string;
   second_approved_at?: Date;
+  third_approver_id?: string;
+  third_approved_at?: Date;
+  certificate_number?: string;
   rejection_reason?: string;
   completed_at?: Date;
   created_at: Date;
@@ -43,17 +46,40 @@ export class DispositionsRepository extends BaseRepository<Disposition> {
     super(db, 'dispositions');
   }
 
-  async findByAgency(agencyId: string): Promise<Disposition[]> {
-    return this.db(this.tableName).where({ agency_id: agencyId }).orderBy('created_at', 'desc');
+  async findAllWithAgency(): Promise<any[]> {
+    return this.db(this.tableName)
+      .select('dispositions.*', 'agencies.name as agency_name', 'agencies.code as agency_code')
+      .leftJoin('agencies', 'dispositions.agency_id', 'agencies.id')
+      .orderBy('dispositions.created_at', 'desc');
   }
 
-  async getItems(dispositionId: string): Promise<DispositionItem[]> {
-    return this.db('disposition_items').where({ disposition_id: dispositionId });
+  async findByAgency(agencyId: string): Promise<any[]> {
+    return this.db(this.tableName)
+      .select('dispositions.*', 'agencies.name as agency_name', 'agencies.code as agency_code')
+      .leftJoin('agencies', 'dispositions.agency_id', 'agencies.id')
+      .where({ 'dispositions.agency_id': agencyId })
+      .orderBy('dispositions.created_at', 'desc');
+  }
+
+  async getItems(dispositionId: string): Promise<any[]> {
+    return this.db('disposition_items')
+      .leftJoin('records', 'disposition_items.record_id', 'records.id')
+      .where({ 'disposition_items.disposition_id': dispositionId })
+      .select(
+        'disposition_items.*',
+        'records.title as record_title',
+        'records.tracking_number as record_tracking_number',
+        'records.series_title as record_series_title'
+      );
   }
 
   async addItems(dispositionId: string, items: Omit<DispositionItem, 'id'>[]): Promise<DispositionItem[]> {
     const data = items.map((item) => ({ ...item, disposition_id: dispositionId }));
     return this.db('disposition_items').insert(data).returning('*');
+  }
+
+  async findAllLegalHolds(): Promise<LegalHold[]> {
+    return this.db('legal_holds').orderBy('placed_at', 'desc');
   }
 
   async findLegalHolds(recordId: string): Promise<LegalHold[]> {
@@ -78,5 +104,19 @@ export class DispositionsRepository extends BaseRepository<Disposition> {
       .where({ record_id: recordId, is_active: true })
       .first();
     return !!hold;
+  }
+
+  async deleteWithItems(dispositionId: string): Promise<string[]> {
+    // Get record IDs before deleting so we can reset their status
+    const items = await this.db('disposition_items').where({ disposition_id: dispositionId });
+    const recordIds = items.map((i: any) => i.record_id);
+    await this.db('disposition_items').where({ disposition_id: dispositionId }).delete();
+    await this.db(this.tableName).where({ id: dispositionId }).delete();
+    return recordIds;
+  }
+
+  async removeRecordFromDispositions(recordId: string): Promise<void> {
+    await this.db('disposition_items').where({ record_id: recordId }).delete();
+    await this.db('legal_holds').where({ record_id: recordId }).delete();
   }
 }

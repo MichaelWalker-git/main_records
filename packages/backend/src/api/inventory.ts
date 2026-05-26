@@ -26,8 +26,44 @@ const createLocationSchema = z.object({
 
 const checkoutSchema = z.object({
   record_id: z.string().uuid(),
+  purpose: z.string().min(1, 'Purpose is required for checkout'),
   due_date: z.string().datetime(),
   notes: z.string().optional(),
+});
+
+router.get('/utilization', authorize('inventory:read'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const locations = await db('locations')
+      .where({ is_active: true, location_type: 'building' })
+      .whereNotNull('capacity')
+      .where('capacity', '>', 0)
+      .select('name', 'code', 'capacity', 'current_count');
+
+    const warehouses = locations.map((l: any) => ({
+      name: l.name,
+      capacity: Number(l.capacity),
+      occupied: Number(l.current_count || 0),
+    }));
+
+    const [mediaTypes] = await db.raw(`
+      SELECT media_type as type, COUNT(*) as count
+      FROM records
+      WHERE media_type IS NOT NULL
+      GROUP BY media_type
+    `);
+
+    const totalCapacity = warehouses.reduce((s: number, w: any) => s + w.capacity, 0);
+    const totalOccupied = warehouses.reduce((s: number, w: any) => s + w.occupied, 0);
+
+    res.json({
+      data: {
+        warehouses,
+        byType: mediaTypes?.rows ?? mediaTypes ?? [],
+        totalCapacity,
+        totalOccupied,
+      },
+    });
+  } catch (err) { next(err); }
 });
 
 router.get('/locations', authorize('inventory:read'), async (req: Request, res: Response, next: NextFunction) => {
@@ -67,6 +103,7 @@ router.post('/checkout', authorize('inventory:write'), validate(checkoutSchema),
       req.user!.id,
       req.user!.agencyId,
       new Date(req.body.due_date),
+      req.body.purpose,
       req.body.notes
     );
     res.status(201).json({ data: event });
@@ -93,6 +130,31 @@ router.get('/circulation/:recordId', authorize('inventory:read'), async (req: Re
   try {
     const history = await inventoryService.getCirculationHistory(req.params.recordId);
     res.json({ data: history });
+  } catch (err) { next(err); }
+});
+
+router.post('/scan', authorize('inventory:read'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { barcode } = req.body;
+    if (!barcode) return res.status(400).json({ error: 'Barcode is required' });
+
+    // Search by tracking number or container number
+    const record = await db('records')
+      .where('tracking_number', barcode)
+      .orWhere('container_number', barcode)
+      .first();
+
+    if (!record) {
+      return res.json({ data: { message: `No record found for barcode: ${barcode}`, action: 'not_found' } });
+    }
+
+    res.json({
+      data: {
+        record,
+        message: `Found: ${record.title}`,
+        action: record.status === 'checked_out' ? 'checkin_available' : 'checkout_available',
+      },
+    });
   } catch (err) { next(err); }
 });
 

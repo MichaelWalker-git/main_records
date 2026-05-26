@@ -4,6 +4,15 @@ import { db } from '../config/database';
 
 const router = Router();
 
+function parseRoles(roles: any): string[] {
+  if (Array.isArray(roles)) return roles.filter(Boolean);
+  if (typeof roles === 'string') {
+    // PostgreSQL text[] literal: "{SYSTEM_ADMIN,ARCHIVES_STAFF}"
+    return roles.replace(/^\{|\}$/g, '').split(',').filter(Boolean);
+  }
+  return [];
+}
+
 router.post('/auth/login', async (req: Request, res: Response) => {
   try {
     if (config.stage !== 'development') {
@@ -12,11 +21,7 @@ router.post('/auth/login', async (req: Request, res: Response) => {
 
     const { email } = req.body;
     const user = await db('users')
-      .leftJoin('user_roles', 'users.id', 'user_roles.user_id')
-      .leftJoin('roles', 'user_roles.role_id', 'roles.id')
-      .where('users.email', email || 'sarah.chen@maine.gov')
-      .select('users.*', db.raw("array_agg(roles.name) as roles"))
-      .groupBy('users.id')
+      .where('email', email || 'sarah.chen@maine.gov')
       .first();
 
     if (!user) {
@@ -29,7 +34,8 @@ router.post('/auth/login', async (req: Request, res: Response) => {
       RECORDS_OFFICER: 'records_officer',
       AGENCY_STAFF: 'agency_user',
     };
-    const mappedRoles = user.roles.filter(Boolean).map((r: string) => roleMap[r] || r);
+    const roles = parseRoles(user.roles);
+    const mappedRoles = roles.map((r: string) => roleMap[r] || r);
 
     res.json({
       accessToken: 'dev-token-' + user.id,
@@ -60,11 +66,7 @@ router.get('/auth/me', async (req: Request, res: Response) => {
     const userId = token.replace('dev-token-', '') || 'b2c3d4e5-2222-4000-8000-000000000001';
 
     const user = await db('users')
-      .leftJoin('user_roles', 'users.id', 'user_roles.user_id')
-      .leftJoin('roles', 'user_roles.role_id', 'roles.id')
-      .where('users.id', userId)
-      .select('users.*', db.raw("array_agg(roles.name) as roles"))
-      .groupBy('users.id')
+      .where('id', userId)
       .first();
 
     if (!user) {
@@ -77,7 +79,8 @@ router.get('/auth/me', async (req: Request, res: Response) => {
       RECORDS_OFFICER: 'records_officer',
       AGENCY_STAFF: 'agency_user',
     };
-    const mappedRoles = user.roles.filter(Boolean).map((r: string) => roleMap[r] || r);
+    const roles = parseRoles(user.roles);
+    const mappedRoles = roles.map((r: string) => roleMap[r] || r);
 
     res.json({
       id: user.id,
