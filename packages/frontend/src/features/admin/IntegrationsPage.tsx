@@ -29,7 +29,10 @@ function StatusIcon({ status }: { status: Integration['status'] }) {
 export function IntegrationsPage() {
   return (
     <div data-testid="integrations-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Integrations</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Integrations</h1>
+        <p className="text-sm text-slate-500 mt-0.5">External system connections</p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {integrations.map((integration) => (
           <div

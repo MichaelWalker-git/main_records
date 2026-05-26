@@ -11,11 +11,19 @@ export class AppError extends Error {
   }
 }
 
-export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
+export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction) {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       error: err.message,
       code: err.code,
+    });
+  }
+
+  // Handle body-parser / validation errors
+  if (err.status && err.status < 500) {
+    return res.status(err.status).json({
+      error: err.message || 'Bad request',
+      code: 'BAD_REQUEST',
     });
   }
 

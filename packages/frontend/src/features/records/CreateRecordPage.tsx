@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useApiMutation } from '../../hooks/useApi';
 import { RMSRecord as Record } from '../../types';
 
+interface FormErrors {
+  title?: string;
+  seriesId?: string;
+  agencyId?: string;
+}
+
 export function CreateRecordPage() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
@@ -11,45 +17,75 @@ export function CreateRecordPage() {
   const [agencyId, setAgencyId] = useState('');
   const [tags, setTags] = useState('');
   const [error, setError] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
   const mutation = useApiMutation<Record, object>('/records', 'post', {
     onSuccess: (data) => navigate(`/records/${data.id}`),
     onError: (err) => setError(err.message),
   });
 
+  function validate(): FormErrors {
+    const e: FormErrors = {};
+    if (!title.trim()) e.title = 'Title is required';
+    else if (title.trim().length < 3) e.title = 'Title must be at least 3 characters';
+    if (!seriesId) e.seriesId = 'Record series is required';
+    if (!agencyId) e.agencyId = 'Agency is required';
+    return e;
+  }
+
+  function handleBlur(field: string) {
+    setTouched((t) => ({ ...t, [field]: true }));
+    setErrors(validate());
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    setTouched({ title: true, seriesId: true, agencyId: true });
+    if (Object.keys(validationErrors).length > 0) return;
+
     setError('');
     mutation.mutate({
       title,
       description,
       seriesId,
       agencyId,
-      tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
+      tags: tags.split(',').map((s) => s.trim()).filter(Boolean),
     });
   }
 
+  const fieldClass = (field: keyof FormErrors) =>
+    `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 ${
+      touched[field] && errors[field] ? 'border-red-300 bg-red-50/30' : 'border-slate-300'
+    }`;
+
   return (
     <div data-testid="create-record-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Create Record</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Create Record</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Add a new record to the system</p>
+      </div>
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4" role="alert">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 text-sm" role="alert">
           {error}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-lg p-6 max-w-2xl">
+      <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-md p-6 max-w-2xl">
         <div className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Title <span className="text-red-400">*</span></label>
             <input
               id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
-              required
+              onBlur={() => handleBlur('title')}
+              className={fieldClass('title')}
               data-testid="record-title-input"
             />
+            {touched.title && errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
           </div>
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
@@ -64,13 +100,13 @@ export function CreateRecordPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="series" className="block text-sm font-medium text-slate-700 mb-1">Record Series</label>
+              <label htmlFor="series" className="block text-sm font-medium text-slate-700 mb-1">Record Series <span className="text-red-400">*</span></label>
               <select
                 id="series"
                 value={seriesId}
                 onChange={(e) => setSeriesId(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
-                required
+                onBlur={() => handleBlur('seriesId')}
+                className={fieldClass('seriesId')}
                 data-testid="record-series-select"
               >
                 <option value="">Select series...</option>
@@ -78,15 +114,16 @@ export function CreateRecordPage() {
                 <option value="GRS-2">GRS-2: Financial Records</option>
                 <option value="GRS-3">GRS-3: Personnel Records</option>
               </select>
+              {touched.seriesId && errors.seriesId && <p className="text-xs text-red-500 mt-1">{errors.seriesId}</p>}
             </div>
             <div>
-              <label htmlFor="agency" className="block text-sm font-medium text-slate-700 mb-1">Agency</label>
+              <label htmlFor="agency" className="block text-sm font-medium text-slate-700 mb-1">Agency <span className="text-red-400">*</span></label>
               <select
                 id="agency"
                 value={agencyId}
                 onChange={(e) => setAgencyId(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
-                required
+                onBlur={() => handleBlur('agencyId')}
+                className={fieldClass('agencyId')}
                 data-testid="record-agency-select"
               >
                 <option value="">Select agency...</option>
@@ -94,6 +131,7 @@ export function CreateRecordPage() {
                 <option value="DOE">Department of Education</option>
                 <option value="DHHS">Health and Human Services</option>
               </select>
+              {touched.agencyId && errors.agencyId && <p className="text-xs text-red-500 mt-1">{errors.agencyId}</p>}
             </div>
           </div>
           <div>
@@ -109,11 +147,11 @@ export function CreateRecordPage() {
             />
           </div>
         </div>
-        <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-200">
+        <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
           <button
             type="submit"
             disabled={mutation.isPending}
-            className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50"
+            className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors"
             data-testid="submit-record-button"
           >
             {mutation.isPending ? 'Creating...' : 'Create Record'}
@@ -121,7 +159,7 @@ export function CreateRecordPage() {
           <button
             type="button"
             onClick={() => navigate('/records')}
-            className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50"
+            className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50 transition-colors"
             data-testid="cancel-button"
           >
             Cancel

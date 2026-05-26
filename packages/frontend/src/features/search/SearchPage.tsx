@@ -42,16 +42,20 @@ export function SearchPage() {
 
   return (
     <div data-testid="search-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Search Records</h1>
-      <div className="flex gap-1 mb-4 border-b border-slate-200">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Search Records</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Find records across all agencies and series</p>
+      </div>
+
+      <div className="flex gap-0.5 mb-4 border-b border-slate-200">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               activeTab === tab.key
-                ? 'border-navy-500 text-navy-500'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'border-navy-500 text-navy-600'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
             }`}
             data-testid={`search-tab-${tab.key}`}
           >
@@ -60,17 +64,17 @@ export function SearchPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white border border-slate-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">Filters</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-1">
+          <div className="bg-white border border-slate-200 rounded-md p-4 sticky top-6">
+            <h3 className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-3">Filters</h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Agency</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Agency</label>
                 <select
                   value={agencyFilter}
                   onChange={(e) => setAgencyFilter(e.target.value)}
-                  className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  className="w-full h-8 px-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
                   data-testid="search-agency-filter"
                 >
                   <option value="">All Agencies</option>
@@ -80,11 +84,11 @@ export function SearchPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Status</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Status</label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-2 py-1.5 border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  className="w-full h-8 px-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
                   data-testid="search-status-filter"
                 >
                   <option value="">All Statuses</option>
@@ -104,7 +108,7 @@ export function SearchPage() {
             showSemanticToggle={activeTab === 'semantic'}
           />
 
-          <div className="mt-6">
+          <div className="mt-4">
             {searchMutation.isPending && (
               <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
             )}
@@ -112,13 +116,13 @@ export function SearchPage() {
               <EmptyState icon={MagnifyingGlassIcon} title="No results found" message="Try different search terms or adjust your filters." />
             )}
             {results.length > 0 && (
-              <div className="space-y-3" data-testid="search-results">
-                <p className="text-sm text-slate-500">{results.length} results</p>
+              <div className="space-y-2" data-testid="search-results">
+                <p className="text-xs text-slate-500 font-medium">{results.length} results</p>
                 {results.map((result) =>
                   result.record ? (
                     <RecordCard key={result.id} record={result.record} />
                   ) : (
-                    <div key={result.id} className="bg-white border border-slate-200 rounded-lg p-4">
+                    <div key={result.id} className="bg-white border border-slate-200 rounded-md p-4">
                       <h3 className="text-sm font-medium text-slate-800">{result.title}</h3>
                       <p className="text-xs text-slate-500 mt-1">{result.snippet}</p>
                     </div>

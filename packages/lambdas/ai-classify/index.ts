@@ -2,7 +2,6 @@ import { SQSEvent, SQSHandler } from "aws-lambda";
 import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Client } from "pg";
-import { Client as OpenSearchClient } from "@opensearch-project/opensearch";
 
 interface ClassifyMessage {
   recordId: string;
@@ -18,9 +17,6 @@ interface ClassifyResult {
 
 const bedrock = new BedrockRuntimeClient({});
 const s3 = new S3Client({});
-const opensearch = new OpenSearchClient({
-  node: process.env.OPENSEARCH_ENDPOINT,
-});
 
 async function getDbClient(): Promise<Client> {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
@@ -44,7 +40,7 @@ async function invokeClassification(
 ): Promise<ClassifyResult> {
   const response = await bedrock.send(
     new InvokeModelCommand({
-      modelId: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+      modelId: "us.anthropic.claude-sonnet-4-20250514-v1:0",
       contentType: "application/json",
       accept: "application/json",
       body: JSON.stringify({
@@ -84,22 +80,6 @@ async function invokeClassification(
   return toolUseBlock.input as ClassifyResult;
 }
 
-async function generateEmbedding(text: string): Promise<number[]> {
-  const response = await bedrock.send(
-    new InvokeModelCommand({
-      modelId: "amazon.titan-embed-text-v2:0",
-      contentType: "application/json",
-      accept: "application/json",
-      body: JSON.stringify({
-        inputText: text.substring(0, 8000),
-      }),
-    })
-  );
-
-  const responseBody = JSON.parse(new TextDecoder().decode(response.body));
-  return responseBody.embedding;
-}
-
 export const handler: SQSHandler = async (event: SQSEvent) => {
   const db = await getDbClient();
 
@@ -124,6 +104,7 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
       const status =
         classification.confidence >= 0.85 ? "CLASSIFIED" : "PENDING";
 
+      // Update the record in PostgreSQL with classification results
       await db.query(
         `UPDATE records
          SET classification_confidence = $1,
@@ -139,30 +120,30 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
         ]
       );
 
+      // Store AI-generated tags
       for (const tag of classification.tags) {
         await db.query(
-          `INSERT INTO record_tags (record_id, tag, source)
-           VALUES ($1, $2, 'AI')
-           ON CONFLICT (record_id, tag) DO NOTHING`,
+          `INSERT INTO record_tags (record_id, tag)
+           VALUES ($1, $2)
+           ON CONFLICT DO NOTHING`,
           [message.recordId, tag]
         );
       }
 
-      const embeddingText = `${recordMetadata.title} ${recordMetadata.description || ""} ${classification.tags.join(" ")}`;
-      const embedding = await generateEmbedding(embeddingText);
-
-      await opensearch.index({
-        index: "records",
-        id: message.recordId,
-        body: {
-          ...recordMetadata,
-          category: classification.category,
-          tags: classification.tags,
-          classification_confidence: classification.confidence,
-          classification_status: status,
-          embedding,
-        },
-      });
+      // Log the classification event for audit
+      await db.query(
+        `INSERT INTO audit_events (event_type, entity_type, entity_id, metadata, created_at)
+         VALUES ('AI_CLASSIFICATION', 'record', $1, $2, NOW())`,
+        [
+          message.recordId,
+          JSON.stringify({
+            category: classification.category,
+            confidence: classification.confidence,
+            tags: classification.tags,
+            reasoning: classification.reasoning,
+          }),
+        ]
+      );
     }
   } catch (error) {
     console.error("Classification error:", error);

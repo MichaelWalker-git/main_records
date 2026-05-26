@@ -12,10 +12,10 @@ const agencies = [
 ];
 
 const roles = [
-  { id: 'r0000000-0000-4000-8000-000000000001', name: 'SYSTEM_ADMIN', display_name: 'System Administrator', description: 'Full system access' },
-  { id: 'r0000000-0000-4000-8000-000000000002', name: 'ARCHIVES_STAFF', display_name: 'Archives Staff', description: 'Maine State Archives operations staff' },
-  { id: 'r0000000-0000-4000-8000-000000000003', name: 'RECORDS_OFFICER', display_name: 'Records Officer', description: 'Agency records management officer' },
-  { id: 'r0000000-0000-4000-8000-000000000004', name: 'AGENCY_STAFF', display_name: 'Agency Staff', description: 'General agency staff with limited access' }
+  { id: '10000000-0000-4000-8000-000000000001', name: 'SYSTEM_ADMIN', display_name: 'System Administrator', description: 'Full system access' },
+  { id: '10000000-0000-4000-8000-000000000002', name: 'ARCHIVES_STAFF', display_name: 'Archives Staff', description: 'Maine State Archives operations staff' },
+  { id: '10000000-0000-4000-8000-000000000003', name: 'RECORDS_OFFICER', display_name: 'Records Officer', description: 'Agency records management officer' },
+  { id: '10000000-0000-4000-8000-000000000004', name: 'AGENCY_STAFF', display_name: 'Agency Staff', description: 'General agency staff with limited access' }
 ];
 
 const users = [
@@ -26,10 +26,10 @@ const users = [
 ];
 
 const userRoles = [
-  { id: 'ur000000-0000-4000-8000-000000000001', user_id: 'b2c3d4e5-2222-4000-8000-000000000001', role_id: 'r0000000-0000-4000-8000-000000000001', agency_id: null },
-  { id: 'ur000000-0000-4000-8000-000000000002', user_id: 'b2c3d4e5-2222-4000-8000-000000000002', role_id: 'r0000000-0000-4000-8000-000000000002', agency_id: 'a1b2c3d4-1111-4000-8000-000000000001' },
-  { id: 'ur000000-0000-4000-8000-000000000003', user_id: 'b2c3d4e5-2222-4000-8000-000000000003', role_id: 'r0000000-0000-4000-8000-000000000003', agency_id: 'a1b2c3d4-1111-4000-8000-000000000002' },
-  { id: 'ur000000-0000-4000-8000-000000000004', user_id: 'b2c3d4e5-2222-4000-8000-000000000004', role_id: 'r0000000-0000-4000-8000-000000000004', agency_id: 'a1b2c3d4-1111-4000-8000-000000000002' }
+  { id: '20000000-0000-4000-8000-000000000001', user_id: 'b2c3d4e5-2222-4000-8000-000000000001', role_id: '10000000-0000-4000-8000-000000000001', agency_id: null },
+  { id: '20000000-0000-4000-8000-000000000002', user_id: 'b2c3d4e5-2222-4000-8000-000000000002', role_id: '10000000-0000-4000-8000-000000000002', agency_id: 'a1b2c3d4-1111-4000-8000-000000000001' },
+  { id: '20000000-0000-4000-8000-000000000003', user_id: 'b2c3d4e5-2222-4000-8000-000000000003', role_id: '10000000-0000-4000-8000-000000000003', agency_id: 'a1b2c3d4-1111-4000-8000-000000000002' },
+  { id: '20000000-0000-4000-8000-000000000004', user_id: 'b2c3d4e5-2222-4000-8000-000000000004', role_id: '10000000-0000-4000-8000-000000000004', agency_id: 'a1b2c3d4-1111-4000-8000-000000000002' }
 ];
 
 const warehouses = [
@@ -74,6 +74,13 @@ export async function up(knex: Knex): Promise<void> {
         const code = '01' + rowStr + bayStr + spStr;
         const isOccupied = idx <= 60;
         const id = 'd4e5f6a7-4444-4000-8000-' + String(idx).padStart(12, '0');
+        // Only reference actual existing record IDs for occupied_by
+        const occupiedByMap: Record<number, string> = {
+          1: 'e5f6a7b8-5555-4000-8000-000000000001',
+          2: 'e5f6a7b8-5555-4000-8000-000000000002',
+          3: 'e5f6a7b8-5555-4000-8000-000000000004',
+          4: 'e5f6a7b8-5555-4000-8000-000000000005',
+        };
         locations.push({
           id,
           warehouse_id: 'c3d4e5f6-3333-4000-8000-000000000001',
@@ -83,7 +90,7 @@ export async function up(knex: Knex): Promise<void> {
           shelf: spStr,
           position: String(sp),
           is_occupied: isOccupied,
-          occupied_by: isOccupied ? 'e5f6a7b8-5555-4000-8000-' + String(idx).padStart(12, '0') : null
+          occupied_by: occupiedByMap[idx] || null
         });
       }
     }

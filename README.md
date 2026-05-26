@@ -6,91 +6,128 @@ Cloud-based Records Management System for the State of Maine, Department of Secr
 
 ## Architecture Overview
 
-- **Frontend**: React + TypeScript SPA served via CloudFront (WCAG 2.1 AA compliant)
-- **Backend**: Node.js API on AWS ECS Fargate with Lambda for async processing
-- **Database**: AWS RDS PostgreSQL with read replicas
-- **Search**: Amazon OpenSearch with Textract OCR and Bedrock AI classification
-- **Auth**: AWS Cognito with SAML 2.0/OIDC integration to State of Maine Active Directory
-- **Storage**: Amazon S3 with cross-region replication (us-east-1 / us-west-2)
-- **Infrastructure**: AWS CDK (TypeScript) for all cloud resources
+- **Frontend**: React + TypeScript SPA served via ECS/nginx (WCAG 2.1 AA compliant)
+- **Backend**: Node.js Express API on AWS ECS Fargate
+- **Database**: Aurora Serverless v2 PostgreSQL (pgvector + tsvector + pg_trgm)
+- **AI/OCR**: Bedrock Claude Vision (Lambda) — PDF + image text extraction
+- **AI/Classification**: Bedrock Claude Sonnet (tool_use structured output)
+- **Semantic Search**: Bedrock Titan Embeddings v2 + pgvector (cosine distance)
+- **Auth**: AWS Cognito (MFA, 4 user groups, SAML-ready)
+- **Storage**: Amazon S3 (documents, exports, prompts)
+- **Async**: SQS queues + Lambda workers + EventBridge cron
+- **Infrastructure**: AWS CDK (TypeScript), 7 stacks
 
 ## Prerequisites
 
-- Node.js 22+
-- AWS CLI v2 (configured with appropriate credentials)
-- AWS CDK CLI (`npm install -g aws-cdk`)
-- Docker Desktop
-- PostgreSQL 15+ (for local development)
+- Node.js 22+ (`nvm use 22`)
+- Docker Desktop (for CDK deploy — builds ECS container images)
+- AWS CLI v2 with profile `039885961427_DeveloperPowerUserAccess`
 
-## Quick Start
+## Local Development
+
+Frontend only (no backend/DB needed for UI work):
 
 ```bash
-# Install dependencies
+nvm use 22
+cd packages/frontend
 npm install
-
-# Start local database
-docker compose up -d postgres
-
-# Run migrations and seed
-./scripts/seed-db.sh
-
-# Start development servers
-npm run dev --workspace=packages/backend
-npm run dev --workspace=packages/frontend
+npx vite
 ```
 
-## Deployment
+Frontend: http://localhost:5173
+
+API calls will fail without backend — use this for UI/styling work only. Full stack testing requires AWS deployment.
+
+## AWS Deployment
+
+### Prerequisites
+1. Docker Desktop running (CDK builds container images for ECS)
+2. AWS profile configured: `039885961427_DeveloperPowerUserAccess`
+
+### Deploy
 
 ```bash
-# Full deployment (build, push, deploy, migrate, seed)
-./scripts/deploy.sh
+nvm use 22
+cd packages/infrastructure
+npm install
 
-# Database only
-./scripts/seed-db.sh
+# First time only — bootstrap CDK in the account
+npx aws-cdk@latest bootstrap aws://039885961427/us-east-1 --profile 039885961427_DeveloperPowerUserAccess
+
+# Deploy all stacks
+npx aws-cdk@latest deploy --all --profile 039885961427_DeveloperPowerUserAccess
+```
+
+### Run migrations (after deploy)
+
+```bash
+cd packages/backend
+DATABASE_URL=<rds-proxy-endpoint-from-cdk-output> npx knex migrate:latest
+```
+
+### Destroy (cleanup)
+
+```bash
+cd packages/infrastructure
+npx aws-cdk@latest destroy --all --profile 039885961427_DeveloperPowerUserAccess
 ```
 
 ## Demo Users
 
-| User | Role | Email | Password |
-|------|------|-------|----------|
-| Sarah Chen | System Admin | sarah.chen@maine.gov | Demo@2024! |
-| Michael Torres | Archives Staff | michael.torres@maine.gov | Demo@2024! |
-| Diana Patel | Records Officer (DHHS) | diana.patel@maine.gov | Demo@2024! |
-| James Wright | Agency Staff (DHHS) | james.wright@maine.gov | Demo@2024! |
+| User | Role | Email |
+|------|------|-------|
+| Sarah Chen | System Admin | sarah.chen@maine.gov |
+| Michael Torres | Archives Staff | michael.torres@maine.gov |
+| Diana Patel | Records Officer (DHHS) | diana.patel@maine.gov |
+| James Wright | Agency Staff (DHHS) | james.wright@maine.gov |
 
-## Key URLs (after deployment)
-
-| Resource | URL |
-|----------|-----|
-| Frontend | https://dev.rms.maine.gov |
-| API | https://api.dev.rms.maine.gov |
-| API Docs | https://api.dev.rms.maine.gov/docs |
-| Cognito Login | https://auth.dev.rms.maine.gov |
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 18, TypeScript, Vite, TailwindCSS |
-| Backend | Node.js, Express, Knex.js |
-| Database | PostgreSQL 15 (RDS) |
-| Search | Amazon OpenSearch |
-| AI/ML | Amazon Textract, Amazon Bedrock |
-| Auth | AWS Cognito |
-| Storage | Amazon S3 |
-| Compute | AWS ECS Fargate, AWS Lambda |
-| IaC | AWS CDK (TypeScript) |
-| Analytics | Amazon QuickSight, CloudWatch |
-| CI/CD | AWS CodePipeline |
+Password for all: `Demo@2024!`
 
 ## Project Structure
 
 ```
 packages/
-  backend/       # Express API, migrations, seeds
-  frontend/      # React SPA
-  infra/         # AWS CDK stacks
-  shared/        # Shared types and utilities
-scripts/         # Deployment and utility scripts
-seed-data/       # JSON seed data files
+  backend/          # Express API, services, repositories, migrations
+  frontend/         # React SPA (Vite + TailwindCSS)
+  infrastructure/   # AWS CDK stacks (7 stacks)
+  lambdas/          # Lambda functions
+    ai-ocr/         # Bedrock Claude Vision document extraction
+    ai-classify/    # Bedrock Claude record classification
+    notification-send/
+    retention-alerts/
+    overdue-checker/
+    report-export/
+aidlc-docs/         # Architecture and design documentation
 ```
+
+## Document Processing Pipeline
+
+```
+Upload → S3 presigned URL → SQS ocr-queue
+  → Lambda (Claude Vision): PDF/image → extracted text
+  → SQS classify-queue
+  → Lambda (Claude Sonnet): text → category + tags + confidence
+  → Titan Embeddings: text → vector(1024) → pgvector
+  → Semantic search enabled
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, TypeScript, Vite, TailwindCSS, Heroicons |
+| Backend | Node.js, Express, Knex.js, Zod |
+| Database | PostgreSQL 15 (Aurora Serverless v2) + pgvector |
+| Search | PostgreSQL tsvector + pgvector semantic search |
+| AI/OCR | Amazon Bedrock (Claude Vision) |
+| AI/Classify | Amazon Bedrock (Claude Sonnet, tool_use) |
+| Embeddings | Amazon Bedrock (Titan Embed v2) |
+| Auth | AWS Cognito (MFA, RBAC) |
+| Storage | Amazon S3 |
+| Compute | AWS ECS Fargate, AWS Lambda |
+| Queues | Amazon SQS, EventBridge |
+| IaC | AWS CDK (TypeScript) |
+
+## Estimated Monthly Cost (PoC)
+
+~$178/month (ECS $60, Aurora $45, NAT $35, Bedrock $30, misc $8)

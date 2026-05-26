@@ -6,7 +6,6 @@ import * as sqs from 'aws-cdk-lib/aws-sqs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as targets from 'aws-cdk-lib/aws-events-targets';
-import * as opensearch from 'aws-cdk-lib/aws-opensearchservice';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
@@ -14,7 +13,7 @@ import { Construct } from 'constructs';
 import { NagSuppressions } from 'cdk-nag';
 
 export interface LambdaStackProps extends cdk.StackProps {
-  vpc: ec2.Vpc;
+  vpc: ec2.IVpc;
   lambdaSg: ec2.SecurityGroup;
   dbSecret: secretsmanager.ISecret;
   dbProxy: rds.DatabaseProxy;
@@ -23,7 +22,6 @@ export interface LambdaStackProps extends cdk.StackProps {
   classifyQueue: sqs.Queue;
   ocrQueue: sqs.Queue;
   notificationQueue: sqs.Queue;
-  opensearchDomain: opensearch.Domain;
 }
 
 export class LambdaStack extends cdk.Stack {
@@ -34,7 +32,6 @@ export class LambdaStack extends cdk.Stack {
       DB_PROXY_ENDPOINT: props.dbProxy.endpoint,
       DB_PORT: '5433',
       DOCUMENTS_BUCKET: props.documentsBucket.bucketName,
-      OPENSEARCH_ENDPOINT: props.opensearchDomain.domainEndpoint,
     };
 
     const vpcConfig = {
@@ -43,7 +40,7 @@ export class LambdaStack extends cdk.Stack {
       securityGroups: [props.lambdaSg],
     };
 
-    // AI Classify
+    // AI Classify — uses Bedrock for record classification, writes results to PostgreSQL
     const classifyFn = new lambda.Function(this, 'AiClassifyFn', {
       functionName: 'maine-rms-ai-classify',
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -51,19 +48,18 @@ export class LambdaStack extends cdk.Stack {
       code: lambda.Code.fromInline('exports.handler = async () => ({ statusCode: 200 });'),
       timeout: cdk.Duration.minutes(5),
       memorySize: 512,
-      environment: { ...commonEnv },
+      environment: { ...commonEnv, PROMPTS_BUCKET: props.documentsBucket.bucketName },
       ...vpcConfig,
     });
     props.dbSecret.grantRead(classifyFn);
     props.documentsBucket.grantRead(classifyFn);
-    props.opensearchDomain.grantWrite(classifyFn);
     classifyFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ['bedrock:InvokeModel'],
       resources: [`arn:aws:bedrock:${this.region}::foundation-model/*`],
     }));
     classifyFn.addEventSource(new lambdaEventSources.SqsEventSource(props.classifyQueue, { batchSize: 5 }));
 
-    // AI OCR
+    // AI OCR — Bedrock Claude Vision for document text extraction, then sends to classify queue
     const ocrFn = new lambda.Function(this, 'AiOcrFn', {
       functionName: 'maine-rms-ai-ocr',
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -71,14 +67,15 @@ export class LambdaStack extends cdk.Stack {
       code: lambda.Code.fromInline('exports.handler = async () => ({ statusCode: 200 });'),
       timeout: cdk.Duration.minutes(10),
       memorySize: 1024,
-      environment: { ...commonEnv },
+      environment: { ...commonEnv, CLASSIFY_QUEUE_URL: props.classifyQueue.queueUrl },
       ...vpcConfig,
     });
     props.dbSecret.grantRead(ocrFn);
     props.documentsBucket.grantRead(ocrFn);
+    props.classifyQueue.grantSendMessages(ocrFn);
     ocrFn.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['textract:StartDocumentAnalysis', 'textract:GetDocumentAnalysis', 'textract:StartDocumentTextDetection', 'textract:GetDocumentTextDetection'],
-      resources: ['*'],
+      actions: ['bedrock:InvokeModel'],
+      resources: [`arn:aws:bedrock:${this.region}::foundation-model/*`],
     }));
     ocrFn.addEventSource(new lambdaEventSources.SqsEventSource(props.ocrQueue, { batchSize: 2 }));
 
@@ -100,7 +97,7 @@ export class LambdaStack extends cdk.Stack {
     }));
     notificationFn.addEventSource(new lambdaEventSources.SqsEventSource(props.notificationQueue, { batchSize: 10 }));
 
-    // Retention Alerts
+    // Retention Alerts — daily check for upcoming retention deadlines
     const retentionFn = new lambda.Function(this, 'RetentionAlertsFn', {
       functionName: 'maine-rms-retention-alerts',
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -119,7 +116,7 @@ export class LambdaStack extends cdk.Stack {
       targets: [new targets.LambdaFunction(retentionFn)],
     });
 
-    // Overdue Checker
+    // Overdue Checker — daily check for overdue circulations
     const overdueFn = new lambda.Function(this, 'OverdueCheckerFn', {
       functionName: 'maine-rms-overdue-checker',
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -154,7 +151,7 @@ export class LambdaStack extends cdk.Stack {
 
     NagSuppressions.addStackSuppressions(this, [
       { id: 'AwsSolutions-IAM4', reason: 'Lambda basic execution role is AWS managed and acceptable' },
-      { id: 'AwsSolutions-IAM5', reason: 'Textract actions require wildcard resource; Bedrock model ARN uses wildcard for flexibility' },
+      { id: 'AwsSolutions-IAM5', reason: 'Bedrock model ARN uses wildcard for flexibility across model versions' },
       { id: 'AwsSolutions-L1', reason: 'Node.js 22 is the latest supported runtime' },
     ]);
   }

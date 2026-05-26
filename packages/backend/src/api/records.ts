@@ -35,7 +35,7 @@ const batchImportSchema = z.object({
 router.get('/', authorize('records:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { limit = '50', offset = '0' } = req.query as any;
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const records = isAdmin
       ? await recordsRepo.findAll({}, Number(limit), Number(offset))
       : await recordsRepo.findByAgency(req.user!.agencyId, Number(limit), Number(offset));
@@ -47,7 +47,7 @@ router.get('/:id', authorize('records:read'), async (req: Request, res: Response
   try {
     const record = await recordsRepo.findById(req.params.id);
     if (!record) return res.status(404).json({ error: 'Record not found' });
-    if (!req.user!.roles.includes('admin') && record.agency_id !== req.user!.agencyId) {
+    if (!req.user!.roles.includes('SYSTEM_ADMIN') && record.agency_id !== req.user!.agencyId) {
       return res.status(403).json({ error: 'Access denied' });
     }
     res.json({ data: record });
@@ -65,7 +65,7 @@ router.put('/:id', authorize('records:write'), async (req: Request, res: Respons
   try {
     const existing = await recordsRepo.findById(req.params.id);
     if (!existing) return res.status(404).json({ error: 'Record not found' });
-    if (!req.user!.roles.includes('admin') && existing.agency_id !== req.user!.agencyId) {
+    if (!req.user!.roles.includes('SYSTEM_ADMIN') && existing.agency_id !== req.user!.agencyId) {
       return res.status(403).json({ error: 'Access denied' });
     }
     const updated = await recordsRepo.update(req.params.id, req.body);
@@ -79,6 +79,16 @@ router.delete('/:id', authorize('records:delete'), async (req: Request, res: Res
     if (!existing) return res.status(404).json({ error: 'Record not found' });
     await recordsRepo.delete(req.params.id);
     res.json({ message: 'Record deleted' });
+  } catch (err) { next(err); }
+});
+
+router.get('/:id/audit', authorize('records:read'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const events = await db('audit_events')
+      .where({ entity_type: 'record', entity_id: req.params.id })
+      .orderBy('created_at', 'desc')
+      .limit(50);
+    res.json({ data: events });
   } catch (err) { next(err); }
 });
 
@@ -108,6 +118,30 @@ router.get('/scan/:barcode', authorize('records:read'), async (req: Request, res
   try {
     const record = await recordsService.lookupByBarcode(req.params.barcode);
     res.json({ data: record });
+  } catch (err) { next(err); }
+});
+
+// Upload: get presigned URL for document upload
+router.post('/:id/upload', authorize('records:write'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { filename, contentType } = req.body;
+    if (!filename || !contentType) {
+      return res.status(400).json({ error: 'filename and contentType are required' });
+    }
+    const result = await recordsService.getUploadUrl(req.params.id, filename, contentType);
+    res.json(result);
+  } catch (err) { next(err); }
+});
+
+// Upload: confirm upload completed, trigger OCR
+router.post('/:id/upload/confirm', authorize('records:write'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { s3Key } = req.body;
+    if (!s3Key) {
+      return res.status(400).json({ error: 's3Key is required' });
+    }
+    const result = await recordsService.confirmUpload(req.params.id, s3Key);
+    res.json(result);
   } catch (err) { next(err); }
 });
 

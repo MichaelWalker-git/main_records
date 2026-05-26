@@ -18,6 +18,18 @@ function getKey(header: jwt.JwtHeader, callback: jwt.SigningKeyCallback) {
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Development bypass - mock admin user (for demo/PoC environments)
+  if (config.stage === 'development') {
+    req.user = {
+      id: 'b2c3d4e5-2222-4000-8000-000000000001',
+      email: 'sarah.chen@maine.gov',
+      roles: ['SYSTEM_ADMIN'],
+      agencyId: '',
+      agencyScope: [],
+    };
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Missing or invalid authorization header' });

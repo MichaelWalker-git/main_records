@@ -5,9 +5,11 @@ const knexConfig: Knex.Config = {
   client: 'pg',
   connection: config.databaseUrl,
   pool: {
-    min: 2,
+    min: 0,
     max: 10,
+    acquireTimeoutMillis: 5000,
   },
+  acquireConnectionTimeout: 5000,
   migrations: {
     tableName: 'knex_migrations',
     directory: '../migrations',

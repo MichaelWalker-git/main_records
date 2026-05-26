@@ -27,7 +27,10 @@ export function BarcodeScanPage() {
 
   return (
     <div data-testid="barcode-scan-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Barcode Scan</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Barcode Scan</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Scan or enter a barcode to locate records</p>
+      </div>
       <div className="max-w-xl mx-auto space-y-6">
         <BarcodeScanner onScan={handleScan} />
 

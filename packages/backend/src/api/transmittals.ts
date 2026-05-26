@@ -26,7 +26,7 @@ const createTransmittalSchema = z.object({
 router.get('/', authorize('transmittals:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status } = req.query as any;
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const transmittals = isAdmin
       ? await transmittalsRepo.findAll(status ? { status } : {})
       : await transmittalsRepo.findByAgency(req.user!.agencyId, status);

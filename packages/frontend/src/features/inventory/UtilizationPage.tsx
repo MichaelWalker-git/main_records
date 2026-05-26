@@ -19,9 +19,12 @@ export function UtilizationPage() {
 
   return (
     <div data-testid="utilization-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Warehouse Utilization</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Warehouse Utilization</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Storage capacity and occupancy</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-slate-200 rounded-lg p-5">
           <p className="text-sm text-slate-500">Total Capacity</p>
           <p className="text-2xl font-bold text-slate-800">{data?.totalCapacity?.toLocaleString() ?? '-'}</p>

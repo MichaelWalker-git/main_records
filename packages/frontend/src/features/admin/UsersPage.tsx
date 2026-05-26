@@ -50,7 +50,10 @@ export function UsersPage() {
   return (
     <div data-testid="users-page">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">User Management</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Manage system users and roles</p>
+        </div>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600"

@@ -8,7 +8,7 @@ const reportService = new ReportService(db);
 
 router.get('/dashboard', authorize('analytics:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const metrics = await reportService.getDashboardMetrics(isAdmin ? undefined : req.user!.agencyId);
     res.json({ data: metrics });
   } catch (err) { next(err); }
@@ -16,7 +16,7 @@ router.get('/dashboard', authorize('analytics:read'), async (req: Request, res: 
 
 router.get('/reports/retention', authorize('analytics:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const report = await reportService.getRetentionReport(isAdmin ? undefined : req.user!.agencyId);
     res.json({ data: report });
   } catch (err) { next(err); }
@@ -24,7 +24,7 @@ router.get('/reports/retention', authorize('analytics:read'), async (req: Reques
 
 router.get('/reports/activity', authorize('analytics:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const days = parseInt(req.query.days as string) || 30;
     const report = await reportService.getActivityReport(isAdmin ? undefined : req.user!.agencyId, days);
     res.json({ data: report });
@@ -34,7 +34,7 @@ router.get('/reports/activity', authorize('analytics:read'), async (req: Request
 router.get('/export/:reportType', authorize('analytics:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { reportType } = req.params;
-    const isAdmin = req.user!.roles.includes('admin');
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
     const agencyId = isAdmin ? undefined : req.user!.agencyId;
 
     let data: any;

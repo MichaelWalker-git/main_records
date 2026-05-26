@@ -20,14 +20,14 @@ export function ExportButton({ onExport, isLoading }: ExportButtonProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
-        className="flex items-center gap-2 px-3 py-2 text-sm border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50"
+        className="flex items-center gap-1.5 h-9 px-3 text-sm font-medium text-slate-600 border border-slate-200 rounded hover:bg-slate-50 disabled:opacity-50 transition-colors"
         data-testid="export-trigger"
       >
         <ArrowDownTrayIcon className="w-4 h-4" aria-hidden="true" />
         Export
       </button>
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-44 bg-white rounded-md shadow-lg border border-slate-200 z-20">
+        <div className="absolute right-0 mt-1 w-44 bg-white rounded border border-slate-200 shadow-sm z-20 py-1">
           {formats.map((format) => (
             <button
               key={format.key}

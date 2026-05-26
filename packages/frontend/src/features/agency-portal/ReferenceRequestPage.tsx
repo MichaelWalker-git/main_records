@@ -36,7 +36,10 @@ export function ReferenceRequestPage() {
 
   return (
     <div data-testid="reference-request-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Reference Requests</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Reference Requests</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Request access to archived records</p>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <h2 className="text-lg font-semibold text-slate-800 mb-4">Submit New Request</h2>

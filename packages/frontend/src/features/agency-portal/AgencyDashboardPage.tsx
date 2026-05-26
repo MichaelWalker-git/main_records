@@ -29,11 +29,11 @@ export function AgencyDashboardPage() {
   return (
     <div data-testid="agency-dashboard-page">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Agency Portal</h1>
-        <p className="text-sm text-slate-500 mt-1">{user?.agencyName}</p>
+        <h1 className="text-xl font-bold text-slate-800">Agency Portal</h1>
+        <p className="text-sm text-slate-500 mt-0.5">{user?.agencyName || 'Manage your agency records'}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <DashboardWidget label="My Transfers" value={data?.myTransfers ?? '-'} icon={TruckIcon} />
         <DashboardWidget label="My Requests" value={data?.myRequests ?? '-'} icon={DocumentTextIcon} />
         <DashboardWidget

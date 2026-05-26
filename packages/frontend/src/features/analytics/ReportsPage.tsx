@@ -35,7 +35,10 @@ export function ReportsPage() {
 
   return (
     <div data-testid="reports-page">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Reports</h1>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-slate-800">Reports</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Generate and export system reports</p>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           {categories.map((category) => (

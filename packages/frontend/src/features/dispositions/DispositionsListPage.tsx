@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ShieldExclamationIcon } from '@heroicons/react/24/outline';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
 import { usePaginatedQuery } from '../../hooks/useApi';
@@ -18,20 +19,22 @@ export function DispositionsListPage() {
 
   const columns = [
     { key: 'title', label: 'Title', sortable: true, render: (d: Disposition) => (
-      <Link to={`/dispositions/${d.id}`} className="text-navy-500 hover:underline" data-testid={`disposition-link-${d.id}`}>
+      <Link to={`/dispositions/${d.id}`} className="text-navy-500 hover:text-navy-700 font-medium" data-testid={`disposition-link-${d.id}`}>
         {d.title}
       </Link>
     )},
     { key: 'agencyName', label: 'Agency', sortable: true },
     { key: 'method', label: 'Method', render: (d: Disposition) => (
-      <span className="capitalize">{d.method}</span>
+      <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{d.method}</span>
     )},
-    { key: 'recordCount', label: 'Records' },
+    { key: 'recordCount', label: 'Records', render: (d: Disposition) => (
+      <span className="tabular-nums">{d.recordCount}</span>
+    )},
     { key: 'scheduledDate', label: 'Scheduled', render: (d: Disposition) => format(new Date(d.scheduledDate), 'MMM d, yyyy') },
     { key: 'status', label: 'Status', render: (d: Disposition) => (
       <div className="flex items-center gap-2">
         <StatusBadge status={d.status} />
-        {d.legalHold && <span className="text-xs text-orange-600 font-medium">HOLD</span>}
+        {d.legalHold && <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase">Hold</span>}
       </div>
     )},
   ];
@@ -39,39 +42,46 @@ export function DispositionsListPage() {
   return (
     <div data-testid="dispositions-list-page">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Dispositions</h1>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Dispositions</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Manage record disposition approvals and scheduling</p>
+        </div>
         <Link
           to="/dispositions/legal-holds"
-          className="text-sm text-navy-500 hover:underline font-medium"
+          className="flex items-center gap-1.5 h-9 px-3 border border-slate-200 rounded text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
           data-testid="legal-holds-link"
         >
+          <ShieldExclamationIcon className="w-4 h-4" />
           Legal Holds
         </Link>
       </div>
-      <div className="flex gap-1 mb-4 border-b border-slate-200">
-        <button
-          onClick={() => setTab('pending')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === 'pending' ? 'border-navy-500 text-navy-500' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-          data-testid="tab-pending"
-        >
-          Pending Approvals
-        </button>
-        <button
-          onClick={() => setTab('history')}
-          className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${tab === 'history' ? 'border-navy-500 text-navy-500' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-          data-testid="tab-history"
-        >
-          History
-        </button>
+
+      <div className="bg-white border border-slate-200 rounded-md">
+        <div className="flex gap-0.5 px-4 pt-3 border-b border-slate-100">
+          <button
+            onClick={() => setTab('pending')}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'pending' ? 'border-navy-500 text-navy-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            data-testid="tab-pending"
+          >
+            Pending Approvals
+          </button>
+          <button
+            onClick={() => setTab('history')}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'history' ? 'border-navy-500 text-navy-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            data-testid="tab-history"
+          >
+            History
+          </button>
+        </div>
+        <DataTable
+          columns={columns}
+          data={data?.data ?? []}
+          keyExtractor={(d) => d.id}
+          isLoading={isLoading}
+          pagination={data ? { page: data.page, pageSize: data.pageSize, total: data.total, totalPages: data.totalPages } : undefined}
+          onPageChange={setPage}
+        />
       </div>
-      <DataTable
-        columns={columns}
-        data={data?.data ?? []}
-        keyExtractor={(d) => d.id}
-        isLoading={isLoading}
-        pagination={data ? { page: data.page, pageSize: data.pageSize, total: data.total, totalPages: data.totalPages } : undefined}
-        onPageChange={setPage}
-      />
     </div>
   );
 }

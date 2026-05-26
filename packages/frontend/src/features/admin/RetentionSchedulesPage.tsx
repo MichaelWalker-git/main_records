@@ -46,7 +46,10 @@ export function RetentionSchedulesPage() {
   return (
     <div data-testid="retention-schedules-page">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-800">Retention Schedules</h1>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Retention Schedules</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Configure record retention policies</p>
+        </div>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600"
