@@ -35,10 +35,12 @@ export function DispositionDetailPage() {
   const { data: disposition, isLoading, refetch } = useApiQuery<Disposition>(['disposition', id!], `/dispositions/${id}`);
 
   const approveMutation = useApiMutation<Disposition, object>(`/dispositions/${id}/approve`, 'post', {
-    onSuccess: () => refetch(),
+    onSuccess: () => { refetch(); toast('Approval recorded.', 'success'); },
+    onError: () => toast('Approve failed.', 'error'),
   });
   const rejectMutation = useApiMutation<Disposition, { reason: string }>(`/dispositions/${id}/reject`, 'post', {
-    onSuccess: () => refetch(),
+    onSuccess: () => { refetch(); toast('Disposition rejected.', 'success'); },
+    onError: () => toast('Reject failed.', 'error'),
   });
 
   if (isLoading || !disposition) {

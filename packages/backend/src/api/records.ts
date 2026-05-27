@@ -38,15 +38,19 @@ const dispositionsRepo = new DispositionsRepository(db);
 const aiService = new AIService();
 const recordsService = new RecordsService(recordsRepo, templatesRepo, retentionRepo, aiService);
 
-// REC-12: Valid status transitions (state machine)
-const VALID_TRANSITIONS: Record<string, string[]> = {
-  active: ['checked_out', 'in_transit', 'on_hold', 'pending_disposition'],
-  checked_out: ['active'],
-  in_transit: ['active'],
-  on_hold: ['active'],
-  pending_disposition: ['disposed', 'active'],
-  disposed: [],
+// REC-12: Valid status transitions (state machine).
+// in_transit can resolve to active (received) or checked_out (handed off externally).
+export const VALID_TRANSITIONS: Record<string, string[]> = {
   draft: ['active'],
+  active: ['checked_out', 'in_transit', 'on_hold', 'pending_disposition', 'archived', 'transferred'],
+  checked_out: ['active', 'in_transit'],
+  in_transit: ['active', 'checked_out'],
+  on_hold: ['active'],
+  pending_disposition: ['disposed', 'destroyed', 'active'],
+  archived: ['active'],
+  transferred: [],
+  disposed: [],
+  destroyed: [],
 };
 
 const createRecordSchema = z.object({
@@ -65,7 +69,7 @@ const createRecordSchema = z.object({
 const updateRecordSchema = z.object({
   title: z.string().min(1).max(500).optional(),
   description: z.string().optional(),
-  status: z.enum(['draft', 'active', 'checked_out', 'in_transit', 'on_hold', 'pending_disposition', 'disposed']).optional(),
+  status: z.enum(['draft', 'active', 'checked_out', 'in_transit', 'on_hold', 'pending_disposition', 'disposed', 'destroyed', 'archived', 'transferred']).optional(),
   record_type: z.string().min(1).optional(),
   location_code: z.string().regex(/^\d{8}$/, 'Location code must be exactly 8 digits (BBFFRRSS format)').optional(),
   container_number: z.string().max(100).optional(),
@@ -81,6 +85,10 @@ const updateRecordSchema = z.object({
 
 const batchImportSchema = z.object({
   records: z.array(createRecordSchema).min(1).max(500),
+});
+
+router.get('/status-transitions', authorize('records:read'), (_req: Request, res: Response) => {
+  res.json({ data: VALID_TRANSITIONS });
 });
 
 router.get('/', authorize('records:read'), async (req: Request, res: Response, next: NextFunction) => {

@@ -5,6 +5,7 @@ import { WorkflowStatus } from '../../components/WorkflowStatus';
 import { Timeline, TimelineEvent } from '../../components/Timeline';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Breadcrumbs } from '../../components/Breadcrumbs';
+import { useToast } from '../../components/Toast';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
 import { Transmittal } from '../../types';
@@ -73,19 +74,24 @@ export function TransmittalDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { isStaff, isAdmin } = useAuth();
   const isArchivesStaff = isStaff || isAdmin;
+  const { toast } = useToast();
   const { data: transmittal, isLoading, refetch } = useApiQuery<Transmittal>(['transmittal', id!], `/transmittals/${id}`);
 
   const submitMutation = useApiMutation<Transmittal, object>(`/transmittals/${id}/submit`, 'post', {
-    onSuccess: () => refetch(),
+    onSuccess: () => { refetch(); toast('Transmittal submitted for review.', 'success'); },
+    onError: () => toast('Submit failed.', 'error'),
   });
   const receiveMutation = useApiMutation<Transmittal, object>(`/transmittals/${id}/receive`, 'post', {
-    onSuccess: () => refetch(),
+    onSuccess: () => { refetch(); toast('Receipt confirmed.', 'success'); },
+    onError: () => toast('Receive failed.', 'error'),
   });
   const approveMutation = useApiMutation<Transmittal, object>(`/transmittals/${id}/approve`, 'post', {
-    onSuccess: () => refetch(),
+    onSuccess: () => { refetch(); toast('Transmittal approved.', 'success'); },
+    onError: () => toast('Approve failed.', 'error'),
   });
   const rejectMutation = useApiMutation<Transmittal, object>(`/transmittals/${id}/reject`, 'post', {
-    onSuccess: () => refetch(),
+    onSuccess: () => { refetch(); toast('Transmittal rejected.', 'success'); },
+    onError: () => toast('Reject failed.', 'error'),
   });
 
   if (isLoading || !transmittal) {

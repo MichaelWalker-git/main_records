@@ -129,13 +129,38 @@ export function DashboardPage() {
           {recordsByType.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={recordsByType} dataKey="count" nameKey="type" cx="50%" cy="50%" innerRadius={60} outerRadius={95} label={{ fontSize: 12 }} strokeWidth={1}>
+                <Pie
+                  data={recordsByType}
+                  dataKey="count"
+                  nameKey="type"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  strokeWidth={1}
+                  paddingAngle={1}
+                >
                   {recordsByType.map((_: any, index: number) => (
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ borderRadius: 4, border: '1px solid #e2e8f0', fontSize: 13 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 4, border: '1px solid #e2e8f0', fontSize: 13 }}
+                  formatter={(value: number, name: string) => [value, name]}
+                />
+                <Legend
+                  layout="vertical"
+                  align="right"
+                  verticalAlign="middle"
+                  iconType="circle"
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: 12, paddingLeft: 12 }}
+                  formatter={(value: string, entry: any) => (
+                    <span className="text-slate-600">
+                      {value} <span className="text-slate-400 tabular-nums">({entry.payload.count})</span>
+                    </span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           ) : (

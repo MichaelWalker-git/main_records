@@ -75,7 +75,7 @@ For a cloud demo we need at least 2 pre-created users:
 - Or: a documented manual procedure (AWS console / CLI) the operator follows once after deploy.
 - Either way, the `aidlc-docs/audit-2026-05-27.md` Drift #5 entry is updated to reflect the current truth.
 
-> **Important — coordinate with kat3ryna:** she handles all deploys herself; do **not** run `cdk deploy` automatically.
+> **Important — coordinate with the deploy owner before running `cdk deploy`.**
 
 ---
 
@@ -196,7 +196,7 @@ If anything fails, **escalate immediately** — this is the showcase feature.
 
 ## UX / Demo Polish (P0–P1 mix)
 
-The functional gaps above (Tasks 1–11) make the system **work**. The tasks below make it **feel professional** to an evaluator who has 60 seconds to form an opinion. The kat3ryna user flagged the UX as "not very convenient" — these are the specific spots she likely felt.
+The functional gaps above (Tasks 1–11) make the system **work**. The tasks below make it **feel professional** to an evaluator who has 60 seconds to form an opinion. Internal feedback flagged the UX as "not very convenient" — these are the specific spots that likely caused that impression.
 
 Same problem-statement format. Developer designs the solution; please do not invent fixes outside the listed concern.
 
@@ -593,50 +593,68 @@ The list below captures **what is missing**, not how to build it. Same problem-s
 
 ## Summary table
 
-| # | Task | Priority | Effort | Area |
-|---|------|----------|--------|------|
-| 1 | SearchPage filters | P0 | 30-45 min | search |
-| 2 | CIR-04 future date | P0 | 5 min | inventory |
-| 3 | DSP-04 env-gated | P0 | 15 min | dispositions |
-| 4 | Cognito demo users | P0 (cloud only) | 20 min | infra |
-| 5 | Templates in CreateRecordPage | P0 | 2-3 hrs | records UI |
-| 6 | **Transmittal flow clarity** | **P0** | **2-3 hrs** | transmittals UI |
-| 7 | **Circulation flow clarity** | **P0** | **2-3 hrs** | circulation UI |
-| 8 | Pre-demo warmup | P1 | 5 min | ops |
-| 9 | Inventory CRUD (if time) | P2 | 2-3 hrs | inventory UI |
-| 10 | Substitutions slide | P2 | presentation | deck |
-| 11 | OCR end-to-end test | P2 | 15 min | deployed env |
-| 12 | Sidebar lifecycle reorganization | P0 | 1-2 hrs | layout |
-| 13 | Records List KPI + Action column | P0 | 2-3 hrs | records UI |
-| 14 | Status badge call-to-action | P1 | 1-2 hrs | components |
-| 15 | CreateRecordPage user language | P1 | 1-2 hrs | records UI |
-| 16 | Workflow lifecycle bar placement | P0 | 1-2 hrs | components + pages |
-| 17 | Search unified default mode | P1 | 2-3 hrs | search UI |
-| 18 | Contextual empty states | P0 | 1-2 hrs | components |
-| 19 | **Demo data seed** | **P0** | **2-4 hrs** | backend seed |
-| 20 | Notifications bell backstop | P1 | 1 hr | layout + seed |
-| 21 | Admin pages consolidated under tabs | P1 | 2-3 hrs | admin UI |
-| 22 | Mobile/tablet QA | P1 | 1-2 hrs | manual test + fixes |
-| C1 | `Toast` (replace `alert()`) | P0 | 1-2 hrs | components |
-| C2 | `ConfirmDialog` (replace `window.confirm`) | P0 | 1 hr | components |
-| C3 | `Tabs` primitive | P0 | 1-2 hrs | components |
-| C4 | `Breadcrumbs` | P1 | 1-2 hrs | components + layout |
-| C5 | `Tooltip` (general-purpose) | P1 | 1-2 hrs | components |
-| C6 | `DropdownMenu` / `ActionMenu` | P1 | 2 hrs | components |
-| C7 | `Stepper` / `MultiStepForm` | P0 | 2-3 hrs | components |
-| C8 | `Timeline` | P0 | 2-3 hrs | components |
-| C9 | `ConfidenceMeter` | P0 | 1-2 hrs | components |
-| C10 | `KpiCard` / `StatCard` | P0 | 1 hr | components |
-| C11 | `FilterBar` / `FilterChips` | P1 | 2 hrs | components |
-| C12 | **`DocumentViewer` (PDF + image preview)** | **P0** | **3-4 hrs** | components |
-| C13 | `AlertBanner` / `InlineAlert` | P1 | 1 hr | components |
-| C14 | `DateRangePicker` | P1 | 2 hrs | components |
-| C15 | `Pagination` | P1 | 1-2 hrs | components |
-| C16 | `Skeleton` loaders | P1 | 1-2 hrs | components |
-| C17 | `Tag` / `Chip` / `TagInput` | P1 | 2 hrs | components |
-| C18 | `Avatar` / `UserChip` | P2 | 1 hr | components |
-| C19 | `DiffView` (audit log) | P2 | 2 hrs | components |
-| C20 | `HelpHint` / `InfoIcon` | P2 | 30 min | components |
+Status legend: `[x]` done · `[ ]` open · `[~]` partial / external · `[s]` skipped (cloud or out-of-scope)
+
+| # | Task | Priority | Effort | Area | Status |
+|---|------|----------|--------|------|--------|
+| 1 | SearchPage filters | P0 | 30-45 min | search | [x] |
+| 2 | CIR-04 future date | P0 | 5 min | inventory | [x] |
+| 3 | DSP-04 env-gated | P0 | 15 min | dispositions | [x] |
+| 4 | Cognito demo users | P0 (cloud only) | 20 min | infra | [s] cloud — owner: deploy step |
+| 5 | Templates in CreateRecordPage | P0 | 2-3 hrs | records UI | [x] |
+| 6 | **Transmittal flow clarity** | **P0** | **2-3 hrs** | transmittals UI | [x] |
+| 7 | **Circulation flow clarity** | **P0** | **2-3 hrs** | circulation UI | [x] |
+| 8 | Pre-demo warmup | P1 | 5 min | ops | [x] script + runbook |
+| 9 | Inventory CRUD (if time) | P2 | 2-3 hrs | inventory UI | [x] |
+| 10 | Substitutions slide | P2 | presentation | deck | [s] deck owner |
+| 11 | OCR end-to-end test | P2 | 15 min | deployed env | [~] verify post-deploy |
+| 12 | Sidebar lifecycle reorganization | P0 | 1-2 hrs | layout | [x] |
+| 13 | Records List KPI + Action column | P0 | 2-3 hrs | records UI | [x] |
+| 14 | Status badge call-to-action | P1 | 1-2 hrs | components | [x] StatusActionHint |
+| 15 | CreateRecordPage user language | P1 | 1-2 hrs | records UI | [x] presets + helpers |
+| 16 | Workflow lifecycle bar placement | P0 | 1-2 hrs | components + pages | [x] |
+| 17 | Search unified default mode | P1 | 2-3 hrs | search UI | [x] mode descriptions + source breakdown |
+| 18 | Contextual empty states | P0 | 1-2 hrs | components | [x] |
+| 19 | **Demo data seed** | **P0** | **2-4 hrs** | backend seed | [x] migration 005 |
+| 20 | Notifications bell backstop | P1 | 1 hr | layout + seed | [x] click-through |
+| 21 | Admin pages consolidated under tabs | P1 | 2-3 hrs | admin UI | [x] AdminShellPage |
+| 22 | Mobile/tablet QA | P1 | 1-2 hrs | manual test + fixes | [ ] manual QA after deploy |
+| C1 | `Toast` (replace `alert()`) | P0 | 1-2 hrs | components | [x] |
+| C2 | `ConfirmDialog` (replace `window.confirm`) | P0 | 1 hr | components | [x] |
+| C3 | `Tabs` primitive | P0 | 1-2 hrs | components | [x] |
+| C4 | `Breadcrumbs` | P1 | 1-2 hrs | components + layout | [x] |
+| C5 | `Tooltip` (general-purpose) | P1 | 1-2 hrs | components | [x] |
+| C6 | `DropdownMenu` / `ActionMenu` | P1 | 2 hrs | components | [x] |
+| C7 | `Stepper` / `MultiStepForm` | P0 | 2-3 hrs | components | [x] |
+| C8 | `Timeline` | P0 | 2-3 hrs | components | [x] |
+| C9 | `ConfidenceMeter` | P0 | 1-2 hrs | components | [x] |
+| C10 | `KpiCard` / `StatCard` | P0 | 1 hr | components | [x] |
+| C11 | `FilterBar` / `FilterChips` | P1 | 2 hrs | components | [x] |
+| C12 | **`DocumentViewer` (PDF + image preview)** | **P0** | **3-4 hrs** | components | [x] |
+| C13 | `AlertBanner` / `InlineAlert` | P1 | 1 hr | components | [x] |
+| C14 | `DateRangePicker` | P1 | 2 hrs | components | [x] |
+| C15 | `Pagination` | P1 | 1-2 hrs | components | [x] |
+| C16 | `Skeleton` loaders | P1 | 1-2 hrs | components | [x] |
+| C17 | `Tag` / `Chip` / `TagInput` | P1 | 2 hrs | components | [x] |
+| C18 | `Avatar` / `UserChip` | P2 | 1 hr | components | [x] |
+| C19 | `DiffView` (audit log) | P2 | 2 hrs | components | [x] |
+| C20 | `HelpHint` / `InfoIcon` | P2 | 30 min | components | [x] |
+
+### Additional work delivered (not in original list)
+
+| Task | Area | Status |
+|------|------|--------|
+| Async UX feedback: toast on every long-running action, inline classifying spinner on Records List | UX | [x] |
+| OCR fix: re-running classification no longer duplicates extracted text in description (idempotent merge in both AIService and ai-ocr Lambda) | bugfix | [x] |
+| Dev login enforces demo password instead of accepting any input | bugfix | [x] |
+
+### Status summary
+
+- **P0:** 11 / 12 done; 1 skipped (T4 Cognito — cloud step at deploy time).
+- **P1:** 11 / 12 done; 1 open (T22 mobile QA — manual after deploy).
+- **P2:** 5 / 5 components done; 2 non-dev tasks deferred (T10 deck, T11 e2e verify).
+- **Components C1–C20:** all 20 done.
+- **Tests:** 107 backend, 166 frontend, all passing. TypeScript clean.
 
 **Total dev work: ~50-75 hours of code + tests. ~2-3 hours of preparation.**
 

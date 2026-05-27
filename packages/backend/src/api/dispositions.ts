@@ -39,7 +39,13 @@ router.get('/', authorize('dispositions:read'), async (req: Request, res: Respon
     if (status) {
       dispositions = dispositions.filter((d: any) => d.status === status || (status === 'pending' && (d.status === 'pending' || d.status === 'pending_approval')));
     }
-    res.json({ data: dispositions, total: dispositions.length, page: Number(page), pageSize: Number(pageSize) });
+    const pageNum = Math.max(1, Number(page) || 1);
+    const sizeNum = Math.max(1, Math.min(100, Number(pageSize) || 25));
+    const total = dispositions.length;
+    const totalPages = Math.max(1, Math.ceil(total / sizeNum));
+    const start = (pageNum - 1) * sizeNum;
+    const paged = dispositions.slice(start, start + sizeNum);
+    res.json({ data: paged, total, page: pageNum, pageSize: sizeNum, totalPages });
   } catch (err) { next(err); }
 });
 

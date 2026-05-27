@@ -15,10 +15,19 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+let warnedMissingProvider = false;
+const noopToast: ToastContextValue = {
+  toast: (message: string) => {
+    if (!warnedMissingProvider) {
+      warnedMissingProvider = true;
+      console.warn(`useToast called outside ToastProvider — toast suppressed: ${message}`);
+    }
+  },
+};
+
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
-  return ctx;
+  return ctx ?? noopToast;
 }
 
 const variantStyles: Record<ToastVariant, string> = {

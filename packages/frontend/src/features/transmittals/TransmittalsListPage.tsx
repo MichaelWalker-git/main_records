@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusIcon, FunnelIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
 import { usePaginatedQuery } from '../../hooks/useApi';
@@ -9,16 +9,8 @@ import { Transmittal } from '../../types';
 import { format } from 'date-fns';
 
 function OwnershipBadge({ transmittal, isArchivesStaff }: { transmittal: any; isArchivesStaff: boolean }) {
-  if (transmittal.status === 'approved' || transmittal.status === 'rejected') return null;
-
-  if (transmittal.status === 'draft') {
-    return (
-      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">
-        Sender: draft
-      </span>
-    );
-  }
-
+  // Only render when the badge adds information beyond StatusBadge — i.e. tells the
+  // viewer who is supposed to act next. Skip for terminal and self-evident states.
   if (transmittal.status === 'submitted' && isArchivesStaff) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-navy-700 bg-navy-50 border border-navy-200 rounded px-1.5 py-0.5">
@@ -36,10 +28,11 @@ function OwnershipBadge({ transmittal, isArchivesStaff }: { transmittal: any; is
     );
   }
 
-  if (transmittal.status === 'received') {
+  if (transmittal.status === 'received' && isArchivesStaff) {
     return (
       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-700 bg-green-50 border border-green-200 rounded px-1.5 py-0.5">
-        Received — pending approval
+        <ExclamationCircleIcon className="w-3 h-3" />
+        Pending your approval
       </span>
     );
   }
@@ -112,7 +105,6 @@ export function TransmittalsListPage() {
 
       <div className="bg-white border border-slate-200 rounded-md">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
-          <FunnelIcon className="w-4 h-4 text-slate-400" />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
