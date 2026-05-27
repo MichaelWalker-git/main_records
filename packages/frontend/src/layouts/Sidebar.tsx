@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   HomeIcon,
   DocumentTextIcon,
@@ -71,8 +71,24 @@ const sections: NavSection[] = [
 
 export function Sidebar() {
   const { roles } = useAuth();
+  const { pathname } = useLocation();
 
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
+  // All nav paths visible to the current user, used to detect overlaps:
+  // when one item's path is a strict prefix of another and the URL matches
+  // the longer one, the shorter (parent-like) item should NOT be highlighted.
+  const allPaths = sections.flatMap((s) => s.items.map((i) => i.path));
+
+  function isItemActive(itemPath: string): boolean {
+    if (itemPath === '/') return pathname === '/';
+    if (pathname === itemPath) return true;
+    if (!pathname.startsWith(itemPath + '/')) return false;
+    // Active by prefix only if no more specific sibling also matches.
+    return !allPaths.some(
+      (p) => p !== itemPath && p.startsWith(itemPath + '/') && (pathname === p || pathname.startsWith(p + '/'))
+    );
+  }
+
+  const linkClass = (isActive: boolean) =>
     `flex items-center gap-3 px-3 py-2 rounded text-sm font-medium transition-colors ${
       isActive
         ? 'bg-navy-400 text-white'
@@ -110,18 +126,21 @@ export function Sidebar() {
                 </p>
               )}
               <div className="space-y-0.5">
-                {visibleItems.map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    end={item.path === '/'}
-                    className={linkClass}
-                    data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                  >
-                    <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
-                    {item.label}
-                  </NavLink>
-                ))}
+                {visibleItems.map((item) => {
+                  const active = isItemActive(item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={linkClass(active)}
+                      aria-current={active ? 'page' : undefined}
+                      data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           );

@@ -175,16 +175,30 @@ export function DashboardPage() {
           <p className="text-sm text-slate-400">No recent activity</p>
         ) : (
           <div className="space-y-2">
-            {data.recentActivity.map((event: any) => (
-              <div key={event.id} className="flex items-baseline gap-3 text-sm py-1.5 border-b border-slate-50 last:border-0">
-                <span className="text-[11px] text-slate-400 font-mono whitespace-nowrap tabular-nums">
-                  {new Date(event.created_at || event.createdAt).toLocaleDateString()}
-                </span>
-                <span className="text-slate-700">{event.action}</span>
-                <span className="text-slate-400 text-xs">{event.resource_type || event.resourceType}</span>
-                <span className="text-slate-400 text-xs">by {event.user_email || event.userEmail}</span>
-              </div>
-            ))}
+            {data.recentActivity.map((event: any) => {
+              const ts = event.created_at || event.createdAt;
+              const actor = event.user_email || event.userEmail;
+              return (
+                <div key={event.id} className="flex items-baseline gap-3 text-sm py-1.5 border-b border-slate-50 last:border-0">
+                  <span className="text-[11px] text-slate-400 font-mono whitespace-nowrap tabular-nums">
+                    {ts
+                      ? new Date(ts).toLocaleString(undefined, {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
+                      : '—'}
+                  </span>
+                  <span className="text-slate-700">{event.action}</span>
+                  <span className="text-slate-400 text-xs">{event.resource_type || event.resourceType}</span>
+                  <span className="text-slate-400 text-xs">
+                    {actor ? `by ${actor}` : 'by system'}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
