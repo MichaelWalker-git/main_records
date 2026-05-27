@@ -1,10 +1,27 @@
 import { useState, useRef, DragEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowUpTrayIcon, DocumentIcon, CheckCircleIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { ArrowUpTrayIcon, DocumentIcon, CheckCircleIcon, PencilSquareIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Stepper } from '../../components/Stepper';
+import { useApiQuery } from '../../hooks/useApi';
 import api from '../../services/api';
 
-type Mode = 'choose' | 'upload' | 'manual';
+interface TemplateField {
+  name: string;
+  label: string;
+  type: 'text' | 'date' | 'number' | 'select';
+  required?: boolean;
+  options?: string[];
+}
+
+interface Template {
+  id: string;
+  name: string;
+  description?: string;
+  fieldDefinitions: TemplateField[];
+}
+
+type Mode = 'choose' | 'upload' | 'manual' | 'template';
 type Step = 'input' | 'processing' | 'done';
 
 export function CreateRecordPage() {
@@ -25,6 +42,19 @@ export function CreateRecordPage() {
   const [agencyId, setAgencyId] = useState('');
   const [tags, setTags] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Template state
+  const { data: templatesRaw } = useApiQuery<any>(['templates'], '/templates');
+  const templates: Template[] = (templatesRaw?.data ?? templatesRaw ?? []).map((t: any) => ({
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    fieldDefinitions: typeof t.fieldDefinitions === 'string' ? JSON.parse(t.fieldDefinitions) : (t.fieldDefinitions || t.field_definitions || []),
+  }));
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [templateStep, setTemplateStep] = useState(0);
+  const [templateFields, setTemplateFields] = useState<Record<string, string>>({});
+  const [templateTitle, setTemplateTitle] = useState('');
 
   function handleFile(f: File) {
     setFile(f);
@@ -163,7 +193,7 @@ export function CreateRecordPage() {
           <h1 className="text-xl font-bold text-slate-800">Create Record</h1>
           <p className="text-sm text-slate-500 mt-0.5">Choose how to create a new record</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl">
           <button
             onClick={() => setMode('upload')}
             className="bg-white border border-slate-200 rounded-md p-8 hover:border-navy-300 hover:shadow-sm transition-all text-left group"
@@ -172,6 +202,15 @@ export function CreateRecordPage() {
             <ArrowUpTrayIcon className="w-10 h-10 text-navy-500 mb-3 group-hover:scale-110 transition-transform" />
             <h3 className="text-sm font-semibold text-slate-800 mb-1">Upload Document</h3>
             <p className="text-xs text-slate-500">Upload a PDF or image. AI will automatically extract text, classify, and fill all metadata.</p>
+          </button>
+          <button
+            onClick={() => setMode('template')}
+            className="bg-white border border-slate-200 rounded-md p-8 hover:border-navy-300 hover:shadow-sm transition-all text-left group"
+            data-testid="mode-template"
+          >
+            <ClipboardDocumentListIcon className="w-10 h-10 text-amber-500 mb-3 group-hover:scale-110 transition-transform" />
+            <h3 className="text-sm font-semibold text-slate-800 mb-1">From Template</h3>
+            <p className="text-xs text-slate-500">Use a pre-defined template with guided fields. Best for standard record types.</p>
           </button>
           <button
             onClick={() => setMode('manual')}
@@ -259,6 +298,174 @@ export function CreateRecordPage() {
               <li>AI classifies the record (series, tags, retention)</li>
               <li>Record is ready for review with all metadata filled</li>
             </ol>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Template mode
+  if (mode === 'template') {
+    async function handleTemplateSubmit() {
+      if (!selectedTemplate || !templateTitle.trim()) return;
+      const requiredFields = selectedTemplate.fieldDefinitions.filter((f) => f.required);
+      const missing = requiredFields.filter((f) => !templateFields[f.name]?.trim());
+      if (missing.length > 0) {
+        setFormErrors(Object.fromEntries(missing.map((f) => [f.name, `${f.label} is required`])));
+        return;
+      }
+      setFormErrors({});
+      setStep('processing');
+      setStatusMessage('Creating record from template...');
+      try {
+        const { data: createResp } = await api.post('/records', {
+          title: templateTitle,
+          templateId: selectedTemplate.id,
+          metadata: templateFields,
+        });
+        const record = createResp.data ?? createResp;
+        navigate(`/records/${record.id}`);
+      } catch (err: any) {
+        setError(err?.message || 'Failed to create record.');
+        setStep('input');
+      }
+    }
+
+    if (!selectedTemplate) {
+      return (
+        <div data-testid="create-record-page">
+          <div className="mb-6">
+            <button onClick={() => setMode('choose')} className="text-xs text-slate-400 hover:text-slate-600 mb-2">&larr; Back</button>
+            <h1 className="text-xl font-bold text-slate-800">Create Record</h1>
+            <p className="text-sm text-slate-500 mt-0.5">Choose a template</p>
+          </div>
+          <Stepper steps={[{ key: 'template', label: 'Choose Template' }, { key: 'fields', label: 'Fill Fields' }, { key: 'review', label: 'Review' }]} currentStep={0} className="mb-6 max-w-2xl" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl">
+            {templates.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => { setSelectedTemplate(t); setTemplateStep(1); }}
+                className="bg-white border border-slate-200 rounded-md p-5 hover:border-navy-300 hover:shadow-sm transition-all text-left"
+                data-testid={`template-${t.id}`}
+              >
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">{t.name}</h3>
+                {t.description && <p className="text-xs text-slate-500">{t.description}</p>}
+                <p className="text-[10px] text-slate-400 mt-2">{t.fieldDefinitions.length} fields</p>
+              </button>
+            ))}
+            {templates.length === 0 && (
+              <p className="text-sm text-slate-400 col-span-full py-8 text-center">No templates available. Ask an admin to create templates.</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (templateStep === 1) {
+      return (
+        <div data-testid="create-record-page">
+          <div className="mb-6">
+            <button onClick={() => { setSelectedTemplate(null); setTemplateStep(0); }} className="text-xs text-slate-400 hover:text-slate-600 mb-2">&larr; Back to templates</button>
+            <h1 className="text-xl font-bold text-slate-800">Create Record</h1>
+            <p className="text-sm text-slate-500 mt-0.5">Template: {selectedTemplate.name}</p>
+          </div>
+          <Stepper steps={[{ key: 'template', label: 'Choose Template' }, { key: 'fields', label: 'Fill Fields' }, { key: 'review', label: 'Review' }]} currentStep={1} className="mb-6 max-w-2xl" />
+          {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 text-sm max-w-2xl">{error}</div>}
+          <div className="bg-white border border-slate-200 rounded-md p-6 max-w-2xl">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Record Title <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={templateTitle}
+                  onChange={(e) => setTemplateTitle(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  placeholder="Enter a descriptive title for this record"
+                  data-testid="template-title-input"
+                />
+              </div>
+              {selectedTemplate.fieldDefinitions.map((field) => (
+                <div key={field.name}>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    {field.label} {field.required && <span className="text-red-400">*</span>}
+                  </label>
+                  {field.type === 'select' && field.options ? (
+                    <select
+                      value={templateFields[field.name] || ''}
+                      onChange={(e) => setTemplateFields((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 ${formErrors[field.name] ? 'border-red-300' : 'border-slate-300'}`}
+                    >
+                      <option value="">Select...</option>
+                      {field.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type === 'date' ? 'date' : field.type === 'number' ? 'number' : 'text'}
+                      value={templateFields[field.name] || ''}
+                      onChange={(e) => setTemplateFields((prev) => ({ ...prev, [field.name]: e.target.value }))}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 ${formErrors[field.name] ? 'border-red-300' : 'border-slate-300'}`}
+                    />
+                  )}
+                  {formErrors[field.name] && <p className="text-xs text-red-500 mt-1">{formErrors[field.name]}</p>}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => { if (templateTitle.trim()) setTemplateStep(2); }}
+                disabled={!templateTitle.trim()}
+                className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors"
+              >
+                Review
+              </button>
+              <button type="button" onClick={() => navigate('/records')} className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Review step
+    return (
+      <div data-testid="create-record-page">
+        <div className="mb-6">
+          <button onClick={() => setTemplateStep(1)} className="text-xs text-slate-400 hover:text-slate-600 mb-2">&larr; Back to fields</button>
+          <h1 className="text-xl font-bold text-slate-800">Create Record</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Review and submit</p>
+        </div>
+        <Stepper steps={[{ key: 'template', label: 'Choose Template' }, { key: 'fields', label: 'Fill Fields' }, { key: 'review', label: 'Review' }]} currentStep={2} className="mb-6 max-w-2xl" />
+        <div className="bg-white border border-slate-200 rounded-md p-6 max-w-2xl">
+          <dl className="space-y-3">
+            <div className="flex justify-between py-2 border-b border-slate-50">
+              <dt className="text-sm text-slate-500">Template</dt>
+              <dd className="text-sm font-medium text-slate-800">{selectedTemplate.name}</dd>
+            </div>
+            <div className="flex justify-between py-2 border-b border-slate-50">
+              <dt className="text-sm text-slate-500">Title</dt>
+              <dd className="text-sm font-medium text-slate-800">{templateTitle}</dd>
+            </div>
+            {selectedTemplate.fieldDefinitions.map((field) => (
+              <div key={field.name} className="flex justify-between py-2 border-b border-slate-50">
+                <dt className="text-sm text-slate-500">{field.label}</dt>
+                <dd className="text-sm text-slate-800">{templateFields[field.name] || <span className="text-slate-300">—</span>}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={handleTemplateSubmit}
+              className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 transition-colors"
+              data-testid="submit-record-button"
+            >
+              Create Record
+            </button>
+            <button type="button" onClick={() => setTemplateStep(1)} className="px-4 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50 transition-colors">
+              Edit Fields
+            </button>
           </div>
         </div>
       </div>

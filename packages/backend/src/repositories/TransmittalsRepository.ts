@@ -37,16 +37,28 @@ export class TransmittalsRepository extends BaseRepository<Transmittal> {
 
   async findAllWithAgency(status?: string): Promise<any[]> {
     let query = this.db(this.tableName)
-      .select('transmittals.*', 'agencies.name as agency_name', 'agencies.code as agency_code')
-      .leftJoin('agencies', 'transmittals.agency_id', 'agencies.id');
+      .select(
+        'transmittals.*',
+        'agencies.name as agency_name',
+        'agencies.code as agency_code',
+        this.db.raw("COALESCE(submitter.first_name || ' ' || submitter.last_name, submitter.email) as submitted_by_name"),
+      )
+      .leftJoin('agencies', 'transmittals.agency_id', 'agencies.id')
+      .leftJoin('users as submitter', 'transmittals.submitted_by', 'submitter.id');
     if (status) query = query.where({ 'transmittals.status': status });
     return query.orderBy('transmittals.created_at', 'desc');
   }
 
   async findByAgency(agencyId: string, status?: string): Promise<any[]> {
     let query = this.db(this.tableName)
-      .select('transmittals.*', 'agencies.name as agency_name', 'agencies.code as agency_code')
+      .select(
+        'transmittals.*',
+        'agencies.name as agency_name',
+        'agencies.code as agency_code',
+        this.db.raw("COALESCE(submitter.first_name || ' ' || submitter.last_name, submitter.email) as submitted_by_name"),
+      )
       .leftJoin('agencies', 'transmittals.agency_id', 'agencies.id')
+      .leftJoin('users as submitter', 'transmittals.submitted_by', 'submitter.id')
       .where({ 'transmittals.agency_id': agencyId });
     if (status) query = query.where({ 'transmittals.status': status });
     return query.orderBy('transmittals.created_at', 'desc');

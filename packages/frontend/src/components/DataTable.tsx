@@ -25,6 +25,7 @@ interface DataTableProps<T> {
   onPageChange?: (page: number) => void;
   keyExtractor: (item: T) => string;
   isLoading?: boolean;
+  emptyState?: React.ReactNode;
 }
 
 export function DataTable<T>({
@@ -35,6 +36,7 @@ export function DataTable<T>({
   onPageChange,
   keyExtractor,
   isLoading,
+  emptyState,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -49,6 +51,7 @@ export function DataTable<T>({
   const safeData = Array.isArray(data) ? data : [];
 
   if (!isLoading && safeData.length === 0) {
+    if (emptyState) return <>{emptyState}</>;
     return <EmptyState title="No results found" message="Try adjusting your filters or search criteria." />;
   }
 

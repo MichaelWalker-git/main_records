@@ -2,16 +2,16 @@ import { NavLink } from 'react-router-dom';
 import {
   HomeIcon,
   DocumentTextIcon,
-  DocumentDuplicateIcon,
   TruckIcon,
   TrashIcon,
   MapPinIcon,
   MagnifyingGlassIcon,
   ChartBarIcon,
   Cog6ToothIcon,
-  BuildingOfficeIcon,
   ArrowsRightLeftIcon,
-  BellIcon,
+  DocumentDuplicateIcon,
+  InboxArrowDownIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 
@@ -20,35 +20,58 @@ interface NavItem {
   path: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   roles?: string[];
-  section?: string;
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', path: '/', icon: HomeIcon, section: 'main' },
-  { label: 'Records', path: '/records', icon: DocumentTextIcon, section: 'main' },
-  { label: 'Transmittals', path: '/transmittals', icon: TruckIcon, section: 'main' },
-  { label: 'Dispositions', path: '/dispositions', icon: TrashIcon, roles: ['admin', 'staff', 'records_officer'], section: 'main' },
-  { label: 'Inventory', path: '/inventory', icon: MapPinIcon, roles: ['admin', 'staff', 'records_officer'], section: 'operations' },
-  { label: 'Circulation', path: '/inventory/circulation', icon: ArrowsRightLeftIcon, roles: ['admin', 'staff', 'records_officer'], section: 'operations' },
-  { label: 'Search', path: '/search', icon: MagnifyingGlassIcon, section: 'operations' },
-  { label: 'Analytics', path: '/analytics', icon: ChartBarIcon, section: 'operations' },
-  { label: 'Reports', path: '/analytics/reports', icon: DocumentDuplicateIcon, roles: ['admin', 'staff', 'records_officer'], section: 'operations' },
-  { label: 'Agency Portal', path: '/agency', icon: BuildingOfficeIcon, roles: ['agency_user', 'admin', 'staff'], section: 'admin' },
-  { label: 'Notifications', path: '/admin/notifications', icon: BellIcon, section: 'admin' },
-  { label: 'Templates', path: '/admin/templates', icon: DocumentDuplicateIcon, roles: ['admin', 'staff'], section: 'admin' },
-  { label: 'Administration', path: '/admin', icon: Cog6ToothIcon, roles: ['admin'], section: 'admin' },
+interface NavSection {
+  title?: string;
+  items: NavItem[];
+}
+
+const sections: NavSection[] = [
+  {
+    items: [
+      { label: 'Dashboard', path: '/', icon: HomeIcon },
+      { label: 'Search', path: '/search', icon: MagnifyingGlassIcon },
+    ],
+  },
+  {
+    title: 'Intake',
+    items: [
+      { label: 'Records', path: '/records', icon: DocumentTextIcon },
+      { label: 'Transmittals', path: '/transmittals', icon: InboxArrowDownIcon },
+    ],
+  },
+  {
+    title: 'Storage',
+    items: [
+      { label: 'Inventory', path: '/inventory', icon: MapPinIcon, roles: ['admin', 'staff', 'records_officer'] },
+      { label: 'Circulation', path: '/inventory/circulation', icon: ArrowsRightLeftIcon, roles: ['admin', 'staff', 'records_officer'] },
+    ],
+  },
+  {
+    title: 'Lifecycle',
+    items: [
+      { label: 'Dispositions', path: '/dispositions', icon: TrashIcon, roles: ['admin', 'staff', 'records_officer'] },
+      { label: 'Retention', path: '/admin/retention-schedules', icon: ShieldCheckIcon, roles: ['admin', 'staff'] },
+    ],
+  },
+  {
+    title: 'Insights',
+    items: [
+      { label: 'Analytics', path: '/analytics', icon: ChartBarIcon },
+      { label: 'Reports', path: '/analytics/reports', icon: DocumentDuplicateIcon, roles: ['admin', 'staff', 'records_officer'] },
+    ],
+  },
+  {
+    title: 'Admin',
+    items: [
+      { label: 'Administration', path: '/admin', icon: Cog6ToothIcon, roles: ['admin'] },
+    ],
+  },
 ];
 
 export function Sidebar() {
   const { roles } = useAuth();
-
-  const visibleItems = navItems.filter(
-    (item) => !item.roles || item.roles.some((r) => roles.includes(r as never))
-  );
-
-  const mainItems = visibleItems.filter((i) => i.section === 'main');
-  const opsItems = visibleItems.filter((i) => i.section === 'operations');
-  const adminItems = visibleItems.filter((i) => i.section === 'admin');
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 px-3 py-2 rounded text-sm font-medium transition-colors ${
@@ -73,63 +96,37 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-3 py-3 space-y-5 overflow-y-auto" aria-label="Main navigation">
-        <div className="space-y-0.5">
-          {mainItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              className={linkClass}
-              data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-            >
-              <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
-              {item.label}
-            </NavLink>
-          ))}
-        </div>
+      <nav className="flex-1 px-3 py-3 space-y-4 overflow-y-auto" aria-label="Main navigation">
+        {sections.map((section, si) => {
+          const visibleItems = section.items.filter(
+            (item) => !item.roles || item.roles.some((r) => roles.includes(r as never))
+          );
+          if (visibleItems.length === 0) return null;
 
-        {opsItems.length > 0 && (
-          <div>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-navy-300">
-              Operations
-            </p>
-            <div className="space-y-0.5">
-              {opsItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={linkClass}
-                  data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
-                  {item.label}
-                </NavLink>
-              ))}
+          return (
+            <div key={si}>
+              {section.title && (
+                <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-navy-300">
+                  {section.title}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {visibleItems.map((item) => (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={item.path === '/'}
+                    className={linkClass}
+                    data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-
-        {adminItems.length > 0 && (
-          <div>
-            <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-navy-300">
-              System
-            </p>
-            <div className="space-y-0.5">
-              {adminItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={linkClass}
-                  data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <item.icon className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true" />
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        )}
+          );
+        })}
       </nav>
 
       <div className="px-4 py-3 border-t border-navy-400/50">

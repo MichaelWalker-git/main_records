@@ -1,7 +1,8 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, TrashIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useApiMutation } from '../../hooks/useApi';
+import { useAuth } from '../../hooks/useAuth';
 
 interface BoxItem {
   id: string;
@@ -13,6 +14,7 @@ interface BoxItem {
 
 export function SubmitTransmittalPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<BoxItem[]>([
@@ -60,8 +62,24 @@ export function SubmitTransmittalPage() {
     <div data-testid="submit-transmittal-page">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-800">Submit Transmittal</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Transfer records to the State Archives</p>
+        <p className="text-sm text-slate-500 mt-0.5">Transfer records to the Maine State Archives</p>
       </div>
+
+      {/* Transfer direction banner */}
+      <div className="bg-navy-50 border border-navy-200 rounded-md p-4 mb-4 flex items-center gap-4" data-testid="transfer-direction">
+        <div className="flex-1">
+          <p className="text-[11px] uppercase tracking-wide text-navy-400 font-medium">From</p>
+          <p className="text-sm font-medium text-navy-800">{user?.agencyName || 'Your Agency'}</p>
+          <p className="text-xs text-navy-600">{user?.email || ''}</p>
+        </div>
+        <ArrowRightIcon className="w-5 h-5 text-navy-300 flex-shrink-0" />
+        <div className="flex-1">
+          <p className="text-[11px] uppercase tracking-wide text-navy-400 font-medium">To</p>
+          <p className="text-sm font-medium text-navy-800">Maine State Archives</p>
+          <p className="text-xs text-navy-600">Records Management Division</p>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="bg-white border border-slate-200 rounded-md p-6">
           <div className="mb-4">

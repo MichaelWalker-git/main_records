@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PlusIcon, FunnelIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, FunnelIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
 import { SearchInput } from '../../components/SearchInput';
 import { ExportButton } from '../../components/ExportButton';
-import { usePaginatedQuery } from '../../hooks/useApi';
+import { EmptyState } from '../../components/EmptyState';
+import { KpiCard } from '../../components/KpiCard';
+import { ConfidenceMeter } from '../../components/ConfidenceMeter';
+import { usePaginatedQuery, useApiQuery } from '../../hooks/useApi';
 import { exportRecords } from '../../utils/export';
 import { useToast } from '../../components/Toast';
 import { useConfirm } from '../../components/ConfirmDialog';
@@ -44,6 +47,9 @@ export function RecordsListPage() {
     } catch { toast('Delete failed.', 'error'); }
   }
 
+  const { data: statsRaw } = useApiQuery<any>(['analytics-dashboard'], '/analytics/dashboard');
+  const stats = statsRaw?.data ?? statsRaw ?? {};
+
   const { data, isLoading } = usePaginatedQuery<Record>(
     ['records'],
     '/records',
@@ -61,6 +67,9 @@ export function RecordsListPage() {
     )},
     { key: 'seriesTitle', label: 'Series', sortable: true, render: (r: Record) => (
       <span className="text-sm text-slate-600 truncate block max-w-[180px]">{r.seriesTitle || '—'}</span>
+    )},
+    { key: 'aiConfidence', label: 'AI', render: (r: Record) => (
+      r.aiConfidence != null ? <ConfidenceMeter score={r.aiConfidence} /> : <span className="text-[10px] text-slate-300">—</span>
     )},
     { key: 'status', label: 'Status', render: (r: Record) => <StatusBadge status={r.status} /> },
     { key: 'actions', label: '', render: (r: Record) => (
@@ -125,6 +134,31 @@ export function RecordsListPage() {
         </div>
       </div>
 
+      {stats.totalRecords != null && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5" data-testid="records-kpi-bar">
+          <KpiCard
+            label="Total Records"
+            value={stats.totalRecords || 0}
+            onClick={() => { setStatusFilter(''); }}
+          />
+          <KpiCard
+            label="Pending Classification"
+            value={stats.pendingClassification || 0}
+            onClick={() => { setStatusFilter('active'); setSearch(''); }}
+          />
+          <KpiCard
+            label="On Legal Hold"
+            value={stats.onLegalHold || 0}
+            onClick={() => { setStatusFilter('on_hold'); }}
+          />
+          <KpiCard
+            label="Overdue Checkouts"
+            value={stats.overdueCheckouts || 0}
+            onClick={() => { setStatusFilter('checked_out'); }}
+          />
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-md">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
           <div className="flex-1">
@@ -159,6 +193,22 @@ export function RecordsListPage() {
           isLoading={isLoading}
           pagination={data ? { page: data.page, pageSize: data.pageSize, total: data.total, totalPages: data.totalPages } : undefined}
           onPageChange={setPage}
+          emptyState={
+            search || statusFilter ? (
+              <EmptyState
+                title="No records match your filters"
+                message="Try clearing your search or changing the status filter."
+                action={<button onClick={() => { setSearch(''); setStatusFilter(''); }} className="text-sm text-navy-500 hover:underline">Clear all filters</button>}
+              />
+            ) : (
+              <EmptyState
+                icon={DocumentTextIcon}
+                title="No records yet"
+                message="Create your first record to get started with records management."
+                action={<Link to="/records/new" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600"><PlusIcon className="w-4 h-4" />New Record</Link>}
+              />
+            )
+          }
         />
       </div>
     </div>

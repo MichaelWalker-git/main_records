@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   DocumentTextIcon,
   ClockIcon,
@@ -24,6 +25,7 @@ interface DashboardData {
 const COLORS = ['#003366', '#2E5A3E', '#475569', '#0ea5e9', '#f59e0b', '#8b5cf6'];
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { data: raw } = useApiQuery<any>(['dashboard'], '/analytics/dashboard');
 
   // Backend returns { data: metrics } or just metrics depending on unwrapping
@@ -69,6 +71,36 @@ export function DashboardPage() {
           to="/inventory/circulation"
         />
       </div>
+
+      {/* Lifecycle Pipeline */}
+      {data && (
+        <div className="bg-white border border-slate-200 rounded-md p-5 mb-6" data-testid="lifecycle-pipeline">
+          <h2 className="text-sm font-semibold text-slate-800 mb-4">Record Lifecycle Pipeline</h2>
+          <div className="flex items-center justify-between">
+            {[
+              { label: 'Pending Classification', value: data.pendingClassification || 0, status: 'active' },
+              { label: 'Active / Stored', value: data.activeRecords || 0, status: 'active' },
+              { label: 'Checked Out', value: data.checkedOut || 0, status: 'checked_out' },
+              { label: 'On Hold', value: data.onLegalHold || 0, status: 'on_hold' },
+              { label: 'Pending Disposition', value: data.pendingDispositions || 0, status: 'pending_disposition' },
+              { label: 'Disposed', value: data.disposedRecords || 0, status: 'disposed' },
+            ].map((stage, i, arr) => (
+              <div key={stage.label} className="flex items-center flex-1">
+                <button
+                  onClick={() => navigate(`/records?status=${stage.status}`)}
+                  className="flex flex-col items-center gap-1 px-2 py-2 rounded hover:bg-slate-50 transition-colors w-full"
+                >
+                  <span className="text-lg font-bold text-slate-800">{stage.value}</span>
+                  <span className="text-[10px] text-slate-500 text-center leading-tight">{stage.label}</span>
+                </button>
+                {i < arr.length - 1 && (
+                  <div className="w-6 h-px bg-slate-200 flex-shrink-0" />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div className="bg-white border border-slate-200 rounded-md p-5" data-testid="records-by-type-chart">

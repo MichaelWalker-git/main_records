@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { SearchInput } from '../../components/SearchInput';
+import { Tabs } from '../../components/Tabs';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { useApiMutation } from '../../hooks/useApi';
@@ -33,7 +34,7 @@ export function SearchPage() {
     [activeTab, agencyFilter, statusFilter]
   );
 
-  const tabs: { key: SearchTab; label: string }[] = [
+  const tabItems = [
     { key: 'metadata', label: 'Metadata' },
     { key: 'fulltext', label: 'Full-Text' },
     { key: 'semantic', label: 'Semantic (AI)' },
@@ -50,22 +51,13 @@ export function SearchPage() {
         <p className="text-sm text-slate-500 mt-0.5">Find records across all agencies and series</p>
       </div>
 
-      <div className="flex gap-0.5 mb-4 border-b border-slate-200">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              activeTab === tab.key
-                ? 'border-navy-500 text-navy-600'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
-            data-testid={`search-tab-${tab.key}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={tabItems}
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as SearchTab)}
+        className="mb-4"
+        testIdPrefix="search-tab"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-1">
