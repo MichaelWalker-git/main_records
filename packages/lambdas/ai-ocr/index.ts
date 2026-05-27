@@ -292,17 +292,21 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
         };
       }
 
-      // Store extracted text in PostgreSQL (indexed by search_vector tsvector)
+      // Store extracted text in PostgreSQL (indexed by search_vector tsvector).
+      // Idempotent: a re-run replaces any prior OCR block instead of appending it again.
+      const marker = '\n\n--- Extracted Content ---\n';
       await db.query(
         `UPDATE records
          SET description = CASE
            WHEN description IS NULL OR description = '' THEN $1
-           ELSE description || E'\n\n--- Extracted Content ---\n' || $1
+           WHEN position($4 in description) > 0
+             THEN substring(description from 1 for position($4 in description) - 1) || $4 || $1
+           ELSE description || $4 || $1
          END,
          media_type = COALESCE(NULLIF(media_type, ''), $2),
          updated_at = NOW()
          WHERE id = $3`,
-        [result.extractedText, result.documentType, message.recordId]
+        [result.extractedText, result.documentType, message.recordId, marker]
       );
 
       // Generate embedding for semantic search

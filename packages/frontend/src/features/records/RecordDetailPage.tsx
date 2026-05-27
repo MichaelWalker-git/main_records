@@ -8,8 +8,11 @@ import {
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Breadcrumbs } from '../../components/Breadcrumbs';
 import { useQueryClient } from '@tanstack/react-query';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
+import { useConfirm } from '../../components/ConfirmDialog';
 import api from '../../services/api';
 import { RMSRecord as Record, AuditEvent } from '../../types';
 import { format } from 'date-fns';
@@ -18,6 +21,8 @@ export function RecordDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   const { data: record, isLoading, isError, refetch } = useApiQuery<Record>(['record', id!], `/records/${id}`);
   const { data: auditHistory } = useApiQuery<AuditEvent[]>(['record-audit', id!], `/records/${id}/audit`);
   const { data: schedulesRaw } = useApiQuery<any>(['retention-schedules'], '/admin/retention-schedules');
@@ -50,10 +55,12 @@ export function RecordDetailPage() {
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [isProcessing, refetch]);
 
-  async function changeStatus(newStatus: string, confirm?: string) {
-    if (confirm && !window.confirm(confirm)) return;
+  async function changeStatus(newStatus: string, confirmMsg?: string) {
+    if (confirmMsg) {
+      const ok = await confirm({ title: 'Confirm Status Change', description: confirmMsg, confirmLabel: 'Proceed', variant: 'danger' });
+      if (!ok) return;
+    }
     try {
-      // Create transmittal when moving to in_transit (non-blocking)
       if (newStatus === 'in_transit' && record) {
         api.post('/transmittals', {
           title: `Transfer: ${record.title}`,
@@ -64,7 +71,7 @@ export function RecordDetailPage() {
       await api.put(`/records/${id}`, { status: newStatus });
       refetch();
     } catch (err: any) {
-      alert(err?.response?.data?.error || 'Status change failed.');
+      toast(err?.response?.data?.error || 'Status change failed.', 'error');
     }
   }
 
@@ -129,6 +136,15 @@ export function RecordDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: 'Records', to: '/records' },
+          { label: record.trackingNumber || record.title },
+        ]}
+        className="mb-3"
+      />
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
@@ -213,7 +229,7 @@ export function RecordDetailPage() {
                             await api.put(`/records/${id}`, { status: 'pending_disposition' });
                             refetch();
                           } catch (err: any) {
-                            alert(err?.response?.data?.error || 'Failed to initiate disposition');
+                            toast(err?.response?.data?.error || 'Failed to initiate disposition', 'error');
                           }
                         }}
                         className="w-full text-left px-3 py-2 hover:bg-slate-50"
@@ -270,11 +286,10 @@ export function RecordDetailPage() {
                     </button>
                     <div className="border-t border-slate-100 my-1" />
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         setShowMoreActions(false);
-                        if (window.confirm('Delete this record? This cannot be undone.')) {
-                          deleteMutation.mutate(undefined as unknown as void);
-                        }
+                        const ok = await confirm({ title: 'Delete Record', description: 'Delete this record? This cannot be undone.', confirmLabel: 'Delete', variant: 'danger' });
+                        if (ok) deleteMutation.mutate(undefined as unknown as void);
                       }}
                       disabled={deleteMutation.isPending}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
@@ -364,7 +379,7 @@ export function RecordDetailPage() {
                       try {
                         await api.patch(`/records/${id}/retention`, { schedule_id: e.target.value });
                         refetch();
-                      } catch { alert('Failed to assign retention.'); }
+                      } catch { toast('Failed to assign retention.', 'error'); }
                     }}
                     className="h-7 px-2 border border-slate-200 rounded text-xs focus:outline-none focus:ring-1 focus:ring-navy-500 bg-white text-slate-600"
                     defaultValue=""
@@ -456,7 +471,7 @@ export function RecordDetailPage() {
                       const { data } = await api.get(`/records/${id}/download`);
                       const url = data.downloadUrl || data.data?.downloadUrl;
                       if (url) window.open(url, '_blank');
-                    } catch { alert('Failed to get download link'); }
+                    } catch { toast('Failed to get download link', 'error'); }
                   }}
                   className="px-2.5 py-1 text-xs font-medium text-navy-600 bg-white border border-slate-200 rounded hover:bg-slate-50 transition-colors"
                 >

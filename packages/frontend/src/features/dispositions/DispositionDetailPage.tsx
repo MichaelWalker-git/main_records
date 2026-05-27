@@ -11,8 +11,11 @@ import {
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Breadcrumbs } from '../../components/Breadcrumbs';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../components/Toast';
+import { useConfirm } from '../../components/ConfirmDialog';
 import api from '../../services/api';
 import { Disposition } from '../../types';
 import { format } from 'date-fns';
@@ -27,6 +30,8 @@ export function DispositionDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isStaff, isAdmin } = useAuth();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   const { data: disposition, isLoading, refetch } = useApiQuery<Disposition>(['disposition', id!], `/dispositions/${id}`);
 
   const approveMutation = useApiMutation<Disposition, object>(`/dispositions/${id}/approve`, 'post', {
@@ -53,6 +58,13 @@ export function DispositionDetailPage() {
 
   return (
     <div data-testid="disposition-detail-page">
+      <Breadcrumbs
+        items={[
+          { label: 'Dispositions', to: '/dispositions' },
+          { label: disposition.title || 'Detail' },
+        ]}
+        className="mb-3"
+      />
       {/* Back navigation */}
       <Link to="/dispositions" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
         <ArrowLeftIcon className="w-3.5 h-3.5" />
@@ -283,12 +295,13 @@ export function DispositionDetailPage() {
             <h3 className="text-[11px] uppercase tracking-wide text-slate-400 font-medium mb-3">Danger Zone</h3>
             <button
               onClick={async () => {
-                if (!window.confirm('Delete this disposition? Records will be returned to active status.')) return;
+                const ok = await confirm({ title: 'Delete Disposition', description: 'Delete this disposition? Records will be returned to active status.', confirmLabel: 'Delete', variant: 'danger' });
+                if (!ok) return;
                 try {
                   await api.delete(`/dispositions/${id}`);
                   navigate('/dispositions');
                 } catch (err: any) {
-                  alert(err?.response?.data?.error || 'Failed to delete disposition');
+                  toast(err?.response?.data?.error || 'Failed to delete disposition', 'error');
                 }
               }}
               className="w-full flex items-center justify-center gap-1.5 h-9 px-3 border border-red-200 text-red-600 rounded text-sm font-medium hover:bg-red-50 transition-colors"

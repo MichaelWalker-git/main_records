@@ -51,8 +51,21 @@ router.get('/pending', authorize('transmittals:approve'), async (req: Request, r
 router.get('/:id', authorize('transmittals:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const transmittal = await db('transmittals')
-      .select('transmittals.*', 'agencies.name as agency_name', 'agencies.code as agency_code')
+      .select(
+        'transmittals.*',
+        'agencies.name as agency_name',
+        'agencies.code as agency_code',
+        'submitter.email as submitted_by_email',
+        db.raw("COALESCE(submitter.first_name || ' ' || submitter.last_name, submitter.email) as submitted_by_name"),
+        'receiver.email as received_by_email',
+        db.raw("COALESCE(receiver.first_name || ' ' || receiver.last_name, receiver.email) as received_by_name"),
+        'approver.email as approved_by_email',
+        db.raw("COALESCE(approver.first_name || ' ' || approver.last_name, approver.email) as approved_by_name"),
+      )
       .leftJoin('agencies', 'transmittals.agency_id', 'agencies.id')
+      .leftJoin('users as submitter', 'transmittals.submitted_by', 'submitter.id')
+      .leftJoin('users as receiver', 'transmittals.received_by', 'receiver.id')
+      .leftJoin('users as approver', 'transmittals.approved_by', 'approver.id')
       .where({ 'transmittals.id': req.params.id })
       .first();
     if (!transmittal) return res.status(404).json({ error: 'Transmittal not found' });

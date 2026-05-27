@@ -7,6 +7,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { ExportButton } from '../../components/ExportButton';
+import { useToast } from '../../components/Toast';
 import { exportReport } from '../../utils/export';
 
 interface ReportTemplate {
@@ -37,6 +38,7 @@ export function ReportsPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
   const selected = reportTemplates.find((r) => r.id === selectedReport);
 
@@ -45,6 +47,8 @@ export function ReportsPage() {
     setIsGenerating(true);
     try {
       await exportReport(selectedReport, format);
+    } catch {
+      toast('Failed to generate report export', 'error');
     } finally {
       setIsGenerating(false);
     }

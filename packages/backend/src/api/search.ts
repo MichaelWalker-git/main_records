@@ -11,6 +11,8 @@ const searchSchema = z.object({
   query: z.string().min(1),
   type: z.enum(['metadata', 'fulltext', 'semantic', 'ocr']).optional(),
   record_type: z.string().optional(),
+  agency: z.string().optional(),
+  status: z.string().optional(),
   date_from: z.string().optional(),
   date_to: z.string().optional(),
   tags: z.array(z.string()).optional(),

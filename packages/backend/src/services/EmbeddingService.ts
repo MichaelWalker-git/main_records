@@ -49,7 +49,12 @@ export class EmbeddingService {
       .update({ embedding: db.raw(`?::vector`, [vectorStr]) });
   }
 
-  async semanticSearch(query: string, limit = 20, offset = 0, filters?: { agency_id?: string }) {
+  async semanticSearch(
+    query: string,
+    limit = 20,
+    offset = 0,
+    filters?: { agency_id?: string; agency?: string; status?: string }
+  ) {
     const queryEmbedding = await this.generateEmbedding(query);
     const vectorStr = `[${queryEmbedding.join(',')}]`;
 
@@ -71,6 +76,11 @@ export class EmbeddingService {
 
     if (filters?.agency_id) {
       q = q.where('records.agency_id', filters.agency_id);
+    } else if (filters?.agency) {
+      q = q.where('records.agency_code', filters.agency);
+    }
+    if (filters?.status) {
+      q = q.where('records.status', filters.status);
     }
 
     const results = await q

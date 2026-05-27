@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecr_assets from 'aws-cdk-lib/aws-ecr-assets';
 import * as path from 'path';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -35,11 +36,13 @@ export class ComputeStack extends cdk.Stack {
     super(scope, id, props);
 
     const backendImage = ecs.ContainerImage.fromAsset(
-      path.join(__dirname, '../../../backend')
+      path.join(__dirname, '../../../backend'),
+      { platform: ecr_assets.Platform.LINUX_AMD64 }
     );
 
     const frontendImage = ecs.ContainerImage.fromAsset(
-      path.join(__dirname, '../../../frontend')
+      path.join(__dirname, '../../../frontend'),
+      { platform: ecr_assets.Platform.LINUX_AMD64 }
     );
 
     this.cluster = new ecs.Cluster(this, 'Cluster', {

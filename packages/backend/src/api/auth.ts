@@ -13,15 +13,26 @@ function parseRoles(roles: any): string[] {
   return [];
 }
 
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'Demo@2024!';
+
 router.post('/auth/login', async (req: Request, res: Response) => {
   try {
     if (config.stage !== 'development') {
       return res.status(501).json({ error: 'Use Cognito hosted UI for authentication' });
     }
 
-    const { email } = req.body;
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    if (password !== DEMO_PASSWORD) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
     const user = await db('users')
-      .where('email', email || 'sarah.chen@maine.gov')
+      .where('email', email)
       .first();
 
     if (!user) {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 import { EmptyState } from './EmptyState';
+import { Pagination } from './Pagination';
 
 interface Column<T> {
   key: string;
@@ -25,6 +26,7 @@ interface DataTableProps<T> {
   onPageChange?: (page: number) => void;
   keyExtractor: (item: T) => string;
   isLoading?: boolean;
+  emptyState?: React.ReactNode;
 }
 
 export function DataTable<T>({
@@ -35,6 +37,7 @@ export function DataTable<T>({
   onPageChange,
   keyExtractor,
   isLoading,
+  emptyState,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -49,6 +52,7 @@ export function DataTable<T>({
   const safeData = Array.isArray(data) ? data : [];
 
   if (!isLoading && safeData.length === 0) {
+    if (emptyState) return <>{emptyState}</>;
     return <EmptyState title="No results found" message="Try adjusting your filters or search criteria." />;
   }
 
@@ -97,75 +101,14 @@ export function DataTable<T>({
           </tbody>
         </table>
       </div>
-      {pagination && onPageChange && pagination.totalPages > 1 && (
-        <nav className="flex items-center justify-between px-4 py-3 border-t border-slate-100" aria-label="Table pagination" data-testid="pagination">
-          <p className="text-xs text-slate-500" aria-live="polite">
-            {(pagination.page - 1) * pagination.pageSize + 1}–{Math.min(pagination.page * pagination.pageSize, pagination.total)} of {pagination.total}
-          </p>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => onPageChange(1)}
-              disabled={pagination.page <= 1}
-              className="w-8 h-8 text-xs border border-slate-200 rounded disabled:opacity-30 hover:bg-slate-50 text-slate-600"
-              aria-label="First page"
-            >
-              «
-            </button>
-            <button
-              onClick={() => onPageChange(pagination.page - 1)}
-              disabled={pagination.page <= 1}
-              className="w-8 h-8 text-xs border border-slate-200 rounded disabled:opacity-30 hover:bg-slate-50 text-slate-600"
-              aria-label="Previous page"
-              data-testid="pagination-prev"
-            >
-              ‹
-            </button>
-            {(() => {
-              const pages: number[] = [];
-              const total = pagination.totalPages;
-              const current = pagination.page;
-              let start = Math.max(1, current - 2);
-              let end = Math.min(total, current + 2);
-              if (end - start < 4) {
-                start = Math.max(1, end - 4);
-                end = Math.min(total, start + 4);
-              }
-              for (let i = start; i <= end; i++) pages.push(i);
-              return pages.map((p) => (
-                <button
-                  key={p}
-                  onClick={() => onPageChange(p)}
-                  className={`w-8 h-8 text-xs rounded ${
-                    p === current
-                      ? 'bg-navy-500 text-white font-medium'
-                      : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                  aria-label={`Page ${p}`}
-                  aria-current={p === current ? 'page' : undefined}
-                >
-                  {p}
-                </button>
-              ));
-            })()}
-            <button
-              onClick={() => onPageChange(pagination.page + 1)}
-              disabled={pagination.page >= pagination.totalPages}
-              className="w-8 h-8 text-xs border border-slate-200 rounded disabled:opacity-30 hover:bg-slate-50 text-slate-600"
-              aria-label="Next page"
-              data-testid="pagination-next"
-            >
-              ›
-            </button>
-            <button
-              onClick={() => onPageChange(pagination.totalPages)}
-              disabled={pagination.page >= pagination.totalPages}
-              className="w-8 h-8 text-xs border border-slate-200 rounded disabled:opacity-30 hover:bg-slate-50 text-slate-600"
-              aria-label="Last page"
-            >
-              »
-            </button>
-          </div>
-        </nav>
+      {pagination && onPageChange && (
+        <Pagination
+          page={pagination.page}
+          pageSize={pagination.pageSize}
+          total={pagination.total}
+          totalPages={pagination.totalPages}
+          onPageChange={onPageChange}
+        />
       )}
     </div>
   );

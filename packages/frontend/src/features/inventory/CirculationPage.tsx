@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { ArrowRightOnRectangleIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
+import {
+  ArrowRightOnRectangleIcon,
+  ArrowLeftOnRectangleIcon,
+  QrCodeIcon,
+  ExclamationTriangleIcon,
+  ClockIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/outline';
 import { DataTable } from '../../components/DataTable';
-import { StatusBadge } from '../../components/StatusBadge';
 import { Modal } from '../../components/Modal';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 
 interface CirculationEvent {
   id: string;
@@ -57,24 +64,47 @@ export function CirculationPage() {
 
   const overdueColumns = [
     { key: 'recordId', label: 'Record', render: (e: any) => (
-      <span className="font-medium text-slate-800">{e.recordTitle || e.recordId?.slice(0, 8) || '—'}</span>
+      <div className="min-w-0">
+        <span className="font-medium text-slate-800 block truncate">{e.recordTitle || e.record_title || '—'}</span>
+        <span className="text-[11px] text-slate-400 font-mono">{e.recordId?.slice(0, 8) || '—'}</span>
+      </div>
     )},
-    { key: 'userId', label: 'Checked Out By', render: (e: any) => e.userName || e.userId?.slice(0, 8) || '—' },
+    { key: 'userId', label: 'Held By', render: (e: any) => (
+      <span className="text-sm text-slate-700">{e.userName || e.user_name || e.userId?.slice(0, 8) || '—'}</span>
+    )},
+    { key: 'purpose', label: 'Purpose', render: (e: any) => (
+      <span className="text-sm text-slate-500 truncate block max-w-[150px]">{e.purpose || '—'}</span>
+    )},
     { key: 'checkedOutAt', label: 'Checked Out', render: (e: CirculationEvent) => {
-      if (!e.checkedOutAt) return <span>—</span>;
-      try { return <span>{format(new Date(e.checkedOutAt), 'MMM d, yyyy')}</span>; } catch { return <span>—</span>; }
+      const date = e.checkedOutAt || (e as any).checked_out_at;
+      if (!date) return <span className="text-slate-400">—</span>;
+      try { return <span className="text-sm">{format(new Date(date), 'MMM d, yyyy')}</span>; } catch { return <span>—</span>; }
     }},
     { key: 'dueDate', label: 'Due Date', render: (e: CirculationEvent) => {
-      if (!e.dueDate) return <span>—</span>;
-      try { return <span className="text-red-600 font-medium">{format(new Date(e.dueDate), 'MMM d, yyyy')}</span>; } catch { return <span>—</span>; }
+      const date = e.dueDate || (e as any).due_date;
+      if (!date) return <span className="text-slate-400">—</span>;
+      try {
+        const days = differenceInDays(new Date(), new Date(date));
+        return (
+          <div>
+            <span className="text-red-600 font-medium text-sm">{format(new Date(date), 'MMM d, yyyy')}</span>
+            <span className="text-[10px] text-red-500 block">{days} days overdue</span>
+          </div>
+        );
+      } catch { return <span>—</span>; }
     }},
-    { key: 'status', label: 'Status', render: () => <StatusBadge status="overdue" /> },
+    { key: 'status', label: 'Status', render: () => (
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-700 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
+        <ExclamationTriangleIcon className="w-3 h-3" />
+        Overdue
+      </span>
+    )},
     { key: 'actions', label: '', render: (e: CirculationEvent) => (
       <button
-        onClick={() => { setCheckinRecordId(e.recordId); setShowCheckin(true); }}
+        onClick={() => { setCheckinRecordId(e.recordId || (e as any).record_id); setShowCheckin(true); }}
         className="text-sm text-navy-500 hover:underline font-medium"
       >
-        Check In
+        Return
       </button>
     )},
   ];
@@ -84,16 +114,25 @@ export function CirculationPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-slate-800">Circulation</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Track record check-out and check-in</p>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Temporary check-out and return of physical records
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            to="/inventory/scan"
+            className="flex items-center gap-1.5 h-9 px-3 border border-slate-300 rounded text-sm font-medium hover:bg-slate-50 transition-colors text-slate-700"
+          >
+            <QrCodeIcon className="w-4 h-4" />
+            Scan Barcode
+          </Link>
           <button
             onClick={() => setShowCheckin(true)}
-            className="flex items-center gap-1.5 h-9 px-3 border border-slate-300 rounded text-sm font-medium hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-1.5 h-9 px-3 border border-slate-300 rounded text-sm font-medium hover:bg-slate-50 transition-colors text-slate-700"
             data-testid="checkin-button"
           >
             <ArrowLeftOnRectangleIcon className="w-4 h-4" />
-            Check In
+            Return Record
           </button>
           <button
             onClick={() => setShowCheckout(true)}
@@ -101,29 +140,69 @@ export function CirculationPage() {
             data-testid="checkout-button"
           >
             <ArrowRightOnRectangleIcon className="w-4 h-4" />
-            Check Out
+            Check Out Record
           </button>
         </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-md">
-        <div className="px-4 py-3 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-800">Overdue Items</h2>
+      {/* Explanation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+        <div className="bg-white border border-slate-200 rounded-md p-4 flex items-start gap-3">
+          <ArrowRightOnRectangleIcon className="w-5 h-5 text-navy-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-slate-800">Check Out</p>
+            <p className="text-xs text-slate-500 mt-0.5">Remove a record from storage for temporary use. Requires purpose and return date.</p>
+          </div>
         </div>
-        <DataTable
-          columns={overdueColumns}
-          data={overdueData}
-          keyExtractor={(e) => e.id}
-        />
-        {overdueData.length === 0 && (
-          <div className="px-4 py-8 text-center text-sm text-slate-500">
-            No overdue items. All records returned on time.
+        <div className="bg-white border border-slate-200 rounded-md p-4 flex items-start gap-3">
+          <ArrowLeftOnRectangleIcon className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-slate-800">Return (Check In)</p>
+            <p className="text-xs text-slate-500 mt-0.5">Return a checked-out record to Archives storage. Record becomes active again.</p>
+          </div>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-md p-4 flex items-start gap-3">
+          <QrCodeIcon className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-slate-800">Barcode Scan</p>
+            <p className="text-xs text-slate-500 mt-0.5">Scan a box/record barcode to look up its status and available actions.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Overdue Table */}
+      <div className="bg-white border border-slate-200 rounded-md">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-2">
+          <ExclamationTriangleIcon className="w-4 h-4 text-red-500" />
+          <h2 className="text-sm font-semibold text-slate-800">
+            Overdue Items {overdueData.length > 0 && <span className="text-red-600">({overdueData.length})</span>}
+          </h2>
+        </div>
+        {overdueData.length > 0 ? (
+          <DataTable
+            columns={overdueColumns}
+            data={overdueData}
+            keyExtractor={(e) => e.id}
+          />
+        ) : (
+          <div className="px-4 py-8 text-center">
+            <CheckCircleIcon className="w-8 h-8 text-green-400 mx-auto mb-2" />
+            <p className="text-sm text-slate-600 font-medium">All clear</p>
+            <p className="text-xs text-slate-400 mt-0.5">No overdue items. All records returned on time.</p>
           </div>
         )}
       </div>
 
       {/* Check Out Modal */}
       <Modal isOpen={showCheckout} onClose={() => setShowCheckout(false)} title="Check Out Record">
+        <div className="mb-4 p-3 bg-slate-50 border border-slate-200 rounded-md">
+          <div className="flex items-start gap-2">
+            <ClockIcon className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-600">
+              Checking out removes the record from storage for temporary use. The record status changes to "Checked Out" and must be returned by the due date.
+            </p>
+          </div>
+        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -191,7 +270,15 @@ export function CirculationPage() {
       </Modal>
 
       {/* Check In Modal */}
-      <Modal isOpen={showCheckin} onClose={() => setShowCheckin(false)} title="Check In Record">
+      <Modal isOpen={showCheckin} onClose={() => setShowCheckin(false)} title="Return Record (Check In)">
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+          <div className="flex items-start gap-2">
+            <CheckCircleIcon className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-600">
+              Returning a record places it back in Archives storage. Its status will change from "Checked Out" to "Active".
+            </p>
+          </div>
+        </div>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -227,7 +314,7 @@ export function CirculationPage() {
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={() => setShowCheckin(false)} className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
             <button type="submit" disabled={checkinMutation.isPending} className="h-9 px-4 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors" data-testid="confirm-checkin">
-              {checkinMutation.isPending ? 'Processing...' : 'Check In'}
+              {checkinMutation.isPending ? 'Processing...' : 'Return Record'}
             </button>
           </div>
         </form>

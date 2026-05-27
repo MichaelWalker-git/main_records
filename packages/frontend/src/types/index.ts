@@ -37,6 +37,8 @@ export interface RMSRecord {
   metadata: Record<string, unknown> | object;
   documentKey?: string;
   hasDocument?: boolean;
+  aiConfidence?: number;
+  classificationStatus?: string;
 }
 
 export type TransmittalStatus = 'draft' | 'submitted' | 'received' | 'approved' | 'rejected';
@@ -44,13 +46,22 @@ export type TransmittalStatus = 'draft' | 'submitted' | 'received' | 'approved' 
 export interface Transmittal {
   id: string;
   trackingNumber: string;
+  title?: string;
+  description?: string;
   agencyId: string;
   agencyName: string;
+  agencyCode?: string;
   status: TransmittalStatus;
   submittedBy: string;
+  submittedByName?: string;
   submittedAt?: string;
   receivedBy?: string;
+  receivedByName?: string;
   receivedAt?: string;
+  approvedBy?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
   itemCount: number;
   notes?: string;
   items: TransmittalItem[];

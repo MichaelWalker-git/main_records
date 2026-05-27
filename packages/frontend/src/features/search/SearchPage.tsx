@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { SearchInput } from '../../components/SearchInput';
+import { Tabs } from '../../components/Tabs';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { useApiMutation } from '../../hooks/useApi';
@@ -33,12 +34,19 @@ export function SearchPage() {
     [activeTab, agencyFilter, statusFilter]
   );
 
-  const tabs: { key: SearchTab; label: string }[] = [
+  const tabItems = [
     { key: 'metadata', label: 'Metadata' },
     { key: 'fulltext', label: 'Full-Text' },
     { key: 'semantic', label: 'Semantic (AI)' },
     { key: 'ocr', label: 'OCR' },
   ];
+
+  const tabDescriptions: Record<SearchTab, string> = {
+    metadata: 'Search title, description, tags, and structured fields. Best for exact known terms.',
+    fulltext: 'PostgreSQL full-text search across record content. Handles word stems and ranking.',
+    semantic: 'AI-powered similarity search using vector embeddings. Finds conceptually related records even without keyword overlap.',
+    ocr: 'Search inside scanned document text extracted by Bedrock OCR. Use when you remember what was inside, not the title.',
+  };
 
   const rawData = searchMutation.data as any;
   const results: SearchResult[] = rawData?.data?.hits ?? rawData?.hits ?? rawData?.data ?? rawData ?? [];
@@ -50,22 +58,17 @@ export function SearchPage() {
         <p className="text-sm text-slate-500 mt-0.5">Find records across all agencies and series</p>
       </div>
 
-      <div className="flex gap-0.5 mb-4 border-b border-slate-200">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              activeTab === tab.key
-                ? 'border-navy-500 text-navy-600'
-                : 'border-transparent text-slate-400 hover:text-slate-600'
-            }`}
-            data-testid={`search-tab-${tab.key}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        tabs={tabItems}
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key as SearchTab)}
+        className="mb-2"
+        testIdPrefix="search-tab"
+      />
+
+      <p className="text-xs text-slate-500 mb-4" data-testid="search-mode-description">
+        {tabDescriptions[activeTab]}
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-1">
@@ -120,7 +123,12 @@ export function SearchPage() {
             )}
             {results.length > 0 && (
               <div className="space-y-2" data-testid="search-results">
-                <p className="text-xs text-slate-500 font-medium">{results.length} results</p>
+                <p className="text-xs text-slate-500 font-medium">
+                  {results.length} {results.length === 1 ? 'result' : 'results'} via{' '}
+                  <span className="text-navy-600">
+                    {activeTab === 'semantic' ? 'semantic similarity' : activeTab === 'fulltext' ? 'full-text match' : activeTab === 'ocr' ? 'OCR text' : 'metadata'}
+                  </span>
+                </p>
                 {results.map((result: any) => (
                   <Link key={result.id} to={`/records/${result.id}`} className="block bg-white border border-slate-200 rounded-md p-4 hover:border-navy-300 hover:shadow-sm transition-all">
                     <div className="flex items-center justify-between">

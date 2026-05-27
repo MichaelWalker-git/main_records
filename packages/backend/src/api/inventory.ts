@@ -27,7 +27,10 @@ const createLocationSchema = z.object({
 const checkoutSchema = z.object({
   record_id: z.string().uuid(),
   purpose: z.string().min(1, 'Purpose is required for checkout'),
-  due_date: z.string().datetime(),
+  due_date: z.string().datetime().refine(
+    (val) => new Date(val) > new Date(),
+    { message: 'Due date must be in the future' }
+  ),
   notes: z.string().optional(),
 });
 
