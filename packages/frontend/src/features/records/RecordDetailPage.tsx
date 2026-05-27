@@ -205,7 +205,7 @@ export function RecordDetailPage() {
                   <select
                     value={record.status}
                     onChange={(e) => { if (e.target.value !== record.status) changeStatus(e.target.value); }}
-                    className={`h-6 px-2 text-[11px] font-medium rounded-full ${dropdownClass} border-0 focus:outline-none focus:ring-2 focus:ring-navy-500 cursor-pointer appearance-none pr-5`}
+                    className={`select-native h-6 px-2 text-[11px] font-medium rounded-full ${dropdownClass} border-0 focus:outline-none focus:ring-2 focus:ring-navy-500 cursor-pointer appearance-none pr-5`}
                     style={{
                       backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='${arrowFill}'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z'/%3E%3C/svg%3E")`,
                       backgroundRepeat: 'no-repeat',
