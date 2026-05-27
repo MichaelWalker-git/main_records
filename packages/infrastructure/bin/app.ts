@@ -82,6 +82,7 @@ new LambdaStack(app, `${prefix}-lambda`, {
   dbSecret: database.dbSecret,
   dbProxy: database.dbProxy,
   documentsBucket: storage.documentsBucket,
+  promptsBucket: storage.promptsBucket,
   exportsBucket: storage.exportsBucket,
   classifyQueue: messaging.classifyQueue,
   ocrQueue: messaging.ocrQueue,

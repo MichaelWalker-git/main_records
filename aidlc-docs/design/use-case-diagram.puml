@@ -1,0 +1,173 @@
+@startuml Maine Records Management System - Use Case Diagram
+
+left to right direction
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+
+actor "System Admin\n(Sarah Chen)" as SA
+actor "Archives Staff\n(Michael Torres)" as AS
+actor "Records Officer\n(Diana Patel)" as RO
+actor "Agency Staff\n(James Wright)" as AGS
+
+rectangle "Maine Records Management System" {
+
+  package "Records Management" {
+    usecase "Create Record" as UC1
+    usecase "Edit Record" as UC2
+    usecase "View Record" as UC3
+    usecase "Batch Import Records" as UC4
+    usecase "Upload Document" as UC5
+    usecase "Generate Barcode/Label" as UC6
+    usecase "Scan Barcode Lookup" as UC7
+  }
+
+  package "Search & Retrieval" {
+    usecase "Full-Text Search" as UC8
+    usecase "Metadata Search" as UC9
+    usecase "Semantic (AI) Search" as UC10
+    usecase "OCR Text Search" as UC11
+  }
+
+  package "Transmittals" {
+    usecase "Submit Transmittal" as UC12
+    usecase "Approve/Reject Transmittal" as UC13
+    usecase "Receive Transmittal" as UC14
+  }
+
+  package "Retention & Disposition" {
+    usecase "Assign Retention Schedule" as UC15
+    usecase "Initiate Disposition" as UC16
+    usecase "Approve Disposition (3-level)" as UC17
+    usecase "Place Legal Hold" as UC18
+    usecase "Release Legal Hold" as UC19
+  }
+
+  package "Circulation & Inventory" {
+    usecase "Check Out Record" as UC20
+    usecase "Check In Record" as UC21
+    usecase "View Overdue Records" as UC22
+    usecase "Manage Locations" as UC23
+    usecase "View Utilization" as UC24
+  }
+
+  package "Agency Self-Service" {
+    usecase "Submit Accession Request" as UC25
+    usecase "Submit Reference Request" as UC26
+    usecase "Track Request Status" as UC27
+  }
+
+  package "Analytics & Reporting" {
+    usecase "View Dashboard" as UC28
+    usecase "Generate Reports (CSV/HTML)" as UC29
+    usecase "Export Audit Trail" as UC30
+  }
+
+  package "Administration" {
+    usecase "Manage Users & Roles" as UC31
+    usecase "Configure Retention Schedules" as UC32
+    usecase "Manage Templates" as UC33
+    usecase "Configure Integrations" as UC34
+    usecase "View Audit Log" as UC35
+  }
+
+  package "AI/Automation" {
+    usecase "Auto-Classify Document" as UC36
+    usecase "OCR Extract Text" as UC37
+    usecase "Generate Embeddings" as UC38
+    usecase "Send Retention Alerts" as UC39
+  }
+}
+
+' --- System Admin (all access) ---
+SA --> UC31
+SA --> UC32
+SA --> UC33
+SA --> UC34
+SA --> UC35
+SA --> UC18
+SA --> UC19
+SA --> UC17
+SA --> UC30
+
+' --- Archives Staff ---
+AS --> UC1
+AS --> UC2
+AS --> UC3
+AS --> UC4
+AS --> UC5
+AS --> UC6
+AS --> UC7
+AS --> UC8
+AS --> UC9
+AS --> UC10
+AS --> UC13
+AS --> UC14
+AS --> UC15
+AS --> UC16
+AS --> UC17
+AS --> UC20
+AS --> UC21
+AS --> UC22
+AS --> UC23
+AS --> UC24
+AS --> UC28
+AS --> UC29
+
+' --- Records Officer ---
+RO --> UC1
+RO --> UC2
+RO --> UC3
+RO --> UC5
+RO --> UC6
+RO --> UC7
+RO --> UC8
+RO --> UC9
+RO --> UC12
+RO --> UC15
+RO --> UC16
+RO --> UC20
+RO --> UC21
+RO --> UC22
+RO --> UC28
+
+' --- Agency Staff ---
+AGS --> UC3
+AGS --> UC7
+AGS --> UC8
+AGS --> UC9
+AGS --> UC25
+AGS --> UC26
+AGS --> UC27
+AGS --> UC28
+
+' --- Automation (system triggers) ---
+UC5 ..> UC37 : <<triggers>>
+UC37 ..> UC36 : <<triggers>>
+UC36 ..> UC38 : <<triggers>>
+UC39 ..> UC22 : <<includes>>
+
+note right of UC36
+  Bedrock Claude Sonnet
+  tool_use pattern
+  Confidence >= 0.85 auto-accepts
+end note
+
+note right of UC37
+  Bedrock Claude Vision
+  PDF + image support
+end note
+
+note right of UC38
+  Bedrock Titan Embeddings v2
+  1024-dim vectors in pgvector
+end note
+
+note bottom of UC17
+  3-level sequential approval:
+  L1 -> L2 -> L3
+  Initiator cannot approve
+  Same user cannot approve
+  multiple levels
+end note
+
+@enduml

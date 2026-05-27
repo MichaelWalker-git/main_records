@@ -25,8 +25,9 @@ export class NotificationService {
     if (userId) {
       await this.db('notifications').insert({
         user_id: userId,
-        event_type: eventType,
-        payload: JSON.stringify(payload),
+        type: eventType,
+        title: eventType.replace(/_/g, ' '),
+        message: JSON.stringify(payload),
         is_read: false,
         created_at: new Date(),
       });

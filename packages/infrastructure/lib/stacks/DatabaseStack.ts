@@ -26,8 +26,8 @@ export class DatabaseStack extends cdk.Stack {
       description: 'RDS security group',
       allowAllOutbound: false,
     });
-    this.rdsSg.addIngressRule(props.ecsSg, ec2.Port.tcp(5433), 'From ECS');
-    this.rdsSg.addIngressRule(props.lambdaSg, ec2.Port.tcp(5433), 'From Lambda');
+    this.rdsSg.addIngressRule(props.ecsSg, ec2.Port.tcp(5432), 'From ECS');
+    this.rdsSg.addIngressRule(props.lambdaSg, ec2.Port.tcp(5432), 'From Lambda');
 
     const encryptionKey = new kms.Key(this, 'DbEncryptionKey', {
       enableKeyRotation: true,
@@ -53,11 +53,9 @@ export class DatabaseStack extends cdk.Stack {
       serverlessV2MinCapacity: 0.5,
       serverlessV2MaxCapacity: 4,
       writer: rds.ClusterInstance.serverlessV2('writer'),
-      readers: [rds.ClusterInstance.serverlessV2('reader', { scaleWithWriter: true })],
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       securityGroups: [this.rdsSg],
-      port: 5433,
       storageEncrypted: true,
       storageEncryptionKey: encryptionKey,
       deletionProtection: false,
@@ -67,12 +65,14 @@ export class DatabaseStack extends cdk.Stack {
     });
 
     this.dbProxy = new rds.DatabaseProxy(this, 'DbProxy', {
+      dbProxyName: 'maine-rms-dev-proxy',
       proxyTarget: rds.ProxyTarget.fromCluster(this.dbCluster),
       secrets: [dbSecret],
       vpc: props.vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       securityGroups: [this.rdsSg],
-      requireTLS: true,
+      requireTLS: false,
+      debugLogging: true,
     });
 
     new cdk.CfnOutput(this, 'DbProxyEndpoint', { value: this.dbProxy.endpoint });

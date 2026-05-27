@@ -20,8 +20,9 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   AGENCY_STAFF: [
     'records:read', 'records:write',
     'transmittals:read', 'transmittals:write',
+    'dispositions:read',
     'inventory:read',
-    'search:read',
+    'search:read', 'analytics:read',
   ],
   VIEWER: ['records:read', 'search:read', 'analytics:read'],
 };

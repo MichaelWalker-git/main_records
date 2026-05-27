@@ -1,17 +1,43 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { PlusIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { Link, useNavigate } from 'react-router-dom';
+import { PlusIcon, FunnelIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { useQueryClient } from '@tanstack/react-query';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
 import { SearchInput } from '../../components/SearchInput';
 import { ExportButton } from '../../components/ExportButton';
 import { usePaginatedQuery } from '../../hooks/useApi';
+import { exportRecords } from '../../utils/export';
+import api from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
 import { RMSRecord as Record } from '../../types';
 
 export function RecordsListPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { isAdmin, isStaff, isOfficer } = useAuth();
+  const canEdit = isAdmin || isStaff || isOfficer;
+  const canClassify = isAdmin || isStaff;
+  const canDelete = isAdmin;
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+
+  async function handleClassify(id: string) {
+    try {
+      await api.post(`/records/${id}/classify`);
+      alert('Classification initiated. AI is processing...');
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+    } catch { alert('Classification failed.'); }
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    try {
+      await api.delete(`/records/${id}`);
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+    } catch { alert('Delete failed.'); }
+  }
 
   const { data, isLoading } = usePaginatedQuery<Record>(
     ['records'],
@@ -20,19 +46,55 @@ export function RecordsListPage() {
   );
 
   const columns = [
-    { key: 'trackingNumber', label: 'Tracking #', sortable: true, render: (r: Record) => (
-      <span className="font-mono text-xs text-slate-500">{r.trackingNumber}</span>
+    { key: 'title', label: 'Record', sortable: true, render: (r: Record) => (
+      <div className="min-w-0">
+        <Link to={`/records/${r.id}`} className="text-navy-500 hover:text-navy-700 font-medium hover:underline block truncate" data-testid={`record-link-${r.id}`}>
+          {r.title}
+        </Link>
+        <span className="text-[11px] text-slate-400 font-mono">{r.trackingNumber}</span>
+      </div>
     )},
-    { key: 'title', label: 'Title', sortable: true, render: (r: Record) => (
-      <Link to={`/records/${r.id}`} className="text-navy-500 hover:text-navy-700 font-medium hover:underline" data-testid={`record-link-${r.id}`}>
-        {r.title}
-      </Link>
+    { key: 'seriesTitle', label: 'Series', sortable: true, render: (r: Record) => (
+      <span className="text-sm text-slate-600 truncate block max-w-[180px]">{r.seriesTitle || '—'}</span>
     )},
-    { key: 'seriesTitle', label: 'Series', sortable: true },
-    { key: 'agencyName', label: 'Agency', sortable: true },
     { key: 'status', label: 'Status', render: (r: Record) => <StatusBadge status={r.status} /> },
-    { key: 'locationPath', label: 'Location', render: (r: Record) => (
-      <span className="text-slate-500">{r.locationPath || '—'}</span>
+    { key: 'actions', label: '', render: (r: Record) => (
+      <div className="flex items-center gap-0.5 justify-end">
+        <button
+          onClick={() => navigate(`/records/${r.id}`)}
+          className="p-1.5 text-slate-400 hover:text-navy-500 transition-colors"
+          title="View"
+        >
+          <EyeIcon className="w-4 h-4" />
+        </button>
+        {canEdit && (
+          <button
+            onClick={() => navigate(`/records/${r.id}/edit`)}
+            className="p-1.5 text-slate-400 hover:text-navy-500 transition-colors"
+            title="Edit"
+          >
+            <PencilIcon className="w-4 h-4" />
+          </button>
+        )}
+        {canClassify && (
+          <button
+            onClick={() => handleClassify(r.id)}
+            className="p-1.5 text-slate-400 hover:text-pine-500 transition-colors"
+            title="AI Classify"
+          >
+            <TagIcon className="w-4 h-4" />
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={() => handleDelete(r.id)}
+            className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
+            title="Delete"
+          >
+            <TrashIcon className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     )},
   ];
 
@@ -46,7 +108,7 @@ export function RecordsListPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton onExport={() => {}} />
+          <ExportButton onExport={exportRecords} />
           <Link
             to="/records/new"
             className="flex items-center gap-1.5 h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
@@ -61,7 +123,7 @@ export function RecordsListPage() {
       <div className="bg-white border border-slate-200 rounded-md">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
           <div className="flex-1">
-            <SearchInput placeholder="Search by title, tracking number, or keyword..." onSearch={setSearch} />
+            <SearchInput placeholder="Search records..." onSearch={setSearch} />
           </div>
           <div className="flex items-center gap-2">
             <FunnelIcon className="w-4 h-4 text-slate-400" />
@@ -73,10 +135,14 @@ export function RecordsListPage() {
             >
               <option value="">All Statuses</option>
               <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="pending_disposition">Pending Disposition</option>
-              <option value="transferred">Transferred</option>
+              <option value="checked_out">Checked Out</option>
+              <option value="in_transit">In Transit</option>
               <option value="on_hold">On Hold</option>
+              <option value="pending_disposition">Pending Disposition</option>
+              <option value="archived">Archived</option>
+              <option value="transferred">Transferred</option>
+              <option value="destroyed">Destroyed</option>
+              <option value="disposed">Disposed</option>
             </select>
           </div>
         </div>

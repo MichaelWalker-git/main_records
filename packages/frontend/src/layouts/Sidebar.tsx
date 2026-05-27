@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   HomeIcon,
   DocumentTextIcon,
+  DocumentDuplicateIcon,
   TruckIcon,
   TrashIcon,
   MapPinIcon,
@@ -26,13 +27,15 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', path: '/', icon: HomeIcon, section: 'main' },
   { label: 'Records', path: '/records', icon: DocumentTextIcon, section: 'main' },
   { label: 'Transmittals', path: '/transmittals', icon: TruckIcon, section: 'main' },
-  { label: 'Dispositions', path: '/dispositions', icon: TrashIcon, section: 'main' },
-  { label: 'Inventory', path: '/inventory', icon: MapPinIcon, section: 'operations' },
-  { label: 'Circulation', path: '/inventory/circulation', icon: ArrowsRightLeftIcon, section: 'operations' },
+  { label: 'Dispositions', path: '/dispositions', icon: TrashIcon, roles: ['admin', 'staff', 'records_officer'], section: 'main' },
+  { label: 'Inventory', path: '/inventory', icon: MapPinIcon, roles: ['admin', 'staff', 'records_officer'], section: 'operations' },
+  { label: 'Circulation', path: '/inventory/circulation', icon: ArrowsRightLeftIcon, roles: ['admin', 'staff', 'records_officer'], section: 'operations' },
   { label: 'Search', path: '/search', icon: MagnifyingGlassIcon, section: 'operations' },
   { label: 'Analytics', path: '/analytics', icon: ChartBarIcon, section: 'operations' },
-  { label: 'Agency Portal', path: '/agency', icon: BuildingOfficeIcon, roles: ['agency_user', 'admin'], section: 'admin' },
+  { label: 'Reports', path: '/analytics/reports', icon: DocumentDuplicateIcon, roles: ['admin', 'staff', 'records_officer'], section: 'operations' },
+  { label: 'Agency Portal', path: '/agency', icon: BuildingOfficeIcon, roles: ['agency_user', 'admin', 'staff'], section: 'admin' },
   { label: 'Notifications', path: '/admin/notifications', icon: BellIcon, section: 'admin' },
+  { label: 'Templates', path: '/admin/templates', icon: DocumentDuplicateIcon, roles: ['admin', 'staff'], section: 'admin' },
   { label: 'Administration', path: '/admin', icon: Cog6ToothIcon, roles: ['admin'], section: 'admin' },
 ];
 

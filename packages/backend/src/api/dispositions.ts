@@ -31,17 +31,25 @@ const createLegalHoldSchema = z.object({
 
 router.get('/', authorize('dispositions:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const { page = '1', pageSize = '25', status } = req.query as any;
     const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
-    const dispositions = isAdmin
-      ? await dispositionsRepo.findAll()
+    let dispositions = isAdmin
+      ? await dispositionsRepo.findAllWithAgency()
       : await dispositionsRepo.findByAgency(req.user!.agencyId);
-    res.json({ data: dispositions });
+    if (status) {
+      dispositions = dispositions.filter((d: any) => d.status === status || (status === 'pending' && (d.status === 'pending' || d.status === 'pending_approval')));
+    }
+    res.json({ data: dispositions, total: dispositions.length, page: Number(page), pageSize: Number(pageSize) });
   } catch (err) { next(err); }
 });
 
 router.get('/:id', authorize('dispositions:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const disposition = await dispositionsRepo.findById(req.params.id);
+    const disposition = await db('dispositions')
+      .select('dispositions.*', 'agencies.name as agency_name', 'agencies.code as agency_code')
+      .leftJoin('agencies', 'dispositions.agency_id', 'agencies.id')
+      .where({ 'dispositions.id': req.params.id })
+      .first();
     if (!disposition) return res.status(404).json({ error: 'Disposition not found' });
     const items = await dispositionsRepo.getItems(req.params.id);
     res.json({ data: { ...disposition, items } });
@@ -71,7 +79,28 @@ router.post('/:id/reject', authorize('dispositions:approve'), async (req: Reques
   } catch (err) { next(err); }
 });
 
+router.delete('/:id', authorize('dispositions:write'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const disposition = await dispositionsRepo.findById(req.params.id);
+    if (!disposition) return res.status(404).json({ error: 'Disposition not found' });
+    // Delete disposition and its items, get affected record IDs
+    const recordIds = await dispositionsRepo.deleteWithItems(req.params.id);
+    // Reset records back to active
+    if (recordIds.length > 0) {
+      await db('records').whereIn('id', recordIds).where('status', 'pending_disposition').update({ status: 'active', updated_at: new Date() });
+    }
+    res.json({ message: 'Disposition deleted', recordsReset: recordIds.length });
+  } catch (err) { next(err); }
+});
+
 // Legal Holds
+router.get('/legal-holds', authorize('dispositions:read'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const holds = await dispositionsRepo.findAllLegalHolds();
+    res.json({ data: holds });
+  } catch (err) { next(err); }
+});
+
 router.get('/legal-holds/:recordId', authorize('dispositions:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const holds = await dispositionsRepo.findLegalHolds(req.params.recordId);

@@ -20,11 +20,26 @@ export class LocationsRepository extends BaseRepository<Location> {
     super(db, 'locations');
   }
 
-  async findTree(parentId?: string): Promise<Location[]> {
-    if (parentId) {
-      return this.db(this.tableName).where({ parent_id: parentId }).orderBy('name');
+  async findTree(parentId?: string): Promise<(Location & { children?: Location[] })[]> {
+    const all = await this.db(this.tableName).where({ is_active: true }).orderBy('name');
+    // Build tree in memory
+    const map = new Map<string, Location & { children: Location[] }>();
+    for (const loc of all) {
+      map.set(loc.id, { ...loc, children: [] });
     }
-    return this.db(this.tableName).whereNull('parent_id').orderBy('name');
+    const roots: (Location & { children: Location[] })[] = [];
+    for (const loc of all) {
+      const node = map.get(loc.id)!;
+      if (loc.parent_id && map.has(loc.parent_id)) {
+        map.get(loc.parent_id)!.children.push(node);
+      } else if (!loc.parent_id || (parentId && loc.parent_id === parentId)) {
+        roots.push(node);
+      }
+    }
+    if (parentId) {
+      return map.has(parentId) ? map.get(parentId)!.children : [];
+    }
+    return roots;
   }
 
   async findChildren(parentId: string): Promise<Location[]> {

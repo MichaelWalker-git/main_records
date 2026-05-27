@@ -13,7 +13,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://maine--alb16-kxi3dpqk8uzt-480421270.us-east-1.elb.amazonaws.com',
         changeOrigin: true,
       },
     },

@@ -30,9 +30,14 @@ export class InventoryService {
     return this.locationsRepo.getUtilization(locationId);
   }
 
-  async checkout(recordId: string, userId: string, agencyId: string, dueDate: Date, notes?: string) {
+  async checkout(recordId: string, userId: string, agencyId: string, dueDate: Date, purpose: string, notes?: string) {
     const record = await this.recordsRepo.findById(recordId);
     if (!record) throw new AppError(404, 'Record not found');
+
+    // CIR-01: Only ACTIVE records can be checked out
+    if (record.status !== 'active') {
+      throw new AppError(400, `Only active records can be checked out (current status: ${record.status})`);
+    }
 
     const existing = await this.circulationRepo.findActiveCheckout(recordId);
     if (existing) throw new AppError(409, 'Record is already checked out');
@@ -41,6 +46,7 @@ export class InventoryService {
       record_id: recordId,
       user_id: userId,
       agency_id: agencyId,
+      purpose,
       checked_out_at: new Date(),
       due_date: dueDate,
       notes,

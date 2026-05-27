@@ -18,6 +18,7 @@ export interface LambdaStackProps extends cdk.StackProps {
   dbSecret: secretsmanager.ISecret;
   dbProxy: rds.DatabaseProxy;
   documentsBucket: s3.Bucket;
+  promptsBucket: s3.Bucket;
   exportsBucket: s3.Bucket;
   classifyQueue: sqs.Queue;
   ocrQueue: sqs.Queue;
@@ -30,7 +31,7 @@ export class LambdaStack extends cdk.Stack {
 
     const commonEnv = {
       DB_PROXY_ENDPOINT: props.dbProxy.endpoint,
-      DB_PORT: '5433',
+      DB_PORT: '5432',
       DOCUMENTS_BUCKET: props.documentsBucket.bucketName,
     };
 
@@ -48,11 +49,12 @@ export class LambdaStack extends cdk.Stack {
       code: lambda.Code.fromInline('exports.handler = async () => ({ statusCode: 200 });'),
       timeout: cdk.Duration.minutes(5),
       memorySize: 512,
-      environment: { ...commonEnv, PROMPTS_BUCKET: props.documentsBucket.bucketName },
+      environment: { ...commonEnv, PROMPTS_BUCKET: props.promptsBucket.bucketName },
       ...vpcConfig,
     });
     props.dbSecret.grantRead(classifyFn);
     props.documentsBucket.grantRead(classifyFn);
+    props.promptsBucket.grantRead(classifyFn);
     classifyFn.addToRolePolicy(new iam.PolicyStatement({
       actions: ['bedrock:InvokeModel'],
       resources: [`arn:aws:bedrock:${this.region}::foundation-model/*`],

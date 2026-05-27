@@ -13,9 +13,9 @@ const authService = new AuthService(usersRepo);
 
 const createUserSchema = z.object({
   email: z.string().email(),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  agencyId: z.string().uuid(),
+  first_name: z.string().min(1),
+  last_name: z.string().min(1),
+  agency_id: z.string().uuid().optional(),
   roles: z.array(z.string()).min(1),
 });
 
@@ -41,7 +41,13 @@ router.get('/:id', authorize('users:read'), async (req: Request, res: Response, 
 
 router.post('/', authorize('users:write'), validate(createUserSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await authService.createUser(req.body);
+    const user = await authService.createUser({
+      email: req.body.email,
+      firstName: req.body.first_name,
+      lastName: req.body.last_name,
+      agencyId: req.body.agency_id || 'a1b2c3d4-1111-4000-8000-000000000001',
+      roles: req.body.roles,
+    });
     res.status(201).json({ data: user });
   } catch (err) { next(err); }
 });

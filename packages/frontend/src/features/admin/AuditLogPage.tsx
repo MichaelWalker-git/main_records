@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DataTable } from '../../components/DataTable';
 import { SearchInput } from '../../components/SearchInput';
 import { ExportButton } from '../../components/ExportButton';
+import { exportAuditLog } from '../../utils/export';
 import { usePaginatedQuery } from '../../hooks/useApi';
 import { AuditEvent } from '../../types';
 import { format } from 'date-fns';
@@ -18,16 +19,13 @@ export function AuditLogPage() {
   );
 
   const columns = [
-    { key: 'timestamp', label: 'Time', sortable: true, render: (e: AuditEvent) => format(new Date(e.timestamp), 'MMM d, yyyy HH:mm:ss') },
+    { key: 'createdAt', label: 'Time', sortable: true, render: (e: AuditEvent) => format(new Date(e.createdAt), 'MMM d, yyyy HH:mm:ss') },
     { key: 'action', label: 'Action', sortable: true },
-    { key: 'entityType', label: 'Entity Type' },
-    { key: 'entityId', label: 'Entity ID', render: (e: AuditEvent) => (
-      <span className="font-mono text-xs">{e.entityId}</span>
+    { key: 'resourceType', label: 'Resource Type' },
+    { key: 'resourceId', label: 'Resource ID', render: (e: AuditEvent) => (
+      <span className="font-mono text-xs">{e.resourceId || '-'}</span>
     )},
-    { key: 'userName', label: 'User', sortable: true },
-    { key: 'ipAddress', label: 'IP Address', render: (e: AuditEvent) => (
-      <span className="font-mono text-xs">{e.ipAddress || '-'}</span>
-    )},
+    { key: 'userEmail', label: 'User', sortable: true },
   ];
 
   return (
@@ -37,7 +35,7 @@ export function AuditLogPage() {
           <h1 className="text-xl font-bold text-slate-800">Audit Log</h1>
           <p className="text-sm text-slate-500 mt-0.5">System activity and access history</p>
         </div>
-        <ExportButton onExport={() => {}} />
+        <ExportButton onExport={exportAuditLog} />
       </div>
 
       <div className="bg-white border border-slate-200 rounded-md">

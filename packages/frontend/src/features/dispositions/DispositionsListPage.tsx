@@ -18,20 +18,24 @@ export function DispositionsListPage() {
   );
 
   const columns = [
-    { key: 'title', label: 'Title', sortable: true, render: (d: Disposition) => (
+    { key: 'title', label: 'Title', sortable: true, render: (d: any) => (
       <Link to={`/dispositions/${d.id}`} className="text-navy-500 hover:text-navy-700 font-medium" data-testid={`disposition-link-${d.id}`}>
         {d.title}
       </Link>
     )},
-    { key: 'agencyName', label: 'Agency', sortable: true },
-    { key: 'method', label: 'Method', render: (d: Disposition) => (
-      <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{d.method}</span>
+    { key: 'agencyId', label: 'Agency', sortable: true, render: (d: any) => (
+      <span>{d.agencyName || d.agencyId || '—'}</span>
     )},
-    { key: 'recordCount', label: 'Records', render: (d: Disposition) => (
-      <span className="tabular-nums">{d.recordCount}</span>
+    { key: 'dispositionAction', label: 'Method', render: (d: any) => (
+      <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{d.dispositionAction || d.method || '—'}</span>
     )},
-    { key: 'scheduledDate', label: 'Scheduled', render: (d: Disposition) => format(new Date(d.scheduledDate), 'MMM d, yyyy') },
-    { key: 'status', label: 'Status', render: (d: Disposition) => (
+    { key: 'initiatedAt', label: 'Initiated', render: (d: any) => {
+      const date = d.scheduledDate || d.initiatedAt || d.createdAt;
+      if (!date) return <span>—</span>;
+      try { return <span>{format(new Date(date), 'MMM d, yyyy')}</span>; }
+      catch { return <span>—</span>; }
+    }},
+    { key: 'status', label: 'Status', render: (d: any) => (
       <div className="flex items-center gap-2">
         <StatusBadge status={d.status} />
         {d.legalHold && <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase">Hold</span>}

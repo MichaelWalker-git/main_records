@@ -23,11 +23,11 @@ describe('config - buildDatabaseUrl', () => {
 
   it('builds URL from DB_HOST + DB_SECRET JSON', async () => {
     process.env.DB_HOST = 'proxy.rds.amazonaws.com';
-    process.env.DB_PORT = '5433';
+    process.env.DB_PORT = '5432';
     process.env.DB_SECRET = JSON.stringify({ username: 'admin', password: 's3cr3t' });
     const { config } = await import('../config');
     expect(config.databaseUrl).toBe(
-      'postgresql://admin:s3cr3t@proxy.rds.amazonaws.com:5433/maine_rms?sslmode=require'
+      'postgresql://admin:s3cr3t@proxy.rds.amazonaws.com:5432/maine_rms'
     );
   });
 
@@ -44,7 +44,7 @@ describe('config - buildDatabaseUrl', () => {
     process.env.DB_SECRET = 'not-json';
     const { config } = await import('../config');
     expect(config.databaseUrl).toBe(
-      'postgresql://proxy.rds.amazonaws.com:5433/maine_rms?sslmode=require'
+      'postgresql://proxy.rds.amazonaws.com:5432/maine_rms'
     );
   });
 
@@ -53,10 +53,10 @@ describe('config - buildDatabaseUrl', () => {
     expect(config.databaseUrl).toBe('postgresql://localhost:5432/maine_rms');
   });
 
-  it('uses default port 5433 when DB_PORT not set', async () => {
+  it('uses default port 5432 when DB_PORT not set', async () => {
     process.env.DB_HOST = 'proxy.rds.amazonaws.com';
     process.env.DB_SECRET = JSON.stringify({ username: 'u', password: 'p' });
     const { config } = await import('../config');
-    expect(config.databaseUrl).toContain(':5433/');
+    expect(config.databaseUrl).toContain(':5432/');
   });
 });

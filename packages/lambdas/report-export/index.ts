@@ -53,11 +53,10 @@ function getQueryForReport(
       };
     case "audit-log":
       return {
-        query: `SELECT al.id, al.action, al.entity_type, al.entity_id, u.name AS user_name, al.created_at
-                FROM audit_log al
-                JOIN users u ON u.id = al.user_id
-                WHERE al.created_at BETWEEN $1 AND $2
-                ORDER BY al.created_at DESC`,
+        query: `SELECT ae.id, ae.action, ae.resource_type, ae.resource_id, ae.user_email, ae.created_at
+                FROM audit_events ae
+                WHERE ae.created_at BETWEEN $1 AND $2
+                ORDER BY ae.created_at DESC`,
         params: [
           parameters.startDate || new Date(0).toISOString(),
           parameters.endDate || new Date().toISOString(),

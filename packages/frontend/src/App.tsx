@@ -6,6 +6,7 @@ import { LoginPage } from './features/auth/LoginPage';
 import { RecordsListPage } from './features/records/RecordsListPage';
 import { RecordDetailPage } from './features/records/RecordDetailPage';
 import { CreateRecordPage } from './features/records/CreateRecordPage';
+import { EditRecordPage } from './features/records/EditRecordPage';
 import { BatchImportPage } from './features/records/BatchImportPage';
 import { TransmittalsListPage } from './features/transmittals/TransmittalsListPage';
 import { SubmitTransmittalPage } from './features/transmittals/SubmitTransmittalPage';
@@ -19,12 +20,14 @@ import { UtilizationPage } from './features/inventory/UtilizationPage';
 import { CirculationPage } from './features/inventory/CirculationPage';
 import { SearchPage } from './features/search/SearchPage';
 import { DashboardPage } from './features/analytics/DashboardPage';
+import { AnalyticsPage } from './features/analytics/AnalyticsPage';
 import { ReportsPage } from './features/analytics/ReportsPage';
 import { UsersPage } from './features/admin/UsersPage';
 import { RetentionSchedulesPage } from './features/admin/RetentionSchedulesPage';
 import { AuditLogPage } from './features/admin/AuditLogPage';
 import { IntegrationsPage } from './features/admin/IntegrationsPage';
 import { NotificationsPage } from './features/admin/NotificationsPage';
+import { TemplatesPage } from './features/admin/TemplatesPage';
 import { AgencyDashboardPage } from './features/agency-portal/AgencyDashboardPage';
 import { SubmitAccessionPage } from './features/agency-portal/SubmitAccessionPage';
 import { ReferenceRequestPage } from './features/agency-portal/ReferenceRequestPage';
@@ -78,6 +81,7 @@ export function App() {
           <Route path="/records/new" element={<CreateRecordPage />} />
           <Route path="/records/import" element={<BatchImportPage />} />
           <Route path="/records/:id" element={<RecordDetailPage />} />
+          <Route path="/records/:id/edit" element={<EditRecordPage />} />
           <Route path="/transmittals" element={<TransmittalsListPage />} />
           <Route path="/transmittals/new" element={<SubmitTransmittalPage />} />
           <Route path="/transmittals/:id" element={<TransmittalDetailPage />} />
@@ -89,13 +93,14 @@ export function App() {
           <Route path="/inventory/utilization" element={<UtilizationPage />} />
           <Route path="/inventory/circulation" element={<CirculationPage />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/analytics" element={<DashboardPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/analytics/reports" element={<ReportsPage />} />
           <Route path="/admin" element={<RoleRoute allowedRoles={['admin']}><UsersPage /></RoleRoute>} />
           <Route path="/admin/users" element={<RoleRoute allowedRoles={['admin']}><UsersPage /></RoleRoute>} />
           <Route path="/admin/retention" element={<RoleRoute allowedRoles={['admin', 'staff']}><RetentionSchedulesPage /></RoleRoute>} />
           <Route path="/admin/audit" element={<RoleRoute allowedRoles={['admin']}><AuditLogPage /></RoleRoute>} />
           <Route path="/admin/integrations" element={<RoleRoute allowedRoles={['admin']}><IntegrationsPage /></RoleRoute>} />
+          <Route path="/admin/templates" element={<RoleRoute allowedRoles={['admin', 'staff']}><TemplatesPage /></RoleRoute>} />
           <Route path="/admin/notifications" element={<NotificationsPage />} />
           <Route path="/agency" element={<RoleRoute allowedRoles={['agency_user', 'admin']}><AgencyDashboardPage /></RoleRoute>} />
           <Route path="/agency/accession" element={<RoleRoute allowedRoles={['agency_user', 'admin']}><SubmitAccessionPage /></RoleRoute>} />

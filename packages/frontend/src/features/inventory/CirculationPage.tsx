@@ -8,20 +8,22 @@ import { format } from 'date-fns';
 
 interface CirculationEvent {
   id: string;
-  record_id: string;
-  record_title?: string;
-  user_id: string;
-  user_name?: string;
-  event_type: 'checkout' | 'checkin';
-  checked_out_at: string;
-  due_date: string;
-  checked_in_at?: string;
+  recordId: string;
+  recordTitle?: string;
+  userId: string;
+  userName?: string;
+  eventType: 'checkout' | 'checkin';
+  checkedOutAt: string;
+  dueDate: string;
+  checkedInAt?: string;
   notes?: string;
+  purpose?: string;
 }
 
 export function CirculationPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [recordId, setRecordId] = useState('');
+  const [purpose, setPurpose] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [checkinRecordId, setCheckinRecordId] = useState('');
@@ -37,6 +39,7 @@ export function CirculationPage() {
     onSuccess: () => {
       setShowCheckout(false);
       setRecordId('');
+      setPurpose('');
       setDueDate('');
       setNotes('');
       refetchOverdue();
@@ -53,18 +56,22 @@ export function CirculationPage() {
   });
 
   const overdueColumns = [
-    { key: 'record_title', label: 'Record', render: (e: CirculationEvent) => (
-      <span className="font-medium text-slate-800">{e.record_title || e.record_id.slice(0, 8)}</span>
+    { key: 'recordId', label: 'Record', render: (e: any) => (
+      <span className="font-medium text-slate-800">{e.recordTitle || e.recordId?.slice(0, 8) || '—'}</span>
     )},
-    { key: 'user_name', label: 'Checked Out By', render: (e: CirculationEvent) => e.user_name || e.user_id.slice(0, 8) },
-    { key: 'checked_out_at', label: 'Checked Out', render: (e: CirculationEvent) => format(new Date(e.checked_out_at), 'MMM d, yyyy') },
-    { key: 'due_date', label: 'Due Date', render: (e: CirculationEvent) => (
-      <span className="text-red-600 font-medium">{format(new Date(e.due_date), 'MMM d, yyyy')}</span>
-    )},
+    { key: 'userId', label: 'Checked Out By', render: (e: any) => e.userName || e.userId?.slice(0, 8) || '—' },
+    { key: 'checkedOutAt', label: 'Checked Out', render: (e: CirculationEvent) => {
+      if (!e.checkedOutAt) return <span>—</span>;
+      try { return <span>{format(new Date(e.checkedOutAt), 'MMM d, yyyy')}</span>; } catch { return <span>—</span>; }
+    }},
+    { key: 'dueDate', label: 'Due Date', render: (e: CirculationEvent) => {
+      if (!e.dueDate) return <span>—</span>;
+      try { return <span className="text-red-600 font-medium">{format(new Date(e.dueDate), 'MMM d, yyyy')}</span>; } catch { return <span>—</span>; }
+    }},
     { key: 'status', label: 'Status', render: () => <StatusBadge status="overdue" /> },
     { key: 'actions', label: '', render: (e: CirculationEvent) => (
       <button
-        onClick={() => { setCheckinRecordId(e.record_id); setShowCheckin(true); }}
+        onClick={() => { setCheckinRecordId(e.recordId); setShowCheckin(true); }}
         className="text-sm text-navy-500 hover:underline font-medium"
       >
         Check In
@@ -120,7 +127,7 @@ export function CirculationPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            checkoutMutation.mutate({ record_id: recordId, due_date: new Date(dueDate).toISOString(), notes });
+            checkoutMutation.mutate({ recordId, purpose, dueDate: new Date(dueDate).toISOString(), notes });
           }}
           className="space-y-4"
         >
@@ -135,6 +142,19 @@ export function CirculationPage() {
               placeholder="Scan barcode or enter record ID"
               required
               data-testid="checkout-record-input"
+            />
+          </div>
+          <div>
+            <label htmlFor="co-purpose" className="block text-sm font-medium text-slate-700 mb-1">Purpose <span className="text-red-400">*</span></label>
+            <input
+              id="co-purpose"
+              type="text"
+              value={purpose}
+              onChange={(e) => setPurpose(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+              placeholder="e.g. Annual audit review, agency request..."
+              required
+              data-testid="checkout-purpose-input"
             />
           </div>
           <div>
@@ -157,13 +177,13 @@ export function CirculationPage() {
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
-              placeholder="Purpose of checkout, requesting agency..."
+              placeholder="Additional notes..."
               data-testid="checkout-notes-input"
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setShowCheckout(false)} className="px-3 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={checkoutMutation.isPending} className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50" data-testid="confirm-checkout">
+            <button type="button" onClick={() => setShowCheckout(false)} className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+            <button type="submit" disabled={checkoutMutation.isPending} className="h-9 px-4 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors" data-testid="confirm-checkout">
               {checkoutMutation.isPending ? 'Processing...' : 'Check Out'}
             </button>
           </div>
@@ -175,7 +195,7 @@ export function CirculationPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            checkinMutation.mutate({ record_id: checkinRecordId, notes: checkinNotes });
+            checkinMutation.mutate({ recordId: checkinRecordId, notes: checkinNotes });
           }}
           className="space-y-4"
         >
@@ -205,8 +225,8 @@ export function CirculationPage() {
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={() => setShowCheckin(false)} className="px-3 py-2 border border-slate-300 rounded-md text-sm hover:bg-slate-50">Cancel</button>
-            <button type="submit" disabled={checkinMutation.isPending} className="px-4 py-2 bg-navy-500 text-white rounded-md text-sm font-medium hover:bg-navy-600 disabled:opacity-50" data-testid="confirm-checkin">
+            <button type="button" onClick={() => setShowCheckin(false)} className="h-9 px-4 border border-slate-300 rounded text-sm text-slate-600 hover:bg-slate-50 transition-colors">Cancel</button>
+            <button type="submit" disabled={checkinMutation.isPending} className="h-9 px-4 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 transition-colors" data-testid="confirm-checkin">
               {checkinMutation.isPending ? 'Processing...' : 'Check In'}
             </button>
           </div>

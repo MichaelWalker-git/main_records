@@ -66,7 +66,7 @@ export function BatchImportPage() {
         <h1 className="text-xl font-bold text-slate-800">Batch Import Records</h1>
         <p className="text-sm text-slate-500 mt-0.5">Import records from CSV file</p>
       </div>
-      <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+      <div className="bg-white border border-slate-200 rounded-md p-6 mb-6">
         <div className="flex items-center gap-4">
           <input
             ref={fileRef}

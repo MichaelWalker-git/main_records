@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/solid';
 
 interface DashboardWidgetProps {
@@ -6,11 +7,14 @@ interface DashboardWidgetProps {
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;
   icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  to?: string;
 }
 
-export function DashboardWidget({ label, value, trend, trendValue, icon: Icon }: DashboardWidgetProps) {
+export function DashboardWidget({ label, value, trend, trendValue, icon: Icon, to }: DashboardWidgetProps) {
+  const Wrapper = to ? Link : 'div';
+  const wrapperProps = to ? { to } : {};
   return (
-    <div className="bg-white border border-slate-200 rounded-md p-4" data-testid="dashboard-widget">
+    <Wrapper {...wrapperProps as any} className={`bg-white border border-slate-200 rounded-md p-4 ${to ? 'hover:border-navy-300 hover:shadow-sm transition-all cursor-pointer' : ''}`} data-testid="dashboard-widget">
       <div className="flex items-start justify-between">
         <div className="min-w-0">
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
@@ -36,6 +40,6 @@ export function DashboardWidget({ label, value, trend, trendValue, icon: Icon }:
           <span className="text-xs text-slate-400 ml-1">vs last month</span>
         </div>
       )}
-    </div>
+    </Wrapper>
   );
 }
