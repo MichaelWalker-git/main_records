@@ -23,7 +23,7 @@ This document maps every requirement from the submitted proposal (File4_Proposed
 | 2 | Logs exportable to SIEM | CloudTrail + app logs (JSON/CSV) | `backend/src/middleware/audit.ts:1-40` — auditMiddleware logs all mutations to `audit_events` table | DONE |
 | 3 | FedRAMP/ISO/SOC2 cloud provider | AWS maintains all certifications | Deployed on AWS us-east-1 (FedRAMP High region) | DONE |
 | 4 | State data not used for AI training | Formal commitment | Bedrock inference-only; no fine-tuning APIs called. `lambdas/ai-classify/index.ts` uses `InvokeModel` only | DONE |
-| 5 | Barcode creation + legacy barcode support | Generate barcodes + USB/Bluetooth scanners | `backend/src/services/RecordsService.ts:77` — `generateBarcodeSvg()` (Code128/QR). `frontend/src/features/inventory/BarcodeScanPage.tsx` — scanner UI | DONE |
+| 5 | Barcode creation + legacy barcode support | Generate barcodes + USB/Bluetooth scanners | `backend/src/services/RecordsService.ts:98` — `generateBarcodeSvg()` (Code128/QR). `frontend/src/features/inventory/BarcodeScanPage.tsx` — scanner UI | DONE |
 | 6 | Record Circulation Tracking | Check-in/out, custody history, overdue notices | `backend/src/api/inventory.ts:64-99` — checkout/checkin/overdue/history endpoints. `backend/src/services/InventoryService.ts:33-78` — CIR-01 active-only check, CIR-03 purpose required | DONE |
 | 7 | Inventory & warehouse location tracking | Unlimited locations, hierarchical tree | `backend/src/api/inventory.ts:34-62` — location CRUD + utilization. `backend/src/repositories/LocationsRepository.ts` — self-referencing tree (parent_id) | DONE |
 | 8 | Template-driven record creation | Configurable templates with required fields | `backend/src/api/templates.ts:1-59` — CRUD. `backend/src/services/RecordsService.ts:25-29` — validates template exists and is active | DONE |
@@ -113,7 +113,7 @@ This document maps every requirement from the submitted proposal (File4_Proposed
 |-----------------|---------------|
 | "Three State Records Center warehouse locations" | DB seed: Augusta, Bangor, Portland (3 buildings). `backend/src/api/inventory.ts:34-62` — location tree API |
 | "Location code mapped to physical shelving (row, bay, shelf, position)" | `backend/src/api/inventory.ts:18-25` — createLocationSchema with type enum: building/floor/room/shelf/box. Hierarchical tree via `parent_id` |
-| "Barcode and QR code scanning for check-in and check-out" | `backend/src/services/RecordsService.ts:77` — generates Code128 and QR. `frontend/src/features/inventory/BarcodeScanPage.tsx` |
+| "Barcode and QR code scanning for check-in and check-out" | `backend/src/services/RecordsService.ts:98` — generates Code128 and QR. `frontend/src/features/inventory/BarcodeScanPage.tsx` |
 | "Printable labels populated with all required fields" | `backend/src/api/records.ts:200` — GET /:id/label returns 4×6" printable HTML with Container#, Location, Agency, Box, Series, Dates, Media, Transmittal# |
 | "Legacy barcodes fully supported" | `backend/src/repositories/RecordsRepository.ts:47-53` — `findByBarcode()` queries `barcode` OR `tracking_number` OR `container_number` |
 | "Circulation module: check-in/check-out with timestamp, user, purpose" | `backend/src/api/inventory.ts:27-32` — schema requires `purpose` + `due_date`. `backend/src/services/InventoryService.ts:33-59` — enforces active-only (CIR-01) |
@@ -203,7 +203,7 @@ This document maps every requirement from the submitted proposal (File4_Proposed
 | Rule ID | Rule | Status | Code Evidence |
 |---------|------|--------|---------------|
 | BAR-01 | Barcode encodes tracking number | DONE | `backend/src/services/RecordsService.ts:32-33` — `barcode: trackingNumber` |
-| BAR-02 | Code128 and QR supported | DONE | `backend/src/services/RecordsService.ts:82` — `bcid: format === 'qrcode' ? 'qrcode' : 'code128'` |
+| BAR-02 | Code128 and QR supported | DONE | `backend/src/services/RecordsService.ts:103` — `bcid: format === 'qrcode' ? 'qrcode' : 'code128'` |
 | BAR-04 | Print layout: barcode + tracking + series + location | DONE | `backend/src/api/records.ts:200` — label HTML includes all fields |
 | BAR-05 | Legacy lookup queries containerNumber + trackingNumber | DONE | `backend/src/repositories/RecordsRepository.ts:47-53` — `.orWhere({ tracking_number }).orWhere({ container_number })` |
 
@@ -301,8 +301,8 @@ All substitutions preserve functional capability. Architecture supports adding o
 
 | Package | Framework | Tests | Status |
 |---------|-----------|-------|--------|
-| Backend | Jest + Supertest | 81 tests (14 suites) | ALL PASSING |
-| Frontend | Vitest + React Testing Library | 29 tests (6 suites) | ALL PASSING |
+| Backend | Jest + Supertest | 87 tests (14 suites) | ALL PASSING |
+| Frontend | Vitest + React Testing Library | 45 tests (8 suites) | ALL PASSING |
 | Infrastructure | CDK Nag (AwsSolutions) | Compile-time checks | ALL PASSING |
 
 ---
