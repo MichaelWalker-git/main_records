@@ -35,6 +35,14 @@ export function Tag({ children, variant = 'default', size = 'sm', onClick, onRem
     onRemove?.();
   }
 
+  function handleRemoveKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      e.stopPropagation();
+      onRemove?.();
+    }
+  }
+
   if (onClick) {
     return (
       <button
@@ -50,6 +58,7 @@ export function Tag({ children, variant = 'default', size = 'sm', onClick, onRem
             aria-label="Remove tag"
             tabIndex={0}
             onClick={handleRemove}
+            onKeyDown={handleRemoveKey}
             className="hover:text-slate-900 cursor-pointer"
           >
             <XMarkIcon className="w-3 h-3" />

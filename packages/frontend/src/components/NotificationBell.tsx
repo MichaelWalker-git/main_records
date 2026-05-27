@@ -7,12 +7,19 @@ import { Notification } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import api from '../services/api';
 
+type RawNotification = Notification & {
+  is_read?: boolean;
+  entity_type?: string;
+  entity_id?: string;
+  created_at?: string;
+};
+
 interface NotificationsResponse {
-  data: Notification[];
+  data: RawNotification[];
   unreadCount: number;
 }
 
-function entityRoute(notification: any): string | null {
+function entityRoute(notification: RawNotification): string | null {
   const type = notification.entity_type || notification.entityType;
   const id = notification.entity_id || notification.entityId;
   if (!type || !id) return null;
@@ -67,7 +74,7 @@ export function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen]);
 
-  async function handleClick(notification: any) {
+  async function handleClick(notification: RawNotification) {
     setIsOpen(false);
     const route = entityRoute(notification);
     const isRead = notification.isRead ?? notification.is_read;
@@ -119,7 +126,7 @@ export function NotificationBell() {
             {notifications.length === 0 ? (
               <li className="px-4 py-6 text-sm text-slate-500 text-center">No notifications</li>
             ) : (
-              notifications.map((notification: any) => {
+              notifications.map((notification: RawNotification) => {
                 const isRead = notification.isRead ?? notification.is_read;
                 const route = entityRoute(notification);
                 const interactive = !!route || !isRead;
@@ -141,7 +148,7 @@ export function NotificationBell() {
                           <p className="text-sm font-medium text-slate-800">{notification.title}</p>
                           <p className="text-xs text-slate-500 mt-0.5">{notification.message}</p>
                           <p className="text-xs text-slate-400 mt-1">
-                            {formatDistanceToNow(new Date(notification.createdAt || notification.created_at), { addSuffix: true })}
+                            {formatDistanceToNow(new Date(notification.createdAt || notification.created_at || Date.now()), { addSuffix: true })}
                           </p>
                         </div>
                       </div>

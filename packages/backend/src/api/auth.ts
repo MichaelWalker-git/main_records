@@ -13,7 +13,7 @@ function parseRoles(roles: any): string[] {
   return [];
 }
 
-const DEMO_PASSWORD = 'Demo@2024!';
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'Demo@2024!';
 
 router.post('/auth/login', async (req: Request, res: Response) => {
   try {

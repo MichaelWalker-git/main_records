@@ -2,7 +2,6 @@ import { NavLink } from 'react-router-dom';
 import {
   HomeIcon,
   DocumentTextIcon,
-  TruckIcon,
   TrashIcon,
   MapPinIcon,
   MagnifyingGlassIcon,

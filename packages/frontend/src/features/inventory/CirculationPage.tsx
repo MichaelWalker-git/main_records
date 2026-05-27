@@ -9,7 +9,6 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import { DataTable } from '../../components/DataTable';
-import { StatusBadge } from '../../components/StatusBadge';
 import { Modal } from '../../components/Modal';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { format, differenceInDays } from 'date-fns';

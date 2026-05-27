@@ -36,4 +36,28 @@ describe('Tag', () => {
     await user.click(screen.getByText('Click me'));
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  it('triggers remove on Enter when remove control is focused (clickable variant)', async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    const onClick = vi.fn();
+    render(<Tag onClick={onClick} onRemove={onRemove}>Removable</Tag>);
+
+    const removeBtn = screen.getByLabelText('Remove tag');
+    removeBtn.focus();
+    await user.keyboard('{Enter}');
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('triggers remove on Space when remove control is focused (clickable variant)', async () => {
+    const user = userEvent.setup();
+    const onRemove = vi.fn();
+    render(<Tag onClick={() => {}} onRemove={onRemove}>Removable</Tag>);
+
+    const removeBtn = screen.getByLabelText('Remove tag');
+    removeBtn.focus();
+    await user.keyboard(' ');
+    expect(onRemove).toHaveBeenCalledTimes(1);
+  });
 });

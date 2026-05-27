@@ -49,8 +49,14 @@ const daysAgo = (d: number) => new Date(Date.now() - d * 86400000);
 const daysFromNow = (d: number) => new Date(Date.now() + d * 86400000);
 
 export async function up(knex: Knex): Promise<void> {
-  const exists = await knex('records').where('id', SENTINEL_RECORD).first();
-  if (exists) return;
+  await knex.transaction(async (trx) => {
+    const exists = await trx('records').where('id', SENTINEL_RECORD).first();
+    if (exists) return;
+    await seed(trx);
+  });
+}
+
+async function seed(knex: Knex.Transaction): Promise<void> {
 
   // --- 50 additional records across agencies and statuses ---
   const records = [

@@ -72,7 +72,7 @@ export class SearchService {
         );
     } else if (type === 'semantic') {
       // Semantic search via pgvector + Bedrock Titan Embeddings
-      const semanticResults = await this.embeddingService.semanticSearch(query, size, offset, { agency_id });
+      const semanticResults = await this.embeddingService.semanticSearch(query, size, offset, { agency_id, agency, status });
       return {
         hits: semanticResults.map((hit: any) => ({
           id: hit.id,

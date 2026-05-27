@@ -18,6 +18,10 @@ interface DashboardData {
   pendingTransmittals: number;
   pendingDispositions: number;
   overdueCheckouts: number;
+  pendingClassification?: number;
+  checkedOut?: number;
+  onLegalHold?: number;
+  disposedRecords?: number;
   recentActivity: { id: string; action: string; resource_type: string; user_email: string; created_at: string }[];
   recordsByType: { media_type: string; count: number }[];
 }

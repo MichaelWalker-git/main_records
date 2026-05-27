@@ -63,4 +63,12 @@ describe('Breadcrumbs', () => {
     );
     expect(screen.getByTestId('breadcrumbs')).toBeInTheDocument();
   });
+
+  it('home crumb links to "/" by default', () => {
+    const { container } = renderWithRouter(
+      <Breadcrumbs items={[{ label: 'Records', to: '/records' }]} />
+    );
+    const homeLink = container.querySelector('a[href="/"]');
+    expect(homeLink).not.toBeNull();
+  });
 });
