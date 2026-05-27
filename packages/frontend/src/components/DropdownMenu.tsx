@@ -6,7 +6,6 @@ export interface DropdownItem {
   label: string;
   icon?: ReactNode;
   onClick?: () => void;
-  to?: string;
   danger?: boolean;
   disabled?: boolean;
   separator?: false;

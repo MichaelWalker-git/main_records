@@ -47,7 +47,7 @@ export function InventoryPage() {
   const [form, setForm] = useState<LocationFormState>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
 
-  const { data: locations = [], refetch } = useApiQuery<Location[]>(['locations'], '/inventory/locations');
+  const { data: locations = [] } = useApiQuery<Location[]>(['locations'], '/inventory/locations');
   const { toast } = useToast();
   const { confirm } = useConfirm();
   const { isAdmin, isStaff } = useAuth();
@@ -117,7 +117,6 @@ export function InventoryPage() {
       }
       setShowForm(false);
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      refetch();
     } catch (err: unknown) {
       toast(extractError(err, 'Save failed.'), 'error');
     } finally {
@@ -138,7 +137,6 @@ export function InventoryPage() {
       toast('Location deactivated.', 'success');
       if (selectedLocation?.id === location.id) setSelectedLocation(null);
       queryClient.invalidateQueries({ queryKey: ['locations'] });
-      refetch();
     } catch (err: unknown) {
       toast(extractError(err, 'Deactivate failed.'), 'error');
     }

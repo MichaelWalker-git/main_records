@@ -15,7 +15,15 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const noopToast: ToastContextValue = { toast: () => {} };
+let warnedMissingProvider = false;
+const noopToast: ToastContextValue = {
+  toast: (message: string) => {
+    if (!warnedMissingProvider) {
+      warnedMissingProvider = true;
+      console.warn(`useToast called outside ToastProvider — toast suppressed: ${message}`);
+    }
+  },
+};
 
 export function useToast() {
   const ctx = useContext(ToastContext);

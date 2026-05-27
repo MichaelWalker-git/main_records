@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PlusIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
-import { ArrowPathIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -35,22 +34,46 @@ export function RecordsListPage() {
   const [classifyingIds, setClassifyingIds] = useState<Set<string>>(new Set());
   const baselineConfidence = useRef<Map<string, number | null>>(new Map());
   const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const timeoutRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const CLASSIFY_TIMEOUT_MS = 30_000;
+
+  function clearClassifyingId(id: string) {
+    setClassifyingIds((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    baselineConfidence.current.delete(id);
+    const t = timeoutRefs.current.get(id);
+    if (t) {
+      clearTimeout(t);
+      timeoutRefs.current.delete(id);
+    }
+  }
 
   async function handleClassify(id: string, currentConfidence: number | null | undefined) {
     if (classifyingIds.has(id)) return;
     setClassifyingIds((prev) => new Set(prev).add(id));
     baselineConfidence.current.set(id, currentConfidence ?? null);
     toast('AI classification started — this usually takes 5-15 seconds.', 'info');
+
+    // Safety net: if confidence never changes (failure that still invalidates the
+    // query, identical confidence, or unreachable backend) the spinner would hang.
+    const timer = setTimeout(() => {
+      if (timeoutRefs.current.get(id) === timer) {
+        clearClassifyingId(id);
+        toast('Classification is taking longer than expected. Refresh later to see the result.', 'warning');
+      }
+    }, CLASSIFY_TIMEOUT_MS);
+    timeoutRefs.current.set(id, timer);
+
     try {
       await api.post(`/records/${id}/classify`);
       queryClient.invalidateQueries({ queryKey: ['records'] });
     } catch {
-      setClassifyingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
-      baselineConfidence.current.delete(id);
+      clearClassifyingId(id);
       toast('Classification failed. Try again or check the record.', 'error');
     }
   }
@@ -74,18 +97,16 @@ export function RecordsListPage() {
     { page, pageSize: 25, search, status: statusFilter || undefined }
   );
 
-  // Poll while any record is classifying; clear from set when confidence changes.
+  // Poll while any record is classifying.
   useEffect(() => {
-    if (classifyingIds.size === 0) {
-      if (pollRef.current) clearInterval(pollRef.current);
-      return;
-    }
+    if (classifyingIds.size === 0) return;
     pollRef.current = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ['records'] });
     }, 3000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [classifyingIds, queryClient]);
 
+  // Detect completion when a polled response shows confidence has changed.
   useEffect(() => {
     if (classifyingIds.size === 0 || !data?.data) return;
     const completed: string[] = [];
@@ -97,15 +118,19 @@ export function RecordsListPage() {
       if (current !== baseline) completed.push(id);
     }
     if (completed.length > 0) {
-      setClassifyingIds((prev) => {
-        const next = new Set(prev);
-        completed.forEach((id) => next.delete(id));
-        return next;
-      });
-      completed.forEach((id) => baselineConfidence.current.delete(id));
+      completed.forEach(clearClassifyingId);
       toast(`Classification complete (${completed.length} record${completed.length > 1 ? 's' : ''}).`, 'success');
     }
   }, [data, classifyingIds, toast]);
+
+  // Clean up any pending timeout timers on unmount.
+  useEffect(() => {
+    const timers = timeoutRefs.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
 
   const columns = [
     { key: 'title', label: 'Record', sortable: true, render: (r: Record) => (

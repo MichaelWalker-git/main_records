@@ -54,9 +54,11 @@ export function IntegrationsPage() {
     setTestingId(id);
     toast(`Testing connection to ${name}...`, 'info');
     try {
-      const response = await api.post<{ data: TestResult } | TestResult>(`/integrations/${id}/test`);
-      const body = response.data as { data?: TestResult } & TestResult;
-      const result: TestResult = (body.data ?? body) as TestResult;
+      const response = await api.post<{ data?: TestResult } | TestResult>(`/integrations/${id}/test`);
+      const body = response.data;
+      const result: TestResult = body && 'data' in body && body.data
+        ? body.data
+        : (body as TestResult);
       setTestResults((prev) => ({ ...prev, [id]: result }));
       if (result.testResult === 'success') {
         toast(`${name}: ${result.message}`, 'success');

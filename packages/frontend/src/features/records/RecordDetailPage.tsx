@@ -17,7 +17,9 @@ import api from '../../services/api';
 import { RMSRecord as Record, AuditEvent } from '../../types';
 import { format } from 'date-fns';
 
-// Mirrors backend VALID_TRANSITIONS in /api/records.ts.
+// MIRRORS backend VALID_TRANSITIONS in packages/backend/src/api/records.ts.
+// Edit both copies together. The endpoint /api/records/status-transitions
+// exposes the backend map for future client-side synchronization.
 const VALID_TRANSITIONS: { [status: string]: string[] } = {
   draft: ['active'],
   active: ['checked_out', 'in_transit', 'on_hold', 'pending_disposition', 'archived', 'transferred'],

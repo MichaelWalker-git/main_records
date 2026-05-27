@@ -75,7 +75,7 @@ For a cloud demo we need at least 2 pre-created users:
 - Or: a documented manual procedure (AWS console / CLI) the operator follows once after deploy.
 - Either way, the `aidlc-docs/audit-2026-05-27.md` Drift #5 entry is updated to reflect the current truth.
 
-> **Important — coordinate with kat3ryna:** she handles all deploys herself; do **not** run `cdk deploy` automatically.
+> **Important — coordinate with the deploy owner before running `cdk deploy`.**
 
 ---
 
@@ -196,7 +196,7 @@ If anything fails, **escalate immediately** — this is the showcase feature.
 
 ## UX / Demo Polish (P0–P1 mix)
 
-The functional gaps above (Tasks 1–11) make the system **work**. The tasks below make it **feel professional** to an evaluator who has 60 seconds to form an opinion. The kat3ryna user flagged the UX as "not very convenient" — these are the specific spots she likely felt.
+The functional gaps above (Tasks 1–11) make the system **work**. The tasks below make it **feel professional** to an evaluator who has 60 seconds to form an opinion. Internal feedback flagged the UX as "not very convenient" — these are the specific spots that likely caused that impression.
 
 Same problem-statement format. Developer designs the solution; please do not invent fixes outside the listed concern.
 
