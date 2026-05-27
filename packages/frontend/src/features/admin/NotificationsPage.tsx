@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BellIcon, EnvelopeIcon, DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
+import { useToast } from '../../components/Toast';
+import { useAuth } from '../../hooks/useAuth';
 
 interface NotificationPref {
   id: string;
@@ -18,19 +20,66 @@ const defaultPrefs: NotificationPref[] = [
   { id: 'system_maintenance', label: 'System Maintenance', description: 'Scheduled maintenance and downtime notices', email: true, inApp: true },
 ];
 
+const STORAGE_PREFIX = 'maine-rms:notification-prefs';
+
+function storageKey(userId?: string): string {
+  return userId ? `${STORAGE_PREFIX}:${userId}` : STORAGE_PREFIX;
+}
+
+function loadStoredPrefs(userId?: string): NotificationPref[] | null {
+  try {
+    const raw = localStorage.getItem(storageKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Record<string, { email: boolean; inApp: boolean }>;
+    return defaultPrefs.map((p) => {
+      const stored = parsed[p.id];
+      if (!stored) return p;
+      return { ...p, email: !!stored.email, inApp: !!stored.inApp };
+    });
+  } catch {
+    return null;
+  }
+}
+
+function persistPrefs(prefs: NotificationPref[], userId?: string): void {
+  const compact: Record<string, { email: boolean; inApp: boolean }> = {};
+  for (const p of prefs) compact[p.id] = { email: p.email, inApp: p.inApp };
+  localStorage.setItem(storageKey(userId), JSON.stringify(compact));
+}
+
 export function NotificationsPage() {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [prefs, setPrefs] = useState<NotificationPref[]>(defaultPrefs);
-  const [saved, setSaved] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const stored = loadStoredPrefs(user?.id);
+    if (stored) setPrefs(stored);
+  }, [user?.id]);
 
   function togglePref(id: string, channel: 'email' | 'inApp') {
-    setPrefs(prefs.map((p) => p.id === id ? { ...p, [channel]: !p[channel] } : p));
-    setSaved(false);
+    setPrefs((prev) => prev.map((p) => p.id === id ? { ...p, [channel]: !p[channel] } : p));
+    setDirty(true);
   }
 
-  function handleSave() {
-    // Would POST to /notifications/preferences in production
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  async function handleSave() {
+    setSaving(true);
+    try {
+      persistPrefs(prefs, user?.id);
+      setDirty(false);
+      toast('Notification preferences saved.', 'success');
+    } catch {
+      toast('Could not save preferences. Storage may be unavailable.', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleReset() {
+    setPrefs(defaultPrefs);
+    setDirty(true);
   }
 
   return (
@@ -40,20 +89,24 @@ export function NotificationsPage() {
           <h1 className="text-xl font-bold text-slate-800">Notification Preferences</h1>
           <p className="text-sm text-slate-500 mt-0.5">Configure how you receive alerts and updates</p>
         </div>
-        <button
-          onClick={handleSave}
-          className="h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
-          data-testid="save-prefs-button"
-        >
-          Save Preferences
-        </button>
-      </div>
-
-      {saved && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-4 text-sm">
-          Preferences saved successfully.
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleReset}
+            className="h-9 px-3 border border-slate-300 text-slate-600 rounded text-sm font-medium hover:bg-slate-50 transition-colors"
+            data-testid="reset-prefs-button"
+          >
+            Reset to defaults
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            data-testid="save-prefs-button"
+          >
+            {saving ? 'Saving...' : dirty ? 'Save Preferences' : 'No changes'}
+          </button>
         </div>
-      )}
+      </div>
 
       <div className="bg-white border border-slate-200 rounded-md">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-6">
@@ -77,6 +130,8 @@ export function NotificationsPage() {
                   onClick={() => togglePref(pref.id, 'email')}
                   className={`w-9 h-5 rounded-full transition-colors relative ${pref.email ? 'bg-navy-500' : 'bg-slate-200'}`}
                   aria-label={`${pref.label} email ${pref.email ? 'enabled' : 'disabled'}`}
+                  aria-pressed={pref.email}
+                  data-testid={`toggle-${pref.id}-email`}
                 >
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${pref.email ? 'left-[18px]' : 'left-0.5'}`} />
                 </button>
@@ -86,6 +141,8 @@ export function NotificationsPage() {
                   onClick={() => togglePref(pref.id, 'inApp')}
                   className={`w-9 h-5 rounded-full transition-colors relative ${pref.inApp ? 'bg-navy-500' : 'bg-slate-200'}`}
                   aria-label={`${pref.label} in-app ${pref.inApp ? 'enabled' : 'disabled'}`}
+                  aria-pressed={pref.inApp}
+                  data-testid={`toggle-${pref.id}-inApp`}
                 >
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${pref.inApp ? 'left-[18px]' : 'left-0.5'}`} />
                 </button>
