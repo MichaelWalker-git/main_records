@@ -10,6 +10,23 @@ interface ClassifyResult {
   reasoning: string;
 }
 
+export const OCR_MARKER = '\n\n--- Extracted Content ---\n';
+const MAX_OCR_LENGTH = 10000;
+
+/**
+ * Merge OCR-extracted text into a record's description idempotently.
+ * Preserves any manual description that precedes the OCR marker, replacing only
+ * the OCR block. Re-running OCR with the same input produces the same output.
+ */
+export function mergeOcrIntoDescription(currentDescription: string | null, extractedText: string): string {
+  const newBlock = extractedText.slice(0, MAX_OCR_LENGTH);
+  if (!currentDescription) return `${OCR_MARKER}${newBlock}`;
+  const idx = currentDescription.indexOf(OCR_MARKER);
+  const manualPart = idx >= 0 ? currentDescription.slice(0, idx) : currentDescription;
+  if (!manualPart) return `${OCR_MARKER}${newBlock}`;
+  return `${manualPart}${OCR_MARKER}${newBlock}`;
+}
+
 export class AIService {
   private sqsClient: SQSClient;
   private bedrockClient: BedrockRuntimeClient;
@@ -202,11 +219,14 @@ export class AIService {
       return;
     }
 
-    // Update record with extracted text
+    // Update record with extracted text. Idempotent: re-runs replace the OCR block
+    // instead of appending so the same content cannot accumulate.
+    const existing = await db('records').where({ id: recordId }).first();
+    const nextDescription = mergeOcrIntoDescription(existing?.description ?? null, extractedText);
     await db('records')
       .where({ id: recordId })
       .update({
-        description: extractedText.slice(0, 10000), // limit to 10k chars
+        description: nextDescription,
         updated_at: new Date(),
       });
 
