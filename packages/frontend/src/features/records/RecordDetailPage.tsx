@@ -8,6 +8,7 @@ import {
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Breadcrumbs } from '../../components/Breadcrumbs';
 import { useQueryClient } from '@tanstack/react-query';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { useToast } from '../../components/Toast';
@@ -135,6 +136,15 @@ export function RecordDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Breadcrumbs */}
+      <Breadcrumbs
+        items={[
+          { label: 'Records', to: '/records' },
+          { label: record.trackingNumber || record.title },
+        ]}
+        className="mb-3"
+      />
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6">

@@ -480,13 +480,59 @@ export function CreateRecordPage() {
         <h1 className="text-xl font-bold text-slate-800">Create Record</h1>
         <p className="text-sm text-slate-500 mt-0.5">Enter record details manually</p>
       </div>
+
+      {/* Quick presets */}
+      <div className="bg-slate-50 border border-slate-200 rounded-md p-3 mb-4 max-w-2xl">
+        <p className="text-xs text-slate-500 mb-2">Quick start — pre-fill common scenarios:</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setRecordType('correspondence');
+              setSeriesId('GRS-5');
+              setDescription('Single document received from agency.');
+            }}
+            className="text-xs px-3 py-1.5 bg-white border border-slate-300 rounded hover:border-navy-400 hover:text-navy-600 transition-colors"
+            data-testid="preset-correspondence"
+          >
+            Single document scan
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setRecordType('case_file');
+              setSeriesId('GRS-4');
+              setDescription('Box received from agency — contents to be inventoried.');
+            }}
+            className="text-xs px-3 py-1.5 bg-white border border-slate-300 rounded hover:border-navy-400 hover:text-navy-600 transition-colors"
+            data-testid="preset-box"
+          >
+            Box from agency
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setRecordType('financial');
+              setSeriesId('GRS-2');
+              setDescription('Annual financial audit records.');
+            }}
+            className="text-xs px-3 py-1.5 bg-white border border-slate-300 rounded hover:border-navy-400 hover:text-navy-600 transition-colors"
+            data-testid="preset-financial"
+          >
+            Financial audit
+          </button>
+        </div>
+      </div>
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4 text-sm" role="alert">{error}</div>
       )}
       <form onSubmit={handleManualSubmit} className="bg-white border border-slate-200 rounded-md p-6 max-w-2xl">
         <div className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Title <span className="text-red-400">*</span></label>
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">
+              Title <span className="text-red-400">*</span>
+            </label>
             <input
               id="title"
               type="text"
@@ -495,6 +541,7 @@ export function CreateRecordPage() {
               className={fieldClass('title')}
               data-testid="record-title-input"
             />
+            <p className="text-xs text-slate-500 mt-1">A short, descriptive name an archivist would search for.</p>
             {formErrors.title && <p className="text-xs text-red-500 mt-1">{formErrors.title}</p>}
           </div>
           <div>
@@ -507,6 +554,7 @@ export function CreateRecordPage() {
               className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
               data-testid="record-description-input"
             />
+            <p className="text-xs text-slate-500 mt-1">Context about contents, date range, or origin. AI will refine if you upload a document later.</p>
           </div>
           <div>
             <label htmlFor="recordType" className="block text-sm font-medium text-slate-700 mb-1">Record Type</label>
@@ -544,6 +592,7 @@ export function CreateRecordPage() {
                 <option value="GRS-6">GRS-6: Permits and Licenses</option>
                 <option value="GRS-7">GRS-7: Meeting Minutes</option>
               </select>
+              <p className="text-xs text-slate-500 mt-1">Pick the GRS series — drives retention and disposition.</p>
               {formErrors.seriesId && <p className="text-xs text-red-500 mt-1">{formErrors.seriesId}</p>}
             </div>
             <div>
@@ -577,6 +626,7 @@ export function CreateRecordPage() {
               placeholder="e.g. confidential, 2024, audit"
               data-testid="record-tags-input"
             />
+            <p className="text-xs text-slate-500 mt-1">Free-form keywords to help search find this record later.</p>
           </div>
         </div>
         <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">

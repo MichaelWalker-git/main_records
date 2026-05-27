@@ -71,7 +71,7 @@ describe('TransmittalDetailPage', () => {
 
   it('renders tracking number', () => {
     renderPage();
-    expect(screen.getByText('TRM-2024-001')).toBeInTheDocument();
+    expect(screen.getAllByText('TRM-2024-001').length).toBeGreaterThan(0);
   });
 
   it('renders transfer summary with sender and destination', () => {

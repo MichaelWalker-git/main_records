@@ -81,7 +81,7 @@ describe('RecordDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Test Record')).toBeInTheDocument();
     });
-    expect(screen.getByText('RMS-20260101-0001')).toBeInTheDocument();
+    expect(screen.getAllByText('RMS-20260101-0001').length).toBeGreaterThan(0);
   });
 
   it('renders the page container', async () => {

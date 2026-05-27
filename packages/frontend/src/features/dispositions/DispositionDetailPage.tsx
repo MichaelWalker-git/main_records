@@ -11,6 +11,7 @@ import {
 import { CheckIcon } from '@heroicons/react/24/solid';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Breadcrumbs } from '../../components/Breadcrumbs';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/Toast';
@@ -57,6 +58,13 @@ export function DispositionDetailPage() {
 
   return (
     <div data-testid="disposition-detail-page">
+      <Breadcrumbs
+        items={[
+          { label: 'Dispositions', to: '/dispositions' },
+          { label: disposition.title || 'Detail' },
+        ]}
+        className="mb-3"
+      />
       {/* Back navigation */}
       <Link to="/dispositions" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
         <ArrowLeftIcon className="w-3.5 h-3.5" />

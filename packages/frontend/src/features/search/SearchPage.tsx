@@ -41,6 +41,13 @@ export function SearchPage() {
     { key: 'ocr', label: 'OCR' },
   ];
 
+  const tabDescriptions: Record<SearchTab, string> = {
+    metadata: 'Search title, description, tags, and structured fields. Best for exact known terms.',
+    fulltext: 'PostgreSQL full-text search across record content. Handles word stems and ranking.',
+    semantic: 'AI-powered similarity search using vector embeddings. Finds conceptually related records even without keyword overlap.',
+    ocr: 'Search inside scanned document text extracted by Bedrock OCR. Use when you remember what was inside, not the title.',
+  };
+
   const rawData = searchMutation.data as any;
   const results: SearchResult[] = rawData?.data?.hits ?? rawData?.hits ?? rawData?.data ?? rawData ?? [];
 
@@ -55,9 +62,13 @@ export function SearchPage() {
         tabs={tabItems}
         activeKey={activeTab}
         onChange={(key) => setActiveTab(key as SearchTab)}
-        className="mb-4"
+        className="mb-2"
         testIdPrefix="search-tab"
       />
+
+      <p className="text-xs text-slate-500 mb-4" data-testid="search-mode-description">
+        {tabDescriptions[activeTab]}
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-1">
@@ -112,7 +123,12 @@ export function SearchPage() {
             )}
             {results.length > 0 && (
               <div className="space-y-2" data-testid="search-results">
-                <p className="text-xs text-slate-500 font-medium">{results.length} results</p>
+                <p className="text-xs text-slate-500 font-medium">
+                  {results.length} {results.length === 1 ? 'result' : 'results'} via{' '}
+                  <span className="text-navy-600">
+                    {activeTab === 'semantic' ? 'semantic similarity' : activeTab === 'fulltext' ? 'full-text match' : activeTab === 'ocr' ? 'OCR text' : 'metadata'}
+                  </span>
+                </p>
                 {results.map((result: any) => (
                   <Link key={result.id} to={`/records/${result.id}`} className="block bg-white border border-slate-200 rounded-md p-4 hover:border-navy-300 hover:shadow-sm transition-all">
                     <div className="flex items-center justify-between">

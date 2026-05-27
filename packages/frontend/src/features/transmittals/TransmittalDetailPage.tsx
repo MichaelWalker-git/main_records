@@ -4,6 +4,7 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { WorkflowStatus } from '../../components/WorkflowStatus';
 import { Timeline, TimelineEvent } from '../../components/Timeline';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Breadcrumbs } from '../../components/Breadcrumbs';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
 import { Transmittal } from '../../types';
@@ -102,6 +103,13 @@ export function TransmittalDetailPage() {
 
   return (
     <div data-testid="transmittal-detail-page">
+      <Breadcrumbs
+        items={[
+          { label: 'Transmittals', to: '/transmittals' },
+          { label: transmittal.trackingNumber || transmittal.title || 'Detail' },
+        ]}
+        className="mb-3"
+      />
       <Link to="/transmittals" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4">
         <ArrowLeftIcon className="w-3.5 h-3.5" />
         Back to Transmittals
