@@ -43,7 +43,7 @@ app.use('/api/dispositions', dispositionsRouter);
 const repoProto = DispositionsRepository.prototype;
 
 describe('GET /api/dispositions', () => {
-  it('returns dispositions list', async () => {
+  it('returns dispositions list with pagination metadata', async () => {
     jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue([
       { id: '1', title: 'Disposition 1', status: 'PENDING_APPROVAL' } as any,
     ]);
@@ -52,6 +52,44 @@ describe('GET /api/dispositions', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
+    expect(res.body.total).toBe(1);
+    expect(res.body.page).toBe(1);
+    expect(res.body.pageSize).toBe(25);
+    expect(res.body.totalPages).toBe(1);
+  });
+
+  it('paginates correctly when more items than pageSize', async () => {
+    const items = Array.from({ length: 12 }, (_, i) => ({ id: `d-${i}`, title: `D${i}`, status: 'pending' } as any));
+    jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue(items);
+
+    const res = await request(app).get('/api/dispositions?page=2&pageSize=5');
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(12);
+    expect(res.body.totalPages).toBe(3);
+    expect(res.body.data).toHaveLength(5);
+    expect(res.body.data[0].id).toBe('d-5');
+  });
+
+  it('returns empty data on out-of-range page', async () => {
+    jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue([
+      { id: '1', title: 'Only', status: 'pending' } as any,
+    ]);
+    const res = await request(app).get('/api/dispositions?page=99');
+    expect(res.body.data).toHaveLength(0);
+    expect(res.body.total).toBe(1);
+    expect(res.body.totalPages).toBe(1);
+  });
+
+  it('applies status filter before paginating', async () => {
+    jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue([
+      { id: '1', status: 'pending' } as any,
+      { id: '2', status: 'approved' } as any,
+      { id: '3', status: 'pending_approval' } as any,
+    ]);
+    const res = await request(app).get('/api/dispositions?status=pending');
+    expect(res.body.total).toBe(2);
+    expect(res.body.data.map((d: any) => d.id)).toEqual(['1', '3']);
   });
 });
 

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { CheckCircleIcon, XCircleIcon, ArrowPathIcon, SignalIcon } from '@heroicons/react/24/outline';
-import { useApiQuery, useApiMutation } from '../../hooks/useApi';
+import { useApiQuery } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
+import api from '../../services/api';
 
 interface Integration {
   id: string;
@@ -46,20 +48,30 @@ export function IntegrationsPage() {
   const { data: integrations = [] } = useApiQuery<Integration[]>(['integrations'], '/integrations');
   const [testResults, setTestResults] = useState<Record<string, TestResult>>({});
   const [testingId, setTestingId] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const testMutation = useApiMutation<TestResult, void>(`/integrations/${testingId}/test`, 'post', {
-    onSuccess: (data) => {
-      if (testingId) {
-        setTestResults((prev) => ({ ...prev, [testingId]: data }));
-      }
-      setTestingId(null);
-    },
-    onError: () => setTestingId(null),
-  });
-
-  function handleTest(id: string) {
+  async function handleTest(id: string, name: string) {
     setTestingId(id);
-    testMutation.mutate();
+    toast(`Testing connection to ${name}...`, 'info');
+    try {
+      const response = await api.post<{ data: TestResult } | TestResult>(`/integrations/${id}/test`);
+      const body = response.data as { data?: TestResult } & TestResult;
+      const result: TestResult = (body.data ?? body) as TestResult;
+      setTestResults((prev) => ({ ...prev, [id]: result }));
+      if (result.testResult === 'success') {
+        toast(`${name}: ${result.message}`, 'success');
+      } else if (result.testResult === 'failure') {
+        toast(`${name}: ${result.message}`, 'error');
+      } else {
+        toast(`${name}: ${result.message}`, 'warning');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Connection test failed.';
+      setTestResults((prev) => ({ ...prev, [id]: { testResult: 'failure', message, testedAt: new Date().toISOString() } }));
+      toast(`${name}: ${message}`, 'error');
+    } finally {
+      setTestingId(null);
+    }
   }
 
   return (
@@ -113,22 +125,31 @@ export function IntegrationsPage() {
                 )}
 
                 {result && (
-                  <div className={`text-xs px-2 py-1.5 rounded ${
-                    result.testResult === 'success' ? 'bg-green-50 text-green-700' :
-                    result.testResult === 'pending' ? 'bg-amber-50 text-amber-700' :
-                    'bg-red-50 text-red-700'
-                  }`}>
-                    {result.message}
+                  <div
+                    className={`text-xs px-2 py-1.5 rounded flex items-start gap-1.5 ${
+                      result.testResult === 'success' ? 'bg-green-50 text-green-700' :
+                      result.testResult === 'pending' ? 'bg-amber-50 text-amber-700' :
+                      'bg-red-50 text-red-700'
+                    }`}
+                    data-testid={`test-result-${integration.id}`}
+                  >
+                    {result.testResult === 'success' && <CheckCircleIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />}
+                    {result.testResult === 'failure' && <XCircleIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />}
+                    <div className="flex-1">
+                      <p>{result.message}</p>
+                      <p className="text-[10px] opacity-70 mt-0.5">Tested: {new Date(result.testedAt).toLocaleTimeString()}</p>
+                    </div>
                   </div>
                 )}
 
                 <div className="flex justify-end pt-1">
                   <button
-                    onClick={() => handleTest(integration.id)}
+                    onClick={() => handleTest(integration.id, integration.name)}
                     disabled={testingId === integration.id}
-                    className="text-xs text-navy-500 hover:text-navy-600 font-medium disabled:opacity-50"
+                    className="inline-flex items-center gap-1 text-xs text-navy-500 hover:text-navy-600 font-medium disabled:opacity-50"
                     data-testid={`test-${integration.id}`}
                   >
+                    {testingId === integration.id && <ArrowPathIcon className="w-3 h-3 animate-spin" />}
                     {testingId === integration.id ? 'Testing...' : 'Test Connection'}
                   </button>
                 </div>

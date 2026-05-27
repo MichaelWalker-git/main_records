@@ -43,7 +43,7 @@ app.use('/api/transmittals', transmittalsRouter);
 const repoProto = TransmittalsRepository.prototype;
 
 describe('GET /api/transmittals', () => {
-  it('returns transmittals list', async () => {
+  it('returns transmittals list with pagination metadata', async () => {
     jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue([
       { id: '1', title: 'Test Transmittal', status: 'draft' } as any,
     ]);
@@ -53,6 +53,36 @@ describe('GET /api/transmittals', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(1);
     expect(res.body.data[0].title).toBe('Test Transmittal');
+    expect(res.body.total).toBe(1);
+    expect(res.body.page).toBe(1);
+    expect(res.body.pageSize).toBe(25);
+    expect(res.body.totalPages).toBe(1);
+  });
+
+  it('slices result by page and computes totalPages', async () => {
+    const items = Array.from({ length: 7 }, (_, i) => ({ id: `t-${i}`, title: `T${i}`, status: 'draft' } as any));
+    jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue(items);
+
+    const res = await request(app).get('/api/transmittals?page=2&pageSize=3');
+
+    expect(res.status).toBe(200);
+    expect(res.body.total).toBe(7);
+    expect(res.body.totalPages).toBe(3);
+    expect(res.body.page).toBe(2);
+    expect(res.body.pageSize).toBe(3);
+    expect(res.body.data.map((t: any) => t.id)).toEqual(['t-3', 't-4', 't-5']);
+  });
+
+  it('clamps pageSize to 100 maximum', async () => {
+    jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue([]);
+    const res = await request(app).get('/api/transmittals?pageSize=10000');
+    expect(res.body.pageSize).toBe(100);
+  });
+
+  it('coerces page=0 or negative to 1', async () => {
+    jest.spyOn(repoProto, 'findAllWithAgency').mockResolvedValue([]);
+    const res = await request(app).get('/api/transmittals?page=-5');
+    expect(res.body.page).toBe(1);
   });
 });
 

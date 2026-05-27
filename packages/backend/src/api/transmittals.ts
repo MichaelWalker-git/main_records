@@ -37,7 +37,13 @@ router.get('/', authorize('transmittals:read'), async (req: Request, res: Respon
     const transmittals = isAdmin
       ? await transmittalsRepo.findAllWithAgency(status)
       : await transmittalsRepo.findByAgency(req.user!.agencyId, status);
-    res.json({ data: transmittals, total: transmittals.length, page: Number(page), pageSize: Number(pageSize) });
+    const pageNum = Math.max(1, Number(page) || 1);
+    const sizeNum = Math.max(1, Math.min(100, Number(pageSize) || 25));
+    const total = transmittals.length;
+    const totalPages = Math.max(1, Math.ceil(total / sizeNum));
+    const start = (pageNum - 1) * sizeNum;
+    const paged = transmittals.slice(start, start + sizeNum);
+    res.json({ data: paged, total, page: pageNum, pageSize: sizeNum, totalPages });
   } catch (err) { next(err); }
 });
 
