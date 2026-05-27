@@ -60,4 +60,32 @@ describe('Sidebar active highlighting', () => {
     const records = screen.getByTestId('nav-records');
     expect(records).toHaveAttribute('aria-current', 'page');
   });
+
+  it('highlights only Circulation on /inventory/circulation (not Inventory)', () => {
+    renderAt('/inventory/circulation');
+
+    expect(screen.getByTestId('nav-circulation')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('nav-inventory')).not.toHaveAttribute('aria-current');
+  });
+
+  it('highlights Inventory on /inventory exact', () => {
+    renderAt('/inventory');
+
+    expect(screen.getByTestId('nav-inventory')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('nav-circulation')).not.toHaveAttribute('aria-current');
+  });
+
+  it('highlights only Inventory on /inventory/scan (a non-circulation child path)', () => {
+    renderAt('/inventory/scan');
+
+    expect(screen.getByTestId('nav-inventory')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('nav-circulation')).not.toHaveAttribute('aria-current');
+  });
+
+  it('highlights only Reports on /analytics/reports (not Analytics)', () => {
+    renderAt('/analytics/reports');
+
+    expect(screen.getByTestId('nav-reports')).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('nav-analytics')).not.toHaveAttribute('aria-current');
+  });
 });
