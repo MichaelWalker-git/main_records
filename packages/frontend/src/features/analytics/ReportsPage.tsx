@@ -45,8 +45,10 @@ export function ReportsPage() {
   async function handleGenerate(format: 'pdf' | 'excel' | 'csv') {
     if (!selectedReport) return;
     setIsGenerating(true);
+    toast(`Generating ${format.toUpperCase()} export...`, 'info');
     try {
       await exportReport(selectedReport, format);
+      toast('Export ready — download started.', 'success');
     } catch {
       toast('Failed to generate report export', 'error');
     } finally {

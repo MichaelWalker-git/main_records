@@ -5,6 +5,7 @@ import { Tabs } from '../../components/Tabs';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { EmptyState } from '../../components/EmptyState';
 import { useApiMutation } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
 import { SearchResult } from '../../types';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
@@ -14,15 +15,22 @@ export function SearchPage() {
   const [activeTab, setActiveTab] = useState<SearchTab>('metadata');
   const [agencyFilter, setAgencyFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const { toast } = useToast();
 
   const searchMutation = useApiMutation<SearchResult[], { query: string; type: SearchTab; agency?: string; status?: string }>(
     '/search',
-    'post'
+    'post',
+    {
+      onError: () => toast('Search failed. Try again.', 'error'),
+    }
   );
 
   const handleSearch = useCallback(
     (query: string) => {
       if (!query.trim()) return;
+      if (activeTab === 'semantic') {
+        toast('Generating embedding and searching — may take a few seconds.', 'info');
+      }
       searchMutation.mutate({
         query,
         type: activeTab,

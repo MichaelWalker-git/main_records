@@ -28,13 +28,19 @@ export function RecordDetailPage() {
   const { data: schedulesRaw } = useApiQuery<any>(['retention-schedules'], '/admin/retention-schedules');
   const schedules: any[] = schedulesRaw?.data ?? schedulesRaw ?? [];
   const classifyMutation = useApiMutation<unknown, void>(`/records/${id}/classify`, 'post', {
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      refetch();
+      toast('Classification complete.', 'success');
+    },
+    onError: () => toast('Classification failed.', 'error'),
   });
   const deleteMutation = useApiMutation<unknown, void>(`/records/${id}`, 'delete', {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['records'] });
+      toast('Record deleted.', 'success');
       navigate('/records');
     },
+    onError: () => toast('Delete failed.', 'error'),
   });
 
   const [showMoreActions, setShowMoreActions] = useState(false);
@@ -349,7 +355,10 @@ export function RecordDetailPage() {
                 <div className="flex items-center gap-3 flex-1">
                   <span className="text-sm text-slate-600">Next: Classify this record to assign a series</span>
                   <button
-                    onClick={() => classifyMutation.mutate(undefined as unknown as void)}
+                    onClick={() => {
+                      toast('AI classification started — this usually takes 5-15 seconds.', 'info');
+                      classifyMutation.mutate(undefined as unknown as void);
+                    }}
                     disabled={classifyMutation.isPending}
                     className="h-7 px-3 text-xs font-medium bg-navy-500 text-white rounded hover:bg-navy-600 transition-colors disabled:opacity-50"
                     data-testid="classify-record-button"

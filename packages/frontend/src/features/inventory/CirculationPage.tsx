@@ -11,6 +11,7 @@ import {
 import { DataTable } from '../../components/DataTable';
 import { Modal } from '../../components/Modal';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
 import { format, differenceInDays } from 'date-fns';
 
 interface CirculationEvent {
@@ -36,6 +37,7 @@ export function CirculationPage() {
   const [checkinRecordId, setCheckinRecordId] = useState('');
   const [checkinNotes, setCheckinNotes] = useState('');
   const [showCheckin, setShowCheckin] = useState(false);
+  const { toast } = useToast();
 
   const { data: overdueData = [], refetch: refetchOverdue } = useApiQuery<CirculationEvent[]>(
     ['overdue'],
@@ -50,7 +52,9 @@ export function CirculationPage() {
       setDueDate('');
       setNotes('');
       refetchOverdue();
+      toast('Record checked out.', 'success');
     },
+    onError: () => toast('Checkout failed. Verify the record ID and due date.', 'error'),
   });
 
   const checkinMutation = useApiMutation<CirculationEvent, object>('/inventory/checkin', 'post', {
@@ -59,7 +63,9 @@ export function CirculationPage() {
       setCheckinRecordId('');
       setCheckinNotes('');
       refetchOverdue();
+      toast('Record returned to storage.', 'success');
     },
+    onError: () => toast('Check-in failed.', 'error'),
   });
 
   const overdueColumns = [

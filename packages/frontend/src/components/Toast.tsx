@@ -15,10 +15,11 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
+const noopToast: ToastContextValue = { toast: () => {} };
+
 export function useToast() {
   const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
-  return ctx;
+  return ctx ?? noopToast;
 }
 
 const variantStyles: Record<ToastVariant, string> = {

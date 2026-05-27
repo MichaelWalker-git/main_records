@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PlusIcon, FunnelIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -30,13 +31,27 @@ export function RecordsListPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [classifyingIds, setClassifyingIds] = useState<Set<string>>(new Set());
+  const baselineConfidence = useRef<Map<string, number | null>>(new Map());
+  const pollRef = useRef<ReturnType<typeof setInterval>>();
 
-  async function handleClassify(id: string) {
+  async function handleClassify(id: string, currentConfidence: number | null | undefined) {
+    if (classifyingIds.has(id)) return;
+    setClassifyingIds((prev) => new Set(prev).add(id));
+    baselineConfidence.current.set(id, currentConfidence ?? null);
+    toast('AI classification started — this usually takes 5-15 seconds.', 'info');
     try {
       await api.post(`/records/${id}/classify`);
-      toast('Classification initiated. AI is processing...', 'success');
       queryClient.invalidateQueries({ queryKey: ['records'] });
-    } catch { toast('Classification failed.', 'error'); }
+    } catch {
+      setClassifyingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      baselineConfidence.current.delete(id);
+      toast('Classification failed. Try again or check the record.', 'error');
+    }
   }
 
   async function handleDelete(id: string) {
@@ -45,6 +60,7 @@ export function RecordsListPage() {
     try {
       await api.delete(`/records/${id}`);
       queryClient.invalidateQueries({ queryKey: ['records'] });
+      toast('Record deleted.', 'success');
     } catch { toast('Delete failed.', 'error'); }
   }
 
@@ -56,6 +72,39 @@ export function RecordsListPage() {
     '/records',
     { page, pageSize: 25, search, status: statusFilter || undefined }
   );
+
+  // Poll while any record is classifying; clear from set when confidence changes.
+  useEffect(() => {
+    if (classifyingIds.size === 0) {
+      if (pollRef.current) clearInterval(pollRef.current);
+      return;
+    }
+    pollRef.current = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+    }, 3000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [classifyingIds, queryClient]);
+
+  useEffect(() => {
+    if (classifyingIds.size === 0 || !data?.data) return;
+    const completed: string[] = [];
+    for (const id of classifyingIds) {
+      const record = data.data.find((r) => r.id === id);
+      if (!record) continue;
+      const baseline = baselineConfidence.current.get(id);
+      const current = record.aiConfidence ?? null;
+      if (current !== baseline) completed.push(id);
+    }
+    if (completed.length > 0) {
+      setClassifyingIds((prev) => {
+        const next = new Set(prev);
+        completed.forEach((id) => next.delete(id));
+        return next;
+      });
+      completed.forEach((id) => baselineConfidence.current.delete(id));
+      toast(`Classification complete (${completed.length} record${completed.length > 1 ? 's' : ''}).`, 'success');
+    }
+  }, [data, classifyingIds, toast]);
 
   const columns = [
     { key: 'title', label: 'Record', sortable: true, render: (r: Record) => (
@@ -69,9 +118,19 @@ export function RecordsListPage() {
     { key: 'seriesTitle', label: 'Series', sortable: true, render: (r: Record) => (
       <span className="text-sm text-slate-600 truncate block max-w-[180px]">{r.seriesTitle || '—'}</span>
     )},
-    { key: 'aiConfidence', label: 'AI', render: (r: Record) => (
-      r.aiConfidence != null ? <ConfidenceMeter score={r.aiConfidence} /> : <span className="text-[10px] text-slate-300">—</span>
-    )},
+    { key: 'aiConfidence', label: 'AI', render: (r: Record) => {
+      if (classifyingIds.has(r.id)) {
+        return (
+          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-navy-600">
+            <ArrowPathIcon className="w-3 h-3 animate-spin" />
+            Classifying...
+          </span>
+        );
+      }
+      return r.aiConfidence != null
+        ? <ConfidenceMeter score={r.aiConfidence} />
+        : <span className="text-[10px] text-slate-300">—</span>;
+    }},
     { key: 'status', label: 'Status', render: (r: Record) => <StatusBadge status={r.status} /> },
     { key: 'actions', label: '', render: (r: Record) => (
       <div className="flex items-center gap-0.5 justify-end">
@@ -93,11 +152,16 @@ export function RecordsListPage() {
         )}
         {canClassify && (
           <button
-            onClick={() => handleClassify(r.id)}
-            className="p-1.5 text-slate-400 hover:text-pine-500 transition-colors"
-            title="AI Classify"
+            onClick={() => handleClassify(r.id, r.aiConfidence)}
+            disabled={classifyingIds.has(r.id)}
+            className="p-1.5 text-slate-400 hover:text-pine-500 transition-colors disabled:opacity-50 disabled:cursor-wait"
+            title={classifyingIds.has(r.id) ? 'Classifying...' : 'AI Classify'}
           >
-            <TagIcon className="w-4 h-4" />
+            {classifyingIds.has(r.id) ? (
+              <ArrowPathIcon className="w-4 h-4 animate-spin" />
+            ) : (
+              <TagIcon className="w-4 h-4" />
+            )}
           </button>
         )}
         {canDelete && (
