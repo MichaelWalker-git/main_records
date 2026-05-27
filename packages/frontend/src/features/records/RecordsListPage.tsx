@@ -9,6 +9,7 @@ import { ExportButton } from '../../components/ExportButton';
 import { EmptyState } from '../../components/EmptyState';
 import { KpiCard } from '../../components/KpiCard';
 import { ConfidenceMeter } from '../../components/ConfidenceMeter';
+import { FilterBar, ActiveFilter } from '../../components/FilterBar';
 import { usePaginatedQuery, useApiQuery } from '../../hooks/useApi';
 import { exportRecords } from '../../utils/export';
 import { useToast } from '../../components/Toast';
@@ -158,6 +159,24 @@ export function RecordsListPage() {
           />
         </div>
       )}
+
+      {(() => {
+        const active: ActiveFilter[] = [];
+        if (search) active.push({ key: 'search', label: 'Search', value: search });
+        if (statusFilter) active.push({ key: 'status', label: 'Status', value: statusFilter.replace(/_/g, ' ') });
+        if (active.length === 0) return null;
+        return (
+          <FilterBar
+            filters={active}
+            onRemove={(key) => {
+              if (key === 'search') setSearch('');
+              if (key === 'status') setStatusFilter('');
+            }}
+            onClearAll={() => { setSearch(''); setStatusFilter(''); }}
+            className="mb-3"
+          />
+        );
+      })()}
 
       <div className="bg-white border border-slate-200 rounded-md">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
