@@ -8,6 +8,8 @@ import { SearchInput } from '../../components/SearchInput';
 import { ExportButton } from '../../components/ExportButton';
 import { usePaginatedQuery } from '../../hooks/useApi';
 import { exportRecords } from '../../utils/export';
+import { useToast } from '../../components/Toast';
+import { useConfirm } from '../../components/ConfirmDialog';
 import api from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 import { RMSRecord as Record } from '../../types';
@@ -15,6 +17,8 @@ import { RMSRecord as Record } from '../../types';
 export function RecordsListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
   const { isAdmin, isStaff, isOfficer } = useAuth();
   const canEdit = isAdmin || isStaff || isOfficer;
   const canClassify = isAdmin || isStaff;
@@ -26,17 +30,18 @@ export function RecordsListPage() {
   async function handleClassify(id: string) {
     try {
       await api.post(`/records/${id}/classify`);
-      alert('Classification initiated. AI is processing...');
+      toast('Classification initiated. AI is processing...', 'success');
       queryClient.invalidateQueries({ queryKey: ['records'] });
-    } catch { alert('Classification failed.'); }
+    } catch { toast('Classification failed.', 'error'); }
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Are you sure you want to delete this record?')) return;
+    const ok = await confirm({ title: 'Delete Record', description: 'Are you sure you want to delete this record? This cannot be undone.', confirmLabel: 'Delete', variant: 'danger' });
+    if (!ok) return;
     try {
       await api.delete(`/records/${id}`);
       queryClient.invalidateQueries({ queryKey: ['records'] });
-    } catch { alert('Delete failed.'); }
+    } catch { toast('Delete failed.', 'error'); }
   }
 
   const { data, isLoading } = usePaginatedQuery<Record>(

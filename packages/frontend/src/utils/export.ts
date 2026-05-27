@@ -186,6 +186,6 @@ export async function exportReport(reportType: string, format: 'pdf' | 'excel' |
       }
     }
   } catch {
-    alert('Failed to generate report export');
+    throw new Error('Failed to generate report export');
   }
 }

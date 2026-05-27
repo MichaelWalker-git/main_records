@@ -2,6 +2,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '../../components/Toast';
+import { ConfirmProvider } from '../../components/ConfirmDialog';
 import { RecordDetailPage } from '../../features/records/RecordDetailPage';
 
 const mockNavigate = vi.fn();
@@ -56,11 +58,15 @@ function renderPage(record: any = mockRecord) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/records/rec-1']}>
-        <Routes>
-          <Route path="/records/:id" element={<RecordDetailPage />} />
-        </Routes>
-      </MemoryRouter>
+      <ToastProvider>
+        <ConfirmProvider>
+          <MemoryRouter initialEntries={['/records/rec-1']}>
+            <Routes>
+              <Route path="/records/:id" element={<RecordDetailPage />} />
+            </Routes>
+          </MemoryRouter>
+        </ConfirmProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
@@ -68,7 +74,6 @@ function renderPage(record: any = mockRecord) {
 describe('RecordDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.confirm = vi.fn(() => true);
   });
 
   it('renders record title and tracking number', async () => {
@@ -115,7 +120,6 @@ describe('RecordDetailPage', () => {
       expect(screen.getByTestId('record-detail-page')).toBeInTheDocument();
     });
 
-    // Open more actions menu
     const buttons = screen.getAllByRole('button');
     const ellipsisBtn = buttons.find(b => b.querySelector('svg'));
     if (ellipsisBtn) fireEvent.click(ellipsisBtn);
@@ -125,11 +129,19 @@ describe('RecordDetailPage', () => {
     });
 
     fireEvent.click(screen.getByTestId('delete-record-button'));
-    expect(window.confirm).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(screen.getByText('Delete this record? This cannot be undone.')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(mockDelete).toHaveBeenCalled();
+    });
+    expect(mockDelete.mock.calls[0][0]).toBe('/records/rec-1');
   });
 
   it('does not delete when confirm is cancelled', async () => {
-    (window.confirm as any).mockReturnValue(false);
     renderPage();
 
     await waitFor(() => {
@@ -145,7 +157,15 @@ describe('RecordDetailPage', () => {
     });
 
     fireEvent.click(screen.getByTestId('delete-record-button'));
-    expect(window.confirm).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(screen.getByText('Delete this record? This cannot be undone.')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Delete this record? This cannot be undone.')).not.toBeInTheDocument();
+    });
     expect(mockDelete).not.toHaveBeenCalled();
   });
 
