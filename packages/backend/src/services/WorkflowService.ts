@@ -136,10 +136,9 @@ export class WorkflowService {
     if (!disposition) throw new AppError(404, 'Disposition not found');
     if (disposition.status !== 'pending_approval') throw new AppError(400, 'Disposition is not pending approval');
 
-    // DSP-04: Approver cannot be the initiator (relaxed in dev/PoC mode)
-    // if (userId === disposition.initiated_by) {
-    //   throw new AppError(403, 'Approver cannot be the same person who initiated the disposition');
-    // }
+    if (process.env.ENFORCE_SEPARATION_OF_DUTIES === 'true' && userId === disposition.initiated_by) {
+      throw new AppError(403, 'Approver cannot be the same person who initiated the disposition');
+    }
 
     const updateData: any = { updated_at: new Date() };
     if (level === 'first') {

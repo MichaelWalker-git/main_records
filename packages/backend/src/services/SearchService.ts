@@ -5,6 +5,8 @@ export interface SearchParams {
   query: string;
   type?: 'metadata' | 'fulltext' | 'semantic' | 'ocr';
   agency_id?: string;
+  agency?: string;
+  status?: string;
   record_type?: string;
   date_from?: string;
   date_to?: string;
@@ -17,7 +19,7 @@ export class SearchService {
   private embeddingService = new EmbeddingService();
 
   async search(params: SearchParams) {
-    const { query, type = 'fulltext', agency_id, record_type, date_from, date_to, tags, page = 1, size = 20 } = params;
+    const { query, type = 'fulltext', agency_id, agency, status, record_type, date_from, date_to, tags, page = 1, size = 20 } = params;
     const offset = (page - 1) * size;
 
     let baseQuery = db('records')
@@ -27,6 +29,11 @@ export class SearchService {
     // Apply filters
     if (agency_id) {
       baseQuery = baseQuery.where('records.agency_id', agency_id);
+    } else if (agency) {
+      baseQuery = baseQuery.where('records.agency_code', agency);
+    }
+    if (status) {
+      baseQuery = baseQuery.where('records.status', status);
     }
     if (record_type) {
       baseQuery = baseQuery.where('records.media_type', record_type);
