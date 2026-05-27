@@ -11,6 +11,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { KpiCard } from '../../components/KpiCard';
 import { ConfidenceMeter } from '../../components/ConfidenceMeter';
 import { FilterBar, ActiveFilter } from '../../components/FilterBar';
+import { DropdownMenu, DropdownEntry } from '../../components/DropdownMenu';
 import { usePaginatedQuery, useApiQuery } from '../../hooks/useApi';
 import { exportRecords } from '../../utils/export';
 import { useToast } from '../../components/Toast';
@@ -132,49 +133,47 @@ export function RecordsListPage() {
         : <span className="text-[10px] text-slate-300">—</span>;
     }},
     { key: 'status', label: 'Status', render: (r: Record) => <StatusBadge status={r.status} /> },
-    { key: 'actions', label: '', render: (r: Record) => (
-      <div className="flex items-center gap-0.5 justify-end">
-        <button
-          onClick={() => navigate(`/records/${r.id}`)}
-          className="p-1.5 text-slate-400 hover:text-navy-500 transition-colors"
-          title="View"
-        >
-          <EyeIcon className="w-4 h-4" />
-        </button>
-        {canEdit && (
+    { key: 'actions', label: '', render: (r: Record) => {
+      const items: DropdownEntry[] = [
+        { key: 'view', label: 'View details', icon: <EyeIcon className="w-4 h-4 text-slate-400" />, onClick: () => navigate(`/records/${r.id}`) },
+      ];
+      if (canEdit) {
+        items.push({ key: 'edit', label: 'Edit', icon: <PencilIcon className="w-4 h-4 text-slate-400" />, onClick: () => navigate(`/records/${r.id}/edit`) });
+      }
+      if (canClassify) {
+        items.push({
+          key: 'classify',
+          label: classifyingIds.has(r.id) ? 'Classifying...' : 'AI Classify',
+          icon: classifyingIds.has(r.id)
+            ? <ArrowPathIcon className="w-4 h-4 text-navy-500 animate-spin" />
+            : <TagIcon className="w-4 h-4 text-slate-400" />,
+          disabled: classifyingIds.has(r.id),
+          onClick: () => handleClassify(r.id, r.aiConfidence),
+        });
+      }
+      if (canDelete) {
+        items.push({ key: 'sep', separator: true });
+        items.push({
+          key: 'delete',
+          label: 'Delete',
+          icon: <TrashIcon className="w-4 h-4" />,
+          danger: true,
+          onClick: () => handleDelete(r.id),
+        });
+      }
+      return (
+        <div className="flex items-center justify-end gap-1">
           <button
-            onClick={() => navigate(`/records/${r.id}/edit`)}
+            onClick={() => navigate(`/records/${r.id}`)}
             className="p-1.5 text-slate-400 hover:text-navy-500 transition-colors"
-            title="Edit"
+            title="View"
           >
-            <PencilIcon className="w-4 h-4" />
+            <EyeIcon className="w-4 h-4" />
           </button>
-        )}
-        {canClassify && (
-          <button
-            onClick={() => handleClassify(r.id, r.aiConfidence)}
-            disabled={classifyingIds.has(r.id)}
-            className="p-1.5 text-slate-400 hover:text-pine-500 transition-colors disabled:opacity-50 disabled:cursor-wait"
-            title={classifyingIds.has(r.id) ? 'Classifying...' : 'AI Classify'}
-          >
-            {classifyingIds.has(r.id) ? (
-              <ArrowPathIcon className="w-4 h-4 animate-spin" />
-            ) : (
-              <TagIcon className="w-4 h-4" />
-            )}
-          </button>
-        )}
-        {canDelete && (
-          <button
-            onClick={() => handleDelete(r.id)}
-            className="p-1.5 text-slate-400 hover:text-red-500 transition-colors"
-            title="Delete"
-          >
-            <TrashIcon className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-    )},
+          <DropdownMenu items={items} triggerLabel="Record actions" />
+        </div>
+      );
+    }},
   ];
 
   return (

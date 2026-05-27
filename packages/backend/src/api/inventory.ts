@@ -24,6 +24,15 @@ const createLocationSchema = z.object({
   agency_id: z.string().uuid().optional(),
 });
 
+const updateLocationSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  code: z.string().min(1).max(50).optional(),
+  parent_id: z.string().uuid().nullable().optional(),
+  location_type: z.enum(['building', 'floor', 'room', 'shelf', 'box']).optional(),
+  capacity: z.number().int().positive().optional(),
+  is_active: z.boolean().optional(),
+});
+
 const checkoutSchema = z.object({
   record_id: z.string().uuid(),
   purpose: z.string().min(1, 'Purpose is required for checkout'),
@@ -87,8 +96,42 @@ router.get('/locations/:id', authorize('inventory:read'), async (req: Request, r
 
 router.post('/locations', authorize('inventory:write'), validate(createLocationSchema), async (req: Request, res: Response, next: NextFunction) => {
   try {
+    if (req.body.parent_id) {
+      const parent = await locationsRepo.findById(req.body.parent_id);
+      if (!parent) return res.status(400).json({ error: 'Parent location not found' });
+    }
     const location = await inventoryService.createLocation(req.body);
     res.status(201).json({ data: location });
+  } catch (err) { next(err); }
+});
+
+router.put('/locations/:id', authorize('inventory:write'), validate(updateLocationSchema), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await locationsRepo.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Location not found' });
+    if (req.body.parent_id && req.body.parent_id !== existing.parent_id) {
+      if (req.body.parent_id === req.params.id) {
+        return res.status(400).json({ error: 'Location cannot be its own parent' });
+      }
+      const parent = await locationsRepo.findById(req.body.parent_id);
+      if (!parent) return res.status(400).json({ error: 'Parent location not found' });
+    }
+    const updated = await locationsRepo.update(req.params.id, { ...req.body, updated_at: new Date() });
+    res.json({ data: updated });
+  } catch (err) { next(err); }
+});
+
+router.delete('/locations/:id', authorize('inventory:write'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await locationsRepo.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Location not found' });
+    const children = await db('locations').where({ parent_id: req.params.id, is_active: true }).count<{ count: string }[]>('id as count').first();
+    const childCount = Number(children?.count ?? 0);
+    if (childCount > 0) {
+      return res.status(409).json({ error: `Cannot deactivate: ${childCount} active child location(s) exist` });
+    }
+    await locationsRepo.update(req.params.id, { is_active: false, updated_at: new Date() });
+    res.status(204).send();
   } catch (err) { next(err); }
 });
 

@@ -1,21 +1,168 @@
 import { useState } from 'react';
+import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { LocationTree } from '../../components/LocationTree';
+import { Modal } from '../../components/Modal';
 import { useApiQuery } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
+import { useConfirm } from '../../components/ConfirmDialog';
+import { useAuth } from '../../hooks/useAuth';
+import { useQueryClient } from '@tanstack/react-query';
+import api from '../../services/api';
 import { Location } from '../../types';
+
+type LocationType = 'building' | 'floor' | 'room' | 'shelf' | 'box';
+
+interface LocationFormState {
+  name: string;
+  code: string;
+  parent_id: string;
+  location_type: LocationType;
+  capacity: string;
+}
+
+const EMPTY_FORM: LocationFormState = {
+  name: '',
+  code: '',
+  parent_id: '',
+  location_type: 'building',
+  capacity: '100',
+};
+
+function flattenTree(locations: Location[]): Location[] {
+  const out: Location[] = [];
+  const walk = (nodes: Location[]) => {
+    for (const n of nodes) {
+      out.push(n);
+      if (n.children?.length) walk(n.children);
+    }
+  };
+  walk(locations);
+  return out;
+}
 
 export function InventoryPage() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const { data: locations = [] } = useApiQuery<Location[]>(['locations'], '/inventory/locations');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<LocationFormState>(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
 
-  const utilization = selectedLocation
+  const { data: locations = [], refetch } = useApiQuery<Location[]>(['locations'], '/inventory/locations');
+  const { toast } = useToast();
+  const { confirm } = useConfirm();
+  const { isAdmin, isStaff } = useAuth();
+  const queryClient = useQueryClient();
+  const canManage = isAdmin || isStaff;
+
+  const flat = flattenTree(locations);
+
+  const utilization = selectedLocation && selectedLocation.capacity > 0
     ? Math.round((selectedLocation.currentCount / selectedLocation.capacity) * 100)
     : 0;
 
+  function openCreate(parent?: Location) {
+    setEditingId(null);
+    setForm({
+      ...EMPTY_FORM,
+      parent_id: parent?.id ?? '',
+      location_type: parent ? nextType(parent.locationType as LocationType) : 'building',
+    });
+    setShowForm(true);
+  }
+
+  function openEdit(location: Location) {
+    setEditingId(location.id);
+    setForm({
+      name: location.name,
+      code: location.code,
+      parent_id: location.parentId ?? '',
+      location_type: location.locationType as LocationType,
+      capacity: String(location.capacity),
+    });
+    setShowForm(true);
+  }
+
+  function nextType(parentType: LocationType): LocationType {
+    const order: LocationType[] = ['building', 'floor', 'room', 'shelf', 'box'];
+    const idx = order.indexOf(parentType);
+    return order[Math.min(idx + 1, order.length - 1)];
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name.trim() || !form.code.trim()) {
+      toast('Name and code are required.', 'error');
+      return;
+    }
+    const capacity = Number(form.capacity);
+    if (!Number.isInteger(capacity) || capacity <= 0) {
+      toast('Capacity must be a positive number.', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const payload = {
+        name: form.name.trim(),
+        code: form.code.trim(),
+        location_type: form.location_type,
+        capacity,
+        parent_id: form.parent_id || undefined,
+      };
+      if (editingId) {
+        await api.put(`/inventory/locations/${editingId}`, payload);
+        toast('Location updated.', 'success');
+      } else {
+        await api.post('/inventory/locations', payload);
+        toast('Location created.', 'success');
+      }
+      setShowForm(false);
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+      refetch();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Save failed.';
+      toast(message, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDeactivate(location: Location) {
+    const ok = await confirm({
+      title: 'Deactivate Location',
+      description: `Are you sure you want to deactivate "${location.name}"? It will be hidden from active operations.`,
+      confirmLabel: 'Deactivate',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await api.delete(`/inventory/locations/${location.id}`);
+      toast('Location deactivated.', 'success');
+      if (selectedLocation?.id === location.id) setSelectedLocation(null);
+      queryClient.invalidateQueries({ queryKey: ['locations'] });
+      refetch();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Deactivate failed.';
+      toast(message, 'error');
+    }
+  }
+
   return (
     <div data-testid="inventory-page">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-800">Inventory Management</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Browse storage locations and track utilization</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">Inventory Management</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Browse storage locations, manage hierarchy, and track utilization</p>
+        </div>
+        {canManage && (
+          <button
+            onClick={() => openCreate()}
+            className="flex items-center gap-1.5 h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
+            data-testid="new-location-button"
+          >
+            <PlusIcon className="w-4 h-4" />
+            New Location
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -32,8 +179,38 @@ export function InventoryPage() {
           {selectedLocation ? (
             <div className="bg-white border border-slate-200 rounded-md p-5" data-testid="location-detail">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-slate-800">{selectedLocation.name}</h2>
-                <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{selectedLocation.locationType}</span>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-800">{selectedLocation.name}</h2>
+                  <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{selectedLocation.locationType}</span>
+                </div>
+                {canManage && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openCreate(selectedLocation)}
+                      className="inline-flex items-center gap-1 h-8 px-2 text-xs border border-slate-200 rounded text-slate-600 hover:bg-slate-50"
+                      data-testid="add-child-location-button"
+                    >
+                      <PlusIcon className="w-3.5 h-3.5" />
+                      Add child
+                    </button>
+                    <button
+                      onClick={() => openEdit(selectedLocation)}
+                      className="inline-flex items-center gap-1 h-8 px-2 text-xs border border-slate-200 rounded text-slate-600 hover:bg-slate-50"
+                      data-testid="edit-location-button"
+                    >
+                      <PencilIcon className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeactivate(selectedLocation)}
+                      className="inline-flex items-center gap-1 h-8 px-2 text-xs border border-red-200 rounded text-red-600 hover:bg-red-50"
+                      data-testid="deactivate-location-button"
+                    >
+                      <TrashIcon className="w-3.5 h-3.5" />
+                      Deactivate
+                    </button>
+                  </div>
+                )}
               </div>
               <dl className="grid grid-cols-2 gap-4 mb-4">
                 <div>
@@ -77,17 +254,110 @@ export function InventoryPage() {
             </div>
           ) : (
             <div className="bg-white border border-slate-200 rounded-md p-12 text-center">
-              <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                </svg>
-              </div>
               <p className="text-sm text-slate-500">Select a location to view details</p>
             </div>
           )}
         </div>
       </div>
+
+      <Modal
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        title={editingId ? 'Edit Location' : 'New Location'}
+      >
+        <form onSubmit={handleSubmit} className="space-y-3" data-testid="location-form">
+          <div>
+            <label htmlFor="loc-name" className="block text-xs font-medium text-slate-600 mb-1">Name *</label>
+            <input
+              id="loc-name"
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
+              required
+              data-testid="loc-name-input"
+            />
+          </div>
+          <div>
+            <label htmlFor="loc-code" className="block text-xs font-medium text-slate-600 mb-1">Code *</label>
+            <input
+              id="loc-code"
+              type="text"
+              value={form.code}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 font-mono"
+              required
+              data-testid="loc-code-input"
+            />
+          </div>
+          <div>
+            <label htmlFor="loc-type" className="block text-xs font-medium text-slate-600 mb-1">Type *</label>
+            <select
+              id="loc-type"
+              value={form.location_type}
+              onChange={(e) => setForm({ ...form, location_type: e.target.value as LocationType })}
+              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
+              data-testid="loc-type-select"
+            >
+              <option value="building">Building</option>
+              <option value="floor">Floor</option>
+              <option value="room">Room</option>
+              <option value="shelf">Shelf</option>
+              <option value="box">Box</option>
+            </select>
+          </div>
+          <div>
+            <label htmlFor="loc-parent" className="block text-xs font-medium text-slate-600 mb-1">Parent location</label>
+            <select
+              id="loc-parent"
+              value={form.parent_id}
+              onChange={(e) => setForm({ ...form, parent_id: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
+              data-testid="loc-parent-select"
+            >
+              <option value="">— No parent (top level) —</option>
+              {flat
+                .filter((l) => l.id !== editingId)
+                .map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.code} — {l.name} ({l.locationType})
+                  </option>
+                ))}
+            </select>
+            <p className="text-[11px] text-slate-400 mt-1">Required for non-building types. Building / floor / room / shelf / box hierarchy.</p>
+          </div>
+          <div>
+            <label htmlFor="loc-capacity" className="block text-xs font-medium text-slate-600 mb-1">Capacity (units) *</label>
+            <input
+              id="loc-capacity"
+              type="number"
+              min={1}
+              value={form.capacity}
+              onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-navy-500 tabular-nums"
+              required
+              data-testid="loc-capacity-input"
+            />
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="h-9 px-3 text-sm border border-slate-300 rounded text-slate-600 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 disabled:opacity-50"
+              data-testid="loc-submit-button"
+            >
+              {submitting ? 'Saving...' : editingId ? 'Save changes' : 'Create location'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

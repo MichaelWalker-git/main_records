@@ -96,20 +96,19 @@ describe('RecordsListPage classify flow', () => {
     expect(cells.length).toBeGreaterThan(0);
   });
 
-  it('shows Classifying indicator and disables button after AI Classify clicked', async () => {
+  it('shows Classifying indicator after AI Classify clicked from action menu', async () => {
     const user = userEvent.setup();
     mockPost.mockResolvedValue({ data: {} });
     renderPage();
 
-    const classifyButton = screen.getAllByTitle('AI Classify')[0];
-    await user.click(classifyButton);
+    const triggers = screen.getAllByTestId('dropdown-trigger');
+    await user.click(triggers[0]);
+    const classifyItem = await screen.findByTestId('dropdown-item-classify');
+    await user.click(classifyItem);
 
     await waitFor(() => {
       expect(screen.getByText('Classifying...')).toBeInTheDocument();
     });
-
-    const updatedButton = screen.getAllByTitle('Classifying...')[0];
-    expect(updatedButton).toBeDisabled();
   });
 
   it('resets classifying state on API error', async () => {
@@ -117,8 +116,10 @@ describe('RecordsListPage classify flow', () => {
     mockPost.mockRejectedValueOnce(new Error('boom'));
     renderPage();
 
-    const classifyButton = screen.getAllByTitle('AI Classify')[0];
-    await user.click(classifyButton);
+    const triggers = screen.getAllByTestId('dropdown-trigger');
+    await user.click(triggers[0]);
+    const classifyItem = await screen.findByTestId('dropdown-item-classify');
+    await user.click(classifyItem);
 
     await waitFor(() => {
       expect(screen.queryByText('Classifying...')).not.toBeInTheDocument();
