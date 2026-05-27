@@ -64,7 +64,7 @@ export async function up(knex: Knex): Promise<void> {
 
   // Sample circulation event (checked-out record)
   await knex('circulation_events').insert({
-    id: 'g1a2b3c4-8888-4000-8000-000000000001',
+    id: 'c1a2b3c4-8888-4000-8000-000000000001',
     record_id: 'e5f6a7b8-5555-4000-8000-000000000004',
     user_id: 'b2c3d4e5-2222-4000-8000-000000000003',
     event_type: 'checkout',
