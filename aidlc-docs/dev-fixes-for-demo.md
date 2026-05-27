@@ -361,6 +361,236 @@ This is a P0 because **without it Tasks 12–17 cannot be evaluated visually**, 
 
 ---
 
+## Missing UI Components (P0–P2 mix)
+
+The current `packages/frontend/src/components/` folder contains **13 components**: `BarcodeScanner`, `DashboardWidget`, `DataTable`, `EmptyState`, `ExportButton`, `LoadingSpinner`, `LocationTree`, `Modal`, `NotificationBell`, `RecordCard`, `SearchInput`, `StatusBadge`, `WorkflowStatus`. That covers the basics, but several pieces a professional RMS demo expects are either missing or hand-rolled inline in pages — which is why the UI feels uneven.
+
+The list below captures **what is missing**, not how to build it. Same problem-statement format. The developer designs the API and chooses where to reuse vs. build new. Where reasonable, prefer extracting from existing inline implementations rather than introducing a new pattern.
+
+### Component 1. `Toast` / `Snackbar` — P0
+
+**Why:** the codebase currently uses `alert(...)` for success/failure feedback (confirmed in `RecordsListPage.tsx:29,31,38,39` and elsewhere). Native `alert()` blocks the UI, looks like the early 2000s, and on demo immediately breaks the "professional system" narrative.
+
+**What "done" looks like:**
+- A toast/snackbar that supports success/error/info/warning variants, auto-dismiss, and stacking.
+- Provided via a global hook (`useToast()` or similar).
+- Every existing `alert()` call in the codebase is replaced.
+- Zero usage of `alert()` remains.
+
+---
+
+### Component 2. `ConfirmDialog` — P0
+
+**Why:** destructive actions currently use `window.confirm(...)` (confirmed in `RecordsListPage.tsx:35`). Same problem as toasts — looks unprofessional on a polished demo.
+
+**What "done" looks like:**
+- A reusable confirm dialog component, with title / description / confirm-label / cancel-label / variant (danger vs neutral).
+- Returns a promise so callers can `await` user choice.
+- Every `window.confirm()` is replaced.
+- The `Modal.tsx` primitive may be reused as the foundation — do not duplicate it.
+
+---
+
+### Component 3. `Tabs` — P0
+
+**Why:** tab UIs are hand-rolled in at least two places: `SearchPage.tsx` (4 search modes) and the disposition detail flow. Task 21 (admin consolidation) needs tabs again. Without a primitive, each page re-implements them slightly differently.
+
+**What "done" looks like:**
+- A `<Tabs>` / `<Tab>` primitive with active state, keyboard nav (arrow keys), and aria roles.
+- `SearchPage.tsx` and any other inline tab implementation is migrated to use it.
+- New admin shell (Task 21) builds on it.
+
+---
+
+### Component 4. `Breadcrumbs` — P1
+
+**Why:** the system has nested entities (record → audit log; disposition → record items; agency → transmittals → records) but no breadcrumb navigation. Users get lost on detail pages. For demo this is the difference between "I know where I am" and "let me find the back button".
+
+**What "done" looks like:**
+- A `<Breadcrumbs>` component fed by a route config or per-page override.
+- Visible on every detail page (Record, Transmittal, Disposition, Audit entry, etc.).
+- Tablet-responsive (collapses or scrolls horizontally on narrow screens).
+
+---
+
+### Component 5. `Tooltip` (general-purpose, not Recharts) — P1
+
+**Why:** the only `Tooltip` in the codebase is from Recharts (chart-only). For Task 17 (search modes explanation), Task 14 (status badges), Task 15 (form helpers), and the help hints scattered in admin pages, we need a general-purpose tooltip primitive.
+
+**What "done" looks like:**
+- Accessible tooltip component with hover + focus triggers, keyboard-dismissable.
+- Supports rich content (not just text strings).
+- At least one consumer migrated as proof (e.g. search-mode tabs).
+
+---
+
+### Component 6. `DropdownMenu` / `ActionMenu` — P1
+
+**Why:** `RecordsListPage.tsx:62-97` shows row actions as inline icons (View/Edit/Classify/Delete). That works for 4 actions but breaks at 6+ — and most rows in a real RMS have 6+ contextual actions (View, Edit, AI Classify, Print Label, Add to Transmittal, Place on Hold, Dispose, Audit Trail). Demo will look cluttered.
+
+**What "done" looks like:**
+- A reusable `<DropdownMenu>` / `<ActionMenu>` with anchor, items, separators, danger variant for destructive actions, keyboard nav.
+- Adopted on row-level actions in Records List, Dispositions List, Transmittals List, Inventory Locations.
+- Existing tests still pass.
+
+---
+
+### Component 7. `Stepper` / `MultiStepForm` — P0 (overlaps with Task 5 + Task 19 templates flow)
+
+**Why:** complex create flows (template-driven creation per Task 5, transmittal submission with multiple stages per Task 6) need a clear multi-step pattern. Without it the form feels like a wall of inputs.
+
+**What "done" looks like:**
+- A `<Stepper>` showing progress (e.g. "Step 2 of 4: Choose Records").
+- Supports forward/back navigation, validation per step, summary review step.
+- At least one flow (`SubmitTransmittalPage` or `CreateRecordPage` template mode) consumes it.
+- Distinct from `WorkflowStatus.tsx` (which is read-only state visualization, not user navigation).
+
+---
+
+### Component 8. `Timeline` — P0
+
+**Why:** several screens need a vertical timeline of events: record audit history, custody chain (circulation), disposition approval steps with timestamps, transmittal lifecycle, legal hold history. Right now these are rendered as flat tables, which hides the **temporal story** that is the heart of records management.
+
+**What "done" looks like:**
+- A `<Timeline>` component supporting: event icon, label, actor, timestamp, optional details/expand, optional badge.
+- Used on RecordDetail (audit + custody), DispositionDetail (approval levels), TransmittalDetail (lifecycle).
+- Pairs with Task 7 (circulation flow clarity) and Task 6 (transmittal flow clarity) — those tasks should consume this primitive rather than reinvent.
+
+---
+
+### Component 9. `ConfidenceMeter` / `ConfidenceBadge` — P0
+
+**Why:** AI classification confidence (`classification_confidence`, threshold 0.85) is our **single biggest differentiator** against off-the-shelf RMS. Right now it is invisible in the UI. Without a dedicated visualization the evaluator never sees the AI working.
+
+**What "done" looks like:**
+- A small visual element (bar, ring, or labeled badge) showing the score 0.00–1.00 with color tied to the threshold (≥0.85 green = auto-classified, <0.85 amber = needs review).
+- Visible on Records List rows where applicable (Task 13 dependency), on RecordDetail, on Dashboard (aggregate distribution).
+- Tooltip explains what the score means in one sentence.
+
+---
+
+### Component 10. `KpiCard` / `StatCard` — P0
+
+**Why:** Task 13 (Records List KPI bar) and Task 16 (Dashboard aggregate lifecycle bar) both need a consistent stat card. `DashboardWidget.tsx` exists but is currently chart-oriented — there is no minimal numeric KPI card.
+
+**What "done" looks like:**
+- A compact `<KpiCard>` showing: label, big number, optional delta (↑/↓ vs prior period), optional click-through filter, optional sparkline.
+- Used on Dashboard, Records List header (Task 13), Inventory Utilization, Analytics.
+- Consistent visual language with `DashboardWidget` so they can sit next to each other.
+
+---
+
+### Component 11. `FilterBar` / `FilterChips` — P1
+
+**Why:** filters on list pages are inline today (status dropdown, search box). When users apply 3-4 filters there is no way to **see what is currently active** at a glance, and clearing them is tedious.
+
+**What "done" looks like:**
+- A `<FilterBar>` showing active filters as chips with × to remove individually, plus "Clear all" link.
+- Used on Records List, Search Results, Dispositions, Audit Log.
+- Reads URL search params so filters are bookmarkable / shareable.
+
+---
+
+### Component 12. `DocumentViewer` / `FilePreview` — P0
+
+**Why:** records can have an attached PDF or image (`document_key`). Currently there is no in-app preview — users would have to download and open externally. That is the single most painful step in any demo flow that touches uploaded files. The audit log mentions "what extracted text came from this document" but evaluators cannot see that side-by-side.
+
+**What "done" looks like:**
+- A `<DocumentViewer>` that renders PDFs (browser-native or a lightweight library like `react-pdf`) and images inline.
+- Used on RecordDetail with a side-by-side panel: document on the left, extracted text + AI metadata on the right. **This is the killer demo screen** — it's where AI value becomes visible.
+- Loads via the existing presigned download URL endpoint.
+- Handles unsupported formats gracefully.
+
+---
+
+### Component 13. `AlertBanner` / `InlineAlert` — P1
+
+**Why:** important contextual messages (legal hold active, retention deadline near, classification below threshold, disposition pending) are rendered inconsistently across pages — sometimes as plain colored text, sometimes as the red-50 div pattern hand-rolled in `CreateRecordPage.tsx:200`.
+
+**What "done" looks like:**
+- An `<AlertBanner>` with variants info / warning / danger / success, optional icon, optional CTA button, optional dismiss.
+- Used on RecordDetail (legal hold notice, disposition pending, retention near), Disposition pages, top-of-page warnings.
+- Replaces the inline red-50/amber-50 div patterns currently scattered across pages.
+
+---
+
+### Component 14. `DateRangePicker` — P1
+
+**Why:** date filters exist semantically on Search (`date_from`, `date_to`), Audit Log, Reports — but the UI uses two separate `<input type="date">` boxes. That works but is clunky for filtering "all dispositions in Q3 2025".
+
+**What "done" looks like:**
+- A `<DateRangePicker>` with preset shortcuts (Today, Last 7 days, Last 30 days, This quarter, This year, Custom).
+- Used wherever a date range is filtered.
+- Returns ISO strings consistent with existing API contracts.
+
+---
+
+### Component 15. `Pagination` — P1
+
+**Why:** several lists likely roll their own pagination (verify `RecordsListPage`, `DispositionsListPage`, etc.). Inconsistent pagination = inconsistent UX.
+
+**What "done" looks like:**
+- A `<Pagination>` with prev/next, page numbers, page size selector, total count display.
+- Consumed by every paginated list.
+- Plays well with `usePaginatedQuery` hook already in the codebase.
+
+---
+
+### Component 16. `Skeleton` loaders — P1
+
+**Why:** when lists/dashboards load, a single centered `LoadingSpinner.tsx` appears. On a polished demo, skeleton placeholders that mirror the final layout feel much faster and more professional, especially on the Dashboard where multiple widgets load.
+
+**What "done" looks like:**
+- A `<Skeleton>` primitive (block / text / circle / table-row variants).
+- Replaces full-page spinners on Dashboard, lists, RecordDetail header.
+- LoadingSpinner is still used for in-button / inline contexts.
+
+---
+
+### Component 17. `Tag` / `Chip` — P1
+
+**Why:** records have `tags`, dispositions have categories, AI assigns multiple labels — these are rendered as comma-separated text or hand-styled spans across the codebase. Inconsistent and uneditable.
+
+**What "done" looks like:**
+- A `<Tag>` / `<Chip>` primitive with optional color, optional × removal, optional click handler.
+- Editable variant (`<TagInput>`) replaces the comma-separated `tags` input on `CreateRecordPage` and `EditRecordPage`.
+- Used wherever we render `record.tags`, AI categories, agency codes.
+
+---
+
+### Component 18. `Avatar` / `UserChip` — P2
+
+**Why:** audit log, custody chain, approval timestamps all show "user X did Y at Z". Currently shown as plain text. A small avatar + name chip makes who-did-what scannable, especially on Timeline (Component 8).
+
+**What "done" looks like:**
+- Initials-based `<Avatar>` (no image upload needed for demo).
+- `<UserChip>` combining avatar + name + role for tight contexts.
+- Used in audit, disposition approvers, custody history.
+
+---
+
+### Component 19. `DiffView` — P2
+
+**Why:** audit log entries that mutate records (PUT) have before/after metadata. Showing them as JSON blobs (current state) is unreadable. A diff view dramatically increases the perceived sophistication of the audit feature.
+
+**What "done" looks like:**
+- A `<DiffView>` showing field-by-field changes (old → new) with color coding.
+- Used on Audit Log entry expansion.
+- Works on the metadata shape that audit middleware already records.
+
+---
+
+### Component 20. `HelpHint` / `InfoIcon` — P2
+
+**Why:** several fields and features have non-obvious meanings (GRS series codes, retention years vs. retention schedule, agency_id vs. agency_code, disposition action types). Inline help hints (small ⓘ next to a label, opening a `Tooltip`) explain without crowding the form.
+
+**What "done" looks like:**
+- A `<HelpHint>` that wraps `Tooltip` (Component 5) with a consistent ⓘ icon and content slot.
+- Used on labels in `CreateRecordPage`, `RetentionSchedulesPage`, admin templates editor.
+- Pairs with Task 15 (user-language form copy).
+
+---
+
 ## Summary table
 
 | # | Task | Priority | Effort | Area |
@@ -387,8 +617,30 @@ This is a P0 because **without it Tasks 12–17 cannot be evaluated visually**, 
 | 20 | Notifications bell backstop | P1 | 1 hr | layout + seed |
 | 21 | Admin pages consolidated under tabs | P1 | 2-3 hrs | admin UI |
 | 22 | Mobile/tablet QA | P1 | 1-2 hrs | manual test + fixes |
+| C1 | `Toast` (replace `alert()`) | P0 | 1-2 hrs | components |
+| C2 | `ConfirmDialog` (replace `window.confirm`) | P0 | 1 hr | components |
+| C3 | `Tabs` primitive | P0 | 1-2 hrs | components |
+| C4 | `Breadcrumbs` | P1 | 1-2 hrs | components + layout |
+| C5 | `Tooltip` (general-purpose) | P1 | 1-2 hrs | components |
+| C6 | `DropdownMenu` / `ActionMenu` | P1 | 2 hrs | components |
+| C7 | `Stepper` / `MultiStepForm` | P0 | 2-3 hrs | components |
+| C8 | `Timeline` | P0 | 2-3 hrs | components |
+| C9 | `ConfidenceMeter` | P0 | 1-2 hrs | components |
+| C10 | `KpiCard` / `StatCard` | P0 | 1 hr | components |
+| C11 | `FilterBar` / `FilterChips` | P1 | 2 hrs | components |
+| C12 | **`DocumentViewer` (PDF + image preview)** | **P0** | **3-4 hrs** | components |
+| C13 | `AlertBanner` / `InlineAlert` | P1 | 1 hr | components |
+| C14 | `DateRangePicker` | P1 | 2 hrs | components |
+| C15 | `Pagination` | P1 | 1-2 hrs | components |
+| C16 | `Skeleton` loaders | P1 | 1-2 hrs | components |
+| C17 | `Tag` / `Chip` / `TagInput` | P1 | 2 hrs | components |
+| C18 | `Avatar` / `UserChip` | P2 | 1 hr | components |
+| C19 | `DiffView` (audit log) | P2 | 2 hrs | components |
+| C20 | `HelpHint` / `InfoIcon` | P2 | 30 min | components |
 
-**Total dev work: ~25-40 hours of code + tests. ~1-2 hours of preparation.**
+**Total dev work: ~50-75 hours of code + tests. ~2-3 hours of preparation.**
+
+**Important:** the component tasks (C1–C20) are **enablers** for the page-level tasks (T1–T22). Land C1 (Toast), C2 (ConfirmDialog), C7 (Stepper), C8 (Timeline), C9 (ConfidenceMeter), C10 (KpiCard), C12 (DocumentViewer) **first** — multiple feature tasks consume them. Without C8 (Timeline), Tasks 6, 7, and 11 cannot be implemented cleanly. Without C9 + C10, Task 13 has no visual building blocks. Without C12, the AI extraction story has no on-screen evidence.
 
 **Critical path note:** Tasks 19 (demo data seed) and 12 (sidebar reorganization) are prerequisites for almost everything else looking right. Encourage the developer to land those first, then iterate on Tasks 13–22 in priority order. Tasks 6, 7, 9, 19, 22 are the biggest unknowns — the developer should scope them first and report back if any will not fit before demo.
 
@@ -410,6 +662,9 @@ This is a P0 because **without it Tasks 12–17 cannot be evaluated visually**, 
 - [ ] Task 18 merged: empty states are contextual (or never seen because Task 19 fills them)
 - [ ] Task 19 merged: demo data seeded — every list, dashboard, chart shows realistic content
 - [ ] Tasks 14, 15, 17, 20, 21, 22 merged or explicitly de-scoped before rehearsal
+- [ ] P0 components landed: C1 (Toast), C2 (ConfirmDialog), C3 (Tabs), C7 (Stepper), C8 (Timeline), C9 (ConfidenceMeter), C10 (KpiCard), C12 (DocumentViewer)
+- [ ] No `alert()` or `window.confirm()` calls remain in `packages/frontend/src`
+- [ ] Other components (C4, C5, C6, C11, C13–C20) merged or explicitly de-scoped before rehearsal
 - [ ] All backend tests pass (currently 87)
 - [ ] All frontend tests pass (currently 45)
 - [ ] Login flow works in target environment
