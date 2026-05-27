@@ -17,6 +17,33 @@ import api from '../../services/api';
 import { RMSRecord as Record, AuditEvent } from '../../types';
 import { format } from 'date-fns';
 
+// Mirrors backend VALID_TRANSITIONS in /api/records.ts.
+const VALID_TRANSITIONS: { [status: string]: string[] } = {
+  draft: ['active'],
+  active: ['checked_out', 'in_transit', 'on_hold', 'pending_disposition', 'archived', 'transferred'],
+  checked_out: ['active', 'in_transit'],
+  in_transit: ['active', 'checked_out'],
+  on_hold: ['active'],
+  pending_disposition: ['disposed', 'destroyed', 'active'],
+  archived: ['active'],
+  transferred: [],
+  disposed: [],
+  destroyed: [],
+};
+
+const STATUS_LABELS: { [status: string]: string } = {
+  draft: 'Draft',
+  active: 'Active',
+  checked_out: 'Checked Out',
+  in_transit: 'In Transit',
+  on_hold: 'On Hold',
+  pending_disposition: 'Pending Disposition',
+  disposed: 'Disposed',
+  destroyed: 'Destroyed',
+  archived: 'Archived',
+  transferred: 'Transferred',
+};
+
 export function RecordDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -76,8 +103,10 @@ export function RecordDetailPage() {
       }
       await api.put(`/records/${id}`, { status: newStatus });
       refetch();
-    } catch (err: any) {
-      toast(err?.response?.data?.error || 'Status change failed.', 'error');
+      toast(`Status changed to ${newStatus.replace(/_/g, ' ')}.`, 'success');
+    } catch (err: unknown) {
+      const errResp = err as { response?: { data?: { error?: string } } };
+      toast(errResp?.response?.data?.error || 'Status change failed.', 'error');
     }
   }
 
@@ -161,34 +190,37 @@ export function RecordDetailPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold text-slate-800">{record.title}</h1>
-              {/* Status dropdown */}
-              {!isReadOnly && record.status === 'active' ? (
-                <select
-                  value={record.status}
-                  onChange={(e) => { if (e.target.value !== record.status) changeStatus(e.target.value); }}
-                  className="h-6 px-2 text-[11px] font-medium rounded-full bg-green-100 text-green-800 border-0 focus:outline-none focus:ring-2 focus:ring-navy-500 cursor-pointer appearance-none pr-5"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23166534'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center', backgroundSize: '14px' }}
-                >
-                  <option value="active">Active</option>
-                  <option value="checked_out">Checked Out</option>
-                  <option value="in_transit">In Transit</option>
-                  <option value="on_hold">Legal Hold</option>
-                </select>
-              ) : !isReadOnly && (record.status === 'checked_out' || record.status === 'in_transit' || record.status === 'on_hold') ? (
-                <select
-                  value={record.status}
-                  onChange={(e) => { if (e.target.value !== record.status) changeStatus(e.target.value); }}
-                  className="h-6 px-2 text-[11px] font-medium rounded-full bg-slate-100 text-slate-700 border-0 focus:outline-none focus:ring-2 focus:ring-navy-500 cursor-pointer appearance-none pr-5"
-                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23475569'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center', backgroundSize: '14px' }}
-                >
-                  <option value="active">Active</option>
-                  <option value="checked_out">Checked Out</option>
-                  <option value="in_transit">In Transit</option>
-                  <option value="on_hold">Legal Hold</option>
-                </select>
-              ) : (
-                <StatusBadge status={record.status} variant="small" />
-              )}
+              {/* Status dropdown — only renders allowed transitions per state machine. */}
+              {(() => {
+                const allowed = VALID_TRANSITIONS[record.status] ?? [];
+                if (isReadOnly || allowed.length === 0) {
+                  return <StatusBadge status={record.status} variant="small" />;
+                }
+                const isActive = record.status === 'active';
+                const dropdownClass = isActive
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-slate-100 text-slate-700';
+                const arrowFill = isActive ? '%23166534' : '%23475569';
+                return (
+                  <select
+                    value={record.status}
+                    onChange={(e) => { if (e.target.value !== record.status) changeStatus(e.target.value); }}
+                    className={`h-6 px-2 text-[11px] font-medium rounded-full ${dropdownClass} border-0 focus:outline-none focus:ring-2 focus:ring-navy-500 cursor-pointer appearance-none pr-5`}
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='${arrowFill}'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z'/%3E%3C/svg%3E")`,
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 4px center',
+                      backgroundSize: '14px',
+                    }}
+                    data-testid="status-select"
+                  >
+                    <option value={record.status}>{STATUS_LABELS[record.status] ?? record.status}</option>
+                    {allowed.map((s) => (
+                      <option key={s} value={s}>{STATUS_LABELS[s] ?? s}</option>
+                    ))}
+                  </select>
+                );
+              })()}
             </div>
             <p className="text-sm text-slate-500 mt-0.5">
               <span className="font-mono">{record.trackingNumber}</span>

@@ -84,6 +84,22 @@ describe('GET /api/records', () => {
   });
 });
 
+describe('GET /api/records/status-transitions', () => {
+  it('returns the valid transition map', async () => {
+    const res = await request(app).get('/api/records/status-transitions');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toBeDefined();
+    // active should be able to transition to several statuses including in_transit and on_hold
+    expect(res.body.data.active).toEqual(expect.arrayContaining(['checked_out', 'in_transit', 'on_hold']));
+    // in_transit can resolve to active or checked_out (the bug case)
+    expect(res.body.data.in_transit).toEqual(expect.arrayContaining(['active', 'checked_out']));
+    // terminal states have no outgoing transitions
+    expect(res.body.data.disposed).toEqual([]);
+    expect(res.body.data.destroyed).toEqual([]);
+  });
+});
+
 describe('GET /api/records/:id', () => {
   it('returns 404 for non-existent record', async () => {
     jest.spyOn(repoProto, 'findById').mockResolvedValue(null as any);
