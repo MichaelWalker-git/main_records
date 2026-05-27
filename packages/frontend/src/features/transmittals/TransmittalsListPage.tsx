@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusIcon, FunnelIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
 import { usePaginatedQuery } from '../../hooks/useApi';
@@ -105,7 +105,6 @@ export function TransmittalsListPage() {
 
       <div className="bg-white border border-slate-200 rounded-md">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
-          <FunnelIcon className="w-4 h-4 text-slate-400" />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}

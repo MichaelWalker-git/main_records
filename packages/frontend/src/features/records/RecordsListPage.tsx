@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PlusIcon, FunnelIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { DataTable } from '../../components/DataTable';
@@ -247,7 +247,6 @@ export function RecordsListPage() {
             <SearchInput placeholder="Search records..." onSearch={setSearch} />
           </div>
           <div className="flex items-center gap-2">
-            <FunnelIcon className="w-4 h-4 text-slate-400" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
