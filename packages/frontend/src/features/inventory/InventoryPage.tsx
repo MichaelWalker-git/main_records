@@ -119,8 +119,7 @@ export function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       refetch();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Save failed.';
-      toast(message, 'error');
+      toast(extractError(err, 'Save failed.'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -141,9 +140,13 @@ export function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ['locations'] });
       refetch();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Deactivate failed.';
-      toast(message, 'error');
+      toast(extractError(err, 'Deactivate failed.'), 'error');
     }
+  }
+
+  function extractError(err: unknown, fallback: string): string {
+    const e = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
+    return e?.response?.data?.error || e?.response?.data?.message || e?.message || fallback;
   }
 
   return (

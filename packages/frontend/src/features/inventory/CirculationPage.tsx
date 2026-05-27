@@ -44,6 +44,11 @@ export function CirculationPage() {
     '/inventory/overdue'
   );
 
+  function extractError(err: unknown, fallback: string): string {
+    const e = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
+    return e?.response?.data?.error || e?.response?.data?.message || e?.message || fallback;
+  }
+
   const checkoutMutation = useApiMutation<CirculationEvent, object>('/inventory/checkout', 'post', {
     onSuccess: () => {
       setShowCheckout(false);
@@ -54,7 +59,7 @@ export function CirculationPage() {
       refetchOverdue();
       toast('Record checked out.', 'success');
     },
-    onError: () => toast('Checkout failed. Verify the record ID and due date.', 'error'),
+    onError: (err) => toast(extractError(err, 'Checkout failed. Verify the record ID and due date.'), 'error'),
   });
 
   const checkinMutation = useApiMutation<CirculationEvent, object>('/inventory/checkin', 'post', {
@@ -65,7 +70,7 @@ export function CirculationPage() {
       refetchOverdue();
       toast('Record returned to storage.', 'success');
     },
-    onError: () => toast('Check-in failed.', 'error'),
+    onError: (err) => toast(extractError(err, 'Check-in failed.'), 'error'),
   });
 
   const overdueColumns = [
