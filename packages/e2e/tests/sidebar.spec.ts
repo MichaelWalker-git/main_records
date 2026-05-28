@@ -4,9 +4,11 @@ test.describe('Sidebar highlighting', () => {
   test('only one nav item is highlighted at a time', async ({ adminPage: page }) => {
     const checkSinglehighlight = async (path: string) => {
       await page.goto(path);
-      await page.waitForLoadState('networkidle');
-      const active = await page.locator('aside [aria-current="page"]').count();
-      expect(active, `Expected exactly one active sidebar item on ${path}, got ${active}`).toBe(1);
+      // Wait for the sidebar to settle (one item with aria-current). Don't use
+      // networkidle — it times out on the cloud due to long-poll/recharts traffic.
+      await expect(page.locator('aside [aria-current="page"]')).toHaveCount(1, {
+        timeout: 10_000,
+      });
     };
 
     await checkSinglehighlight('/');

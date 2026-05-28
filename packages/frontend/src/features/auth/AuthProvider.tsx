@@ -27,8 +27,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const login = useCallback(async (email: string, password: string, mfaCode?: string) => {
-    const response = await authService.login({ email, password, mfaCode });
-    setUser(response.user);
+    try {
+      const response = await authService.login({ email, password, mfaCode });
+      setUser(response.user);
+    } catch (err: unknown) {
+      // Surface the backend's error message (e.g. "Invalid credentials") instead
+      // of axios's generic "Request failed with status code 401".
+      const e = err as { response?: { data?: { error?: string; message?: string } }; message?: string };
+      const msg = e?.response?.data?.error || e?.response?.data?.message || e?.message || 'Login failed';
+      throw new Error(msg);
+    }
   }, []);
 
   const logout = useCallback(async () => {

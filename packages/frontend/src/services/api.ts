@@ -61,7 +61,12 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
+    // Auto-redirect to /login on 401 — but skip the auth endpoints themselves,
+    // otherwise a wrong-password POST /auth/login reloads the page before the
+    // error message can render.
+    const url: string = error.config?.url || '';
+    const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh');
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       window.location.href = '/login';

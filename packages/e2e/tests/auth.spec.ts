@@ -12,13 +12,8 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-password').fill('wrong-password');
     await page.getByTestId('login-submit').click();
 
-    // Either an error message renders or the URL stays on /login —
-    // both indicate the bad credentials were rejected.
-    await page.waitForTimeout(2_000);
-    const url = page.url();
-    const onLogin = url.includes('/login');
-    const hasError = await page.getByTestId('login-error').isVisible().catch(() => false);
-    expect(onLogin || hasError, `Expected to stay on login or see error; got url=${url}`).toBe(true);
+    await expect(page.getByTestId('login-error')).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test('login with arbitrary password "1" is rejected (was previously accepted)', async ({ page }) => {
@@ -27,10 +22,7 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-password').fill('1');
     await page.getByTestId('login-submit').click();
 
-    await page.waitForTimeout(2_000);
-    const url = page.url();
-    const onLogin = url.includes('/login');
-    const hasError = await page.getByTestId('login-error').isVisible().catch(() => false);
-    expect(onLogin || hasError, `Expected to stay on login or see error; got url=${url}`).toBe(true);
+    await expect(page.getByTestId('login-error')).toBeVisible();
+    await expect(page).toHaveURL(/\/login/);
   });
 });

@@ -25,17 +25,21 @@ test.describe('Inventory locations', () => {
     await page.getByTestId('edit-location-button').click();
 
     await expect(page.getByTestId('location-form')).toBeVisible();
-    // Tweak the name and submit
+    // Tweak the name and submit; restore it after so re-runs are idempotent.
     const nameInput = page.getByTestId('loc-name-input');
     const original = await nameInput.inputValue();
     await nameInput.fill(`${original} edited`);
     await page.getByTestId('loc-submit-button').click();
 
-    // Either success toast (Location updated.) or specific error toast — both acceptable;
-    // the bug we want to catch is "no feedback at all".
-    const success = page.getByText('Location updated.');
-    const errorBox = page.locator('[role="alert"]');
-    await expect(success.or(errorBox).first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Location updated.')).toBeVisible({ timeout: 10_000 });
+
+    // Restore the original name so this test can run repeatedly without
+    // accumulating " edited" suffixes in the seed.
+    await page.locator('text=State Records Center').first().click();
+    await page.getByTestId('edit-location-button').click();
+    await page.getByTestId('loc-name-input').fill(original);
+    await page.getByTestId('loc-submit-button').click();
+    await expect(page.getByText('Location updated.')).toBeVisible({ timeout: 10_000 });
   });
 });
 
