@@ -53,6 +53,10 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Skip /auth/login and /auth/refresh — the interceptor would otherwise reload
+// the page before LoginPage can render the inline error.
+const AUTH_ENDPOINT_RE = /\/auth\/(login|refresh)(\?|$)/;
+
 api.interceptors.response.use(
   (response) => {
     if (response.data) {
@@ -61,7 +65,8 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url ?? '';
+    if (error.response?.status === 401 && !AUTH_ENDPOINT_RE.test(url)) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       window.location.href = '/login';
