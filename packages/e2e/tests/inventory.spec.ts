@@ -25,21 +25,27 @@ test.describe('Inventory locations', () => {
     await page.getByTestId('edit-location-button').click();
 
     await expect(page.getByTestId('location-form')).toBeVisible();
-    // Tweak the name and submit; restore it after so re-runs are idempotent.
     const nameInput = page.getByTestId('loc-name-input');
     const original = await nameInput.inputValue();
-    await nameInput.fill(`${original} edited`);
-    await page.getByTestId('loc-submit-button').click();
+    const transient = `${original} [e2e ${Date.now()}]`;
 
-    await expect(page.getByText('Location updated.')).toBeVisible({ timeout: 10_000 });
-
-    // Restore the original name so this test can run repeatedly without
-    // accumulating " edited" suffixes in the seed.
-    await page.locator('text=State Records Center').first().click();
-    await page.getByTestId('edit-location-button').click();
-    await page.getByTestId('loc-name-input').fill(original);
-    await page.getByTestId('loc-submit-button').click();
-    await expect(page.getByText('Location updated.')).toBeVisible({ timeout: 10_000 });
+    try {
+      await nameInput.fill(transient);
+      await page.getByTestId('loc-submit-button').click();
+      await expect(page.getByText('Location updated.')).toBeVisible({ timeout: 10_000 });
+    } finally {
+      // Always restore the original name so the seed is not polluted, even if
+      // an assertion above failed. Use exact match to avoid clicking a
+      // sibling whose name happens to share a prefix.
+      await page.getByText(transient, { exact: true }).first().click().catch(() => {});
+      const editBtn = page.getByTestId('edit-location-button');
+      if (await editBtn.isVisible().catch(() => false)) {
+        await editBtn.click();
+        await page.getByTestId('loc-name-input').fill(original);
+        await page.getByTestId('loc-submit-button').click();
+        await expect(page.getByText('Location updated.')).toBeVisible({ timeout: 10_000 });
+      }
+    }
   });
 });
 
