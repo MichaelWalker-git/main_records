@@ -11,6 +11,7 @@ import {
   DocumentDuplicateIcon,
   InboxArrowDownIcon,
   ShieldCheckIcon,
+  ArrowUpTrayIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../hooks/useAuth';
 
@@ -37,6 +38,7 @@ const sections: NavSection[] = [
     title: 'Intake',
     items: [
       { label: 'Records', path: '/records', icon: DocumentTextIcon },
+      { label: 'Batch Import', path: '/records/import', icon: ArrowUpTrayIcon, roles: ['admin', 'staff', 'records_officer'] },
       { label: 'Transmittals', path: '/transmittals', icon: InboxArrowDownIcon },
     ],
   },

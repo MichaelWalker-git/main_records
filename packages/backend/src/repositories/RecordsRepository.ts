@@ -23,6 +23,13 @@ export interface Record {
   transmittal_number?: string;
   date_from?: string;
   date_to?: string;
+  umbrella?: string;
+  unit?: string;
+  subunit?: string;
+  agency_3?: string;
+  tr_number?: string;
+  dispo_date?: string;
+  rfid_enabled?: boolean;
   metadata: any;
   custom_metadata?: any;
   tags: string[];

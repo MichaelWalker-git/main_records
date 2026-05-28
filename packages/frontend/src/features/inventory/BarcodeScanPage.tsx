@@ -8,11 +8,20 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { useApiMutation } from '../../hooks/useApi';
 import { RMSRecord as Record } from '../../types';
 
+type MatchedOn = 'barcode' | 'tracking_number' | 'container_number';
+
 interface ScanResult {
   record?: Record;
   action?: string;
+  matchedOn?: MatchedOn;
   message: string;
 }
+
+const MATCH_LABELS: { [K in MatchedOn]: string } = {
+  barcode: 'new barcode',
+  tracking_number: 'legacy tracking number',
+  container_number: 'container number',
+};
 
 export function BarcodeScanPage() {
   const [lastScanned, setLastScanned] = useState('');
@@ -86,6 +95,14 @@ export function BarcodeScanPage() {
                   <h3 className="text-sm font-semibold text-slate-800">Record Found</h3>
                   <StatusBadge status={result.record.status} />
                 </div>
+                {result.matchedOn && (
+                  <div className="mb-3" data-testid="scan-match-badge">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-navy-50 border border-navy-200 text-[11px] font-medium text-navy-700">
+                      <span className="w-1.5 h-1.5 rounded-full bg-navy-500" />
+                      Matched on: {MATCH_LABELS[result.matchedOn]}
+                    </span>
+                  </div>
+                )}
                 <RecordCard record={result.record} />
                 <div className="mt-4 pt-3 border-t border-slate-100">
                   <p className="text-[11px] uppercase tracking-wide text-slate-400 font-medium mb-2">Available Action</p>

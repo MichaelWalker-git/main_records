@@ -22,6 +22,8 @@ const createLocationSchema = z.object({
   location_type: z.enum(['building', 'floor', 'room', 'shelf', 'box']),
   capacity: z.number().int().positive(),
   agency_id: z.string().uuid().optional(),
+  vacant_location: z.boolean().optional(),
+  rfid_enabled: z.boolean().optional(),
 });
 
 const updateLocationSchema = z.object({
@@ -31,6 +33,8 @@ const updateLocationSchema = z.object({
   location_type: z.enum(['building', 'floor', 'room', 'shelf', 'box']).optional(),
   capacity: z.number().int().positive().optional(),
   is_active: z.boolean().optional(),
+  vacant_location: z.boolean().optional(),
+  rfid_enabled: z.boolean().optional(),
 });
 
 const checkoutSchema = z.object({
@@ -184,9 +188,11 @@ router.post('/scan', authorize('inventory:read'), async (req: Request, res: Resp
     const { barcode } = req.body;
     if (!barcode) return res.status(400).json({ error: 'Barcode is required' });
 
-    // Search by tracking number or container number
+    // Look up by current barcode, legacy tracking number, or container number.
+    // The matched-on field proves migration compatibility with legacy systems.
     const record = await db('records')
-      .where('tracking_number', barcode)
+      .where('barcode', barcode)
+      .orWhere('tracking_number', barcode)
       .orWhere('container_number', barcode)
       .first();
 
@@ -194,9 +200,15 @@ router.post('/scan', authorize('inventory:read'), async (req: Request, res: Resp
       return res.json({ data: { message: `No record found for barcode: ${barcode}`, action: 'not_found' } });
     }
 
+    let matchedOn: 'barcode' | 'tracking_number' | 'container_number';
+    if (record.barcode === barcode) matchedOn = 'barcode';
+    else if (record.tracking_number === barcode) matchedOn = 'tracking_number';
+    else matchedOn = 'container_number';
+
     res.json({
       data: {
         record,
+        matchedOn,
         message: `Found: ${record.title}`,
         action: record.status === 'checked_out' ? 'checkin_available' : 'checkout_available',
       },

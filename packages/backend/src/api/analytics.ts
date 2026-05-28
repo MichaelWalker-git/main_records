@@ -14,6 +14,36 @@ router.get('/dashboard', authorize('analytics:read'), async (req: Request, res: 
   } catch (err) { next(err); }
 });
 
+// Migration status: parallel-run snapshot for the legacy → RMS cutover.
+// Imported = records with a tracking_number originally minted by the legacy
+// system (matched via tr_number presence). Pending mapping = records lacking
+// series classification or container_number. Failed = unresolved batch_import
+// audit events (resource_id is null).
+router.get('/migration-status', authorize('analytics:read'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');
+    const agencyId = isAdmin ? undefined : req.user!.agencyId;
+    const baseRecords = agencyId ? db('records').where({ agency_id: agencyId }) : db('records');
+
+    const [importedRow] = await baseRecords.clone().whereNotNull('tr_number').count('* as count');
+    const [pendingRow] = await baseRecords.clone()
+      .whereNotNull('tr_number')
+      .where(function () { this.whereNull('series_title').orWhereNull('container_number'); })
+      .count('* as count');
+    const [failedRow] = await db('audit_events')
+      .where({ action: 'batch_import_failed' })
+      .count('* as count');
+
+    res.json({
+      data: {
+        imported: Number(importedRow.count),
+        pendingMapping: Number(pendingRow.count),
+        failed: Number(failedRow.count),
+      },
+    });
+  } catch (err) { next(err); }
+});
+
 router.get('/detailed', authorize('analytics:read'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const isAdmin = req.user!.roles.includes('SYSTEM_ADMIN');

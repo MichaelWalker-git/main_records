@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { PlusIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TagIcon, TrashIcon, EyeIcon, DocumentTextIcon, ArrowPathIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import { useQueryClient } from '@tanstack/react-query';
 import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -32,6 +32,8 @@ export function RecordsListPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [classifyingIds, setClassifyingIds] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState<null | 'classify' | 'dispose'>(null);
   const baselineConfidence = useRef<Map<string, number | null>>(new Map());
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const timeoutRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -132,7 +134,84 @@ export function RecordsListPage() {
     };
   }, []);
 
+  const visibleIds = (data?.data ?? []).map((r) => r.id);
+  const allSelectedOnPage = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+  const someSelectedOnPage = visibleIds.some((id) => selectedIds.has(id));
+
+  function toggleRow(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function togglePageSelection() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allSelectedOnPage) visibleIds.forEach((id) => next.delete(id));
+      else visibleIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  async function handleBulkClassify() {
+    if (selectedIds.size === 0) return;
+    setBulkBusy('classify');
+    const ids = Array.from(selectedIds);
+    let ok = 0, failed = 0;
+    for (const id of ids) {
+      try { await api.post(`/records/${id}/classify`); ok++; }
+      catch { failed++; }
+    }
+    setBulkBusy(null);
+    setSelectedIds(new Set());
+    queryClient.invalidateQueries({ queryKey: ['records'] });
+    toast(`Bulk classify: ${ok} queued${failed ? `, ${failed} failed` : ''}.`, failed ? 'warning' : 'success');
+  }
+
+  async function handleBulkDispose() {
+    if (selectedIds.size === 0) return;
+    const ok = await confirm({
+      title: 'Bulk Dispose',
+      description: `Create a disposition workflow for ${selectedIds.size} record(s)?`,
+      confirmLabel: 'Create disposition',
+      variant: 'danger',
+    });
+    if (!ok) return;
+    setBulkBusy('dispose');
+    try {
+      await api.post('/dispositions', {
+        title: `Bulk disposition (${selectedIds.size} records)`,
+        dispositionAction: 'destroy',
+        recordIds: Array.from(selectedIds),
+      });
+      toast(`Disposition created for ${selectedIds.size} records.`, 'success');
+      setSelectedIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ['records'] });
+    } catch (err: any) {
+      toast(err?.response?.data?.error || 'Bulk dispose failed.', 'error');
+    } finally {
+      setBulkBusy(null);
+    }
+  }
+
   const columns = [
+    {
+      key: 'select',
+      label: '',
+      render: (r: Record) => (
+        <input
+          type="checkbox"
+          aria-label={`Select ${r.title}`}
+          checked={selectedIds.has(r.id)}
+          onChange={() => toggleRow(r.id)}
+          className="h-4 w-4 rounded border-slate-300 text-navy-500 focus:ring-navy-500"
+          data-testid={`row-select-${r.id}`}
+        />
+      ),
+    },
     { key: 'title', label: 'Record', sortable: true, render: (r: Record) => (
       <div className="min-w-0">
         <Link to={`/records/${r.id}`} className="text-navy-500 hover:text-navy-700 font-medium hover:underline block truncate" data-testid={`record-link-${r.id}`}>
@@ -213,6 +292,14 @@ export function RecordsListPage() {
         <div className="flex items-center gap-2">
           <ExportButton onExport={exportRecords} />
           <Link
+            to="/records/import"
+            className="flex items-center gap-1.5 h-9 px-3 border border-slate-200 text-slate-700 rounded text-sm font-medium hover:bg-slate-50 transition-colors"
+            data-testid="import-csv-button"
+          >
+            <ArrowUpTrayIcon className="w-4 h-4" />
+            Import CSV
+          </Link>
+          <Link
             to="/records/new"
             className="flex items-center gap-1.5 h-9 px-3 bg-navy-500 text-white rounded text-sm font-medium hover:bg-navy-600 transition-colors"
             data-testid="create-record-button"
@@ -266,8 +353,56 @@ export function RecordsListPage() {
         );
       })()}
 
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between bg-navy-50 border border-navy-200 rounded-md px-3 py-2 mb-3" data-testid="bulk-action-bar">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-navy-700 font-medium">{selectedIds.size} selected</span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-xs text-navy-600 hover:underline"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            {canClassify && (
+              <button
+                onClick={handleBulkClassify}
+                disabled={bulkBusy !== null}
+                className="h-8 px-3 text-xs font-medium border border-navy-300 text-navy-700 bg-white rounded hover:bg-navy-100 disabled:opacity-50"
+                data-testid="bulk-classify-button"
+              >
+                {bulkBusy === 'classify' ? 'Classifying...' : 'Bulk AI Classify'}
+              </button>
+            )}
+            {canEdit && (
+              <button
+                onClick={handleBulkDispose}
+                disabled={bulkBusy !== null}
+                className="h-8 px-3 text-xs font-medium border border-red-200 text-red-700 bg-white rounded hover:bg-red-50 disabled:opacity-50"
+                data-testid="bulk-dispose-button"
+              >
+                {bulkBusy === 'dispose' ? 'Working...' : 'Bulk Dispose'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white border border-slate-200 rounded-md">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
+          <label className="inline-flex items-center gap-2 text-xs text-slate-500" title="Select all on page">
+            <input
+              type="checkbox"
+              aria-label="Select all on page"
+              checked={allSelectedOnPage}
+              ref={(el) => { if (el) el.indeterminate = !allSelectedOnPage && someSelectedOnPage; }}
+              onChange={togglePageSelection}
+              className="h-4 w-4 rounded border-slate-300 text-navy-500 focus:ring-navy-500"
+              data-testid="select-all-page"
+            />
+            <span>Select all</span>
+          </label>
           <div className="flex-1">
             <SearchInput placeholder="Search records..." onSearch={setSearch} />
           </div>
