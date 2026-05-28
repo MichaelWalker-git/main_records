@@ -35,6 +35,24 @@ BASE_URL=http://maine--alb16-kxi3dpqk8uzt-480421270.us-east-1.elb.amazonaws.com 
 - Backend reachable at `/api` from the frontend (vite proxy handles this in dev).
 - Demo seed must be applied (`packages/backend/migrations/005_demo_seed.ts`).
 
+## Troubleshooting
+
+### Vite returns 504 "Outdated Optimize Dep" after installing packages
+
+Adding any dependency to a workspace can invalidate vite's pre-bundled deps
+cache. The dev server keeps serving stale `/node_modules/.vite/deps/*`
+entries with HTTP 504, the React tree never mounts, and every test fails
+with "element not found".
+
+Fix:
+
+```bash
+rm -rf packages/frontend/node_modules/.vite
+# stop and restart `npm run dev` for the frontend workspace
+```
+
+Run this once after `npm install` in any workspace before running e2e.
+
 ## Conventions
 
 - Use `data-testid` selectors; avoid CSS class or text-content selectors when a
