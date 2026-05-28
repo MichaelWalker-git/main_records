@@ -30,6 +30,13 @@ style: |
     font-weight: 400;
     letter-spacing: -0.01em;
     justify-content: flex-start;
+    word-break: keep-all;
+    overflow-wrap: normal;
+    hyphens: manual;
+  }
+  section * {
+    word-break: keep-all;
+    overflow-wrap: normal;
   }
 
   h1, h2, h3, h4 {
@@ -39,6 +46,22 @@ style: |
     line-height: 1.05;
     margin: 0;
     font-weight: 800;
+  }
+
+  section > h1 {
+    font-size: 48px;
+    line-height: 1.05;
+    margin-bottom: 18px;
+    width: 100%;
+    max-width: none;
+    word-break: keep-all;
+    overflow-wrap: normal;
+    white-space: normal;
+  }
+  section > header {
+    word-break: keep-all;
+    overflow-wrap: normal;
+    white-space: nowrap;
   }
 
   strong { color: var(--pine); font-weight: 700; }
@@ -159,76 +182,78 @@ style: |
   .two-pane {
     display: grid;
     grid-template-columns: 1.1fr 1fr;
-    gap: 80px;
-    margin-top: 40px;
+    gap: 50px;
+    margin-top: 18px;
     align-items: center;
   }
   .pane-left h2 {
-    font-size: 42px;
+    font-size: 32px;
     color: var(--navy);
-    margin-bottom: 24px;
-    line-height: 1.05;
+    margin-bottom: 14px;
+    line-height: 1.1;
   }
-  .pane-left p { font-size: 19px; color: var(--slate-600); line-height: 1.55; max-width: 460px; }
-  .curve-svg { margin-top: 30px; }
+  .pane-left p { font-size: 16px; color: var(--slate-600); line-height: 1.5; max-width: 460px; }
+  .curve-svg { margin-top: 18px; }
   .pane-right {
     background: var(--navy);
     color: #ffffff;
-    padding: 48px;
+    padding: 30px 32px;
     border-radius: 8px;
   }
   .pane-right .label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--gold);
-    margin-bottom: 16px;
+    margin-bottom: 10px;
   }
   .pane-right .big-num {
-    font-size: 140px;
+    font-size: 96px;
     font-weight: 800;
     line-height: 0.9;
     color: #ffffff;
     letter-spacing: -0.04em;
   }
-  .pane-right .caption { font-size: 20px; color: rgba(255,255,255,0.8); margin-top: 16px; line-height: 1.4; }
-  .pane-right .hl { display: block; margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 15px; color: rgba(255,255,255,0.6); }
+  .pane-right .caption { font-size: 16px; color: rgba(255,255,255,0.85); margin-top: 10px; line-height: 1.35; }
+  .pane-right .hl { display: block; margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.4; }
 
   /* ===== COMPLIANCE columns ===== */
   .compliance {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 40px;
-    margin-top: 30px;
-    margin-bottom: 30px;
+    gap: 28px;
+    margin-top: 18px;
+    margin-bottom: 16px;
   }
   .compliance .col h3 {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--pine);
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
     border-bottom: 2px solid var(--pine);
   }
   .compliance .col ul { padding: 0; margin: 0; list-style: none; }
   .compliance .col li {
-    font-size: 19px;
+    font-size: 15px;
     color: var(--navy);
     font-weight: 500;
-    padding: 6px 0;
+    padding: 4px 0;
     letter-spacing: -0.01em;
+    line-height: 1.25;
   }
   .compliance .col li em {
     display: block;
     font-style: normal;
     font-family: 'Inter', sans-serif;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 400;
     color: var(--slate-600);
     margin-top: 2px;
+    line-height: 1.35;
   }
   .audit-band {
     background: var(--slate-100);
@@ -251,10 +276,11 @@ style: |
     letter-spacing: 0.02em;
   }
   .micro {
-    margin-top: 14px;
+    margin-top: 10px;
     color: var(--slate-600);
-    font-size: 15px;
+    font-size: 13px;
     letter-spacing: 0.02em;
+    line-height: 1.5;
   }
   .micro strong { color: var(--navy); }
 
@@ -262,73 +288,75 @@ style: |
   .frame-band {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 18px;
-    margin-bottom: 14px;
+    gap: 12px;
+    margin-top: 10px;
+    margin-bottom: 10px;
   }
   .frame-cite {
     background: #ffffff;
     border: 1px solid var(--slate-200);
     border-left: 4px solid var(--gold);
     border-radius: 6px;
-    padding: 12px 18px;
+    padding: 10px 14px;
   }
   .frame-cite .src {
     font-family: 'Fraunces', serif;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--gold);
     font-weight: 600;
     letter-spacing: 0.15em;
     text-transform: uppercase;
   }
   .frame-cite p {
-    font-size: 15px;
+    font-size: 13px;
     color: var(--slate-900);
-    margin: 4px 0 0;
-    line-height: 1.45;
+    margin: 3px 0 0;
+    line-height: 1.4;
   }
   .frame-cite p strong { color: var(--navy); }
   .arch-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 18px;
-    margin-top: 6px;
+    gap: 12px;
+    margin-top: 4px;
   }
   .arch-card {
     background: #ffffff;
     border: 1px solid var(--slate-200);
     border-radius: 8px;
-    padding: 28px;
+    padding: 16px 20px;
     border-top: 4px solid var(--pine);
   }
   .arch-card .num {
     font-family: 'Fraunces', serif;
-    font-size: 14px;
+    font-size: 11px;
     color: var(--gold);
     font-weight: 600;
     letter-spacing: 0.15em;
   }
   .arch-card h3 {
-    font-size: 28px;
+    font-size: 20px;
     color: var(--navy);
-    margin: 8px 0 12px;
+    margin: 4px 0 6px;
     letter-spacing: -0.02em;
+    line-height: 1.1;
   }
-  .arch-card .stack { font-size: 15px; color: var(--pine); font-weight: 600; margin-bottom: 8px; letter-spacing: 0.01em; }
-  .arch-card p { font-size: 15px; color: var(--slate-600); margin: 0; line-height: 1.5; }
+  .arch-card .stack { font-size: 13px; color: var(--pine); font-weight: 600; margin-bottom: 4px; letter-spacing: 0.01em; }
+  .arch-card p { font-size: 13px; color: var(--slate-600); margin: 0; line-height: 1.4; }
   .arch-foot {
-    margin-top: 24px;
+    margin-top: 12px;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
   }
   .integrations {
     background: var(--navy);
     color: #ffffff;
-    padding: 16px 24px;
+    padding: 10px 18px;
     border-radius: 6px;
-    font-size: 15px;
+    font-size: 12px;
     letter-spacing: 0.02em;
+    line-height: 1.45;
   }
   .integrations span { color: var(--gold); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; font-size: 12px; margin-right: 12px; }
   .substitutions {
@@ -459,13 +487,13 @@ style: |
 <!--
 SLIDE 1 — INTRO  (~50 sec)
 
-Good morning. I'm Michael Walker with Horus Technology. We're an AWS Advanced Partner and an Anthropic Partner, based in San Diego. About twelve engineers, fully distributed, all AWS-certified. Twenty-six active certifications across the team.
+Good morning. I'm Michael Walker with Horus Technology. Before I founded Horus in 2023, I was an AWS Solutions Architect. Before that, a Google engineer. Twelve engineers on the team. Twenty-six active AWS certifications.
 
-What we do is narrow. We build document-processing software with AI on AWS, mostly for clients who can't afford to be wrong — healthcare, financial services, insurance, education. The numbers we see across our portfolio, on average: above 95% accuracy, 85% faster processing, payback inside fourteen months.
+In April, we passed the AWS Small-and-Medium-Business Competency. Third-party audited. An independent auditor signed off on our operational maturity using our production projects as the evidence. The certificate is in File 3.
 
-We run 24/7 distributed managed support for the users of the systems we build — that's the operational model we propose for Maine archivists, agency records officers, and citizen-facing portal users.
+Today we run four production deployments across regulated industries. Healthcare vital-records. EdTech. High-volume handwritten correspondence in a regulated industry. Private-equity contracts. I'll cite specific figures from each as supporting evidence later in the deck. We operate 24/7 distributed managed support, with a dedicated project manager and SLA-backed response times — and that is the operational model we are proposing for Maine.
 
-PRESENTER NOTE: Eye contact, not slide. Don't read certs aloud.
+PRESENTER NOTE: Eye contact, not slide. Don't read certs aloud. Do not bring up Pass/Fail #4 unprompted — eligibility is already certified in Appendix C.
 -->
 
 ---
@@ -474,17 +502,17 @@ PRESENTER NOTE: Eye contact, not slide. Don't read certs aloud.
 <header>The Problem</header>
 
 <div class="problem-headline">
-You're getting more records every <em>week</em><br>today than you used to get in a <em>month,</em><br>ten years ago.
+Eight miles of records.<br>A <em>five-day</em> statutory clock.<br>A finite archivist team.
 </div>
 
 <div class="problem-stats">
   <div class="stat">
-    <div class="num">10<span>×</span></div>
-    <div class="lbl">growth in record intake over the last decade</div>
+    <div class="num">8<span> mi</span></div>
+    <div class="lbl">of permanently valuable State records — county court files back to 1639</div>
   </div>
   <div class="stat">
-    <div class="num">0<span>%</span></div>
-    <div class="lbl">growth in archivist headcount over the same decade</div>
+    <div class="num">5<span> days</span></div>
+    <div class="lbl">FOAA statutory clock to acknowledge every citizen request — Maine Title 1 §408-A</div>
   </div>
   <div class="stat">
     <div class="num">3<span>×</span></div>
@@ -495,15 +523,15 @@ You're getting more records every <em>week</em><br>today than you used to get in
 <!--
 SLIDE 2 — PROBLEM  (~1:30)
 
-Today is about your Records Management System. We're showing you our records-management product, running on AWS, configured against your RFP — live, in a few minutes.
+Today is about your Records Management System. What we are showing you is our records-management product, running on AWS, configured against your RFP. Pass/Fail #3 asks for initial customizations and ongoing code maintenance for Maine records-management law. We commit to that — for the life of the contract.
 
-Pass/Fail #3 in your eligibility section asks the bidder to commit to initial customizations and ongoing code maintenance to keep up with Maine records-management law. We commit to that.
+Here is the promise. Eight miles of records. A five-working-day FOAA clock. The same archivist team. Three to five times the throughput — with architectural headroom up to ten. Full audit trail. Zero compliance lapses.
 
-One fact about Maine State Archives that frames everything else: you're getting more records every week today than you used to get in a month, ten years ago. And in those same ten years, the archivist team hasn't grown. You can't hire your way out of that.
+This is not a replacement for archival judgment. It is a system that does the repetitive part — and gives the archivist back the part where appraisal judgment actually lives.
 
-Three regulatory pressures hit a state archive at the same time. Records disposition schedules. FOAA — Maine's Freedom of Access Act. Legal hold. Get any one of those wrong, and it shows up in public.
+WHY THIS MATTERS NOW: Your own homepage today says the Archives is relocating to the Cultural Building, conducting inventory, response times slower. That is the only moment in a generation when eight miles of records are being physically touched anyway. Deploy this RMS during inventory — and every box gets its barcode, its 8-digit location code, and its metadata captured once. Not twice. The cost of digital transformation pays itself out of work already committed.
 
-So that's what the next twelve minutes are about. Three pieces: the operational gap, the compliance exposure, and the AI that closes both.
+Three pieces next. The FOAA gap. The compliance exposure. And the AI that closes both.
 
 PRESENTER NOTE: Slow down. This is the slide that anchors everything else.
 -->
@@ -534,40 +562,50 @@ PRESENTER NOTE: Slow down. This is the slide that anchors everything else.
 
   </div>
   <div class="pane-right">
-    <div class="label">Healthcare Medical Records</div>
-    <div class="big-num">85<span style="font-size:80px;">%</span></div>
-    <div class="caption">Faster processing. Same team.</div>
+    <div class="label">Own production workload — high-volume handwritten correspondence</div>
+    <div class="big-num">5<span style="font-size:80px;">×</span></div>
+    <div class="caption">200 → 1,000+ items / day. 60K docs / month. 50% cost reduction. Same headcount.</div>
     <div class="hl">Plus: human-in-loop review · change-management · AI pipeline. All three costed.</div>
   </div>
 </div>
 
-<div class="micro" style="margin-top:24px;"><strong>Federal precedent:</strong> NARA's <strong>Electronic Records Archives</strong> initiative — anchored in <strong>OMB M-19-21</strong> (Transition to Electronic Records), deadline updated by <strong>M-23-07</strong> to <strong>30 June 2024</strong>. Tooling that kept pace with the curve, not headcount that did.</div>
+<div class="micro" style="margin-top:24px;"><strong>Federal precedent:</strong> NARA's <strong>Electronic Records Archives</strong> — <strong>900 TB · 800M files · 100+ federal agencies</strong>, under OMB M-19-21 / M-23-07 to a <strong>30 June 2024</strong> deadline. <strong>CoSA 2023, Joy Banks:</strong> 19% of state archives operate with ≤9 FTE; only 23.5% spend &gt;50% time on electronic records. Work grew. Labor pool did not.</div>
 
 <!--
-SLIDE 3 — BLOCK 1: OPERATIONAL  (~2:00)
+SLIDE 3 — BLOCK 1: OPERATIONAL  (~3:10)
 
-Thesis: You can't keep up with exponential record volume by hiring linearly. AI does the cognitive work; humans make the decisions.
+Thesis: Eight miles of records. A five-day statutory clock. A finite archivist team. That math closes only when AI absorbs the repetitive work and gives those hours back to the archivist.
 
-Healthcare Medical Records workload (NDA). Fact: patient-records intake rising every quarter, headcount frozen. Action: Bedrock pipeline in front of intake — every document classified, extracted, routed automatically; humans only saw what AI was unsure about. Result: 85% faster processing, same team. Three reference projects in our File 3 submission cover the same pattern across healthcare, financial services, and higher-education records — happy to walk through any in Q&A.
+ARG 1 — SCIENTIFIC + STATUTORY (the math every archives faces — and how Maine's law writes it):
 
-ARCHIVIST BRIDGE (do not skip): the records are different — patient charts aren't 19th-century court records, and a loan file isn't a gubernatorial paper. What's the same is the structural pattern: high-volume regulated intake with legal retention requirements, classification as the bottleneck, judgment as the part you don't automate. That pattern ports cleanly to a state archives.
+Every state archives in the country is solving the same equation right now. Work has grown. Labor pool has not. Statutory clocks have not moved. And the data on what closes that gap is unambiguous.
 
-Honesty point: not a magic pill. Three things ran in parallel — AI pipeline, human-in-the-loop review queue, change-management plan for the staff. All three matter. All three costed into the Maine proposal.
+NARA's Electronic Records Archives. Nine hundred terabytes. Eight hundred million files. Over a hundred federal agencies. They got there under OMB memo M-19-21, updated by M-23-07, to a June 30, 2024 deadline — after which NARA stopped accepting analog transfers. Their answer: tooling.
 
-NARA in the 2010s — same curve. The federal answer was the Electronic Records Archives initiative. The published anchor is OMB Memorandum M-19-21, with the deadline updated by M-23-07 to 30 June 2024.
+And the team side of the same equation. CoSA's 2023 State of State Records report, executive director Joy Banks. Nineteen percent of state archives operate with nine or fewer staff. Only twenty-three percent of those staff spend more than half their time on electronic records. Work grew. Labor pool did not.
 
-REFRAME (do not skip): Maine isn't bound by M-19-21 — it's a federal directive. But the curve M-19-21 was answering is the same curve facing your Archives — and the federal answer was tooling, not headcount. NARA didn't replace its workforce. It built tooling that kept pace. Same logic, configured for state heritage records.
+Now Maine, specifically. Your own policy gives you five working days to answer every citizen request. A fixed archivist team. And an archive that goes back to 1639 — four hundred years of records the same team has to keep working with.
 
->>> AFTER THIS SLIDE: DEMO MOMENT 1 — Records List → upload one record → AI auto-classifies. ~30 sec demo + 10 sec close. Backup screencast A queued.
+Every hour spent hand-pulling binders is an hour subtracted from appraisal and reference — the work that actually requires an archivist. The clock does not move. The team does not grow. Something has to absorb the repetitive load — or compliance slips.
 
-DEMO CLOSE: One document. Classified, tagged, indexed, embedded, routed for review — under thirty seconds. Nobody on your team typed a field. Multiply that by the boxes in your three warehouse locations. The backlog doesn't shrink because you hire more people. It shrinks when classification stops being a person's job. That's the operational case.
+That something is AI doing the sorting, classification, and retrieval — under human review. Auto-classification at upload, instead of manual keying. Sub-second search, instead of half-day shelf-pulls. Hours given back to the archivist for the part of the job that actually requires an archivist.
+
+Honesty point: not a magic pill. Three things ran in parallel in every deployment we shipped — AI pipeline, human-in-loop review queue, change management for staff. All three are in the Maine proposal.
+
+ARG 2 — PRACTICAL (we have already shipped this exact pattern):
+
+Not theoretical. We have already shipped it. A regulated industry. High-volume handwritten paper correspondence, daily. Statutory turnaround. Same operational shape as your reference queue. Before: 200 items a day, by hand. After: over 1,000. Same headcount. 60,000 documents a month. Cost down 50 percent. The team did not grow. The team's hours were freed. The system handled OCR, classification, structured metadata extraction — and the people moved up the work-stack to exception handling and judgment calls. Same architecture is what we bring to Maine, off the shelf, tuned to your corpus during the 90-day parallel run.
+
+>>> AFTER THIS SLIDE: DEMO MOMENT 1 — Records List → upload one record → AI auto-classifies. ~25 sec demo + 10 sec close. Backup screencast A queued.
+
+DEMO CLOSE: One document. Classified. Tagged. Indexed. Embedded. Routed for review — in under thirty seconds. Nobody typed a field. That same upload, by hand, is twenty minutes of an archivist's day. Multiply that by every box being touched right now. The hours returned to the team are not a slide anymore — they are a budget line. The backlog does not shrink because you hire more people; it shrinks when the repetitive cognitive work stops landing on the archivist's desk — and the five-day clock stops being a fire drill.
 -->
 
 ---
 
 <header>Block 2 · Compliance</header>
 
-# <em style="font-family:'Fraunces',serif;color:var(--pine);font-weight:500;font-style:normal;">Six</em> independent frameworks.<br>One architecture.
+# Block 1 gave hours back.<br><em style="font-family:'Fraunces',serif;color:var(--pine);font-weight:500;font-style:normal;">Block 2 protects them.</em>
 
 <div class="compliance">
   <div class="col">
@@ -605,42 +643,60 @@ DEMO CLOSE: One document. Classified, tagged, indexed, embedded, routed for revi
   </div>
 </div>
 
-<div class="micro"><strong>NIST SP 800-88</strong> media-sanitization on termination &nbsp;·&nbsp; Maine <strong>OIT BackUp + BC</strong> policy conformance &nbsp;·&nbsp; <strong>WCAG 2.1 Level AA</strong> from day one</div>
+<div class="micro"><strong>IBM Cost of a Data Breach 2024 (Ponemon, 604 orgs):</strong> public-sector breach <strong>USD 2.55M</strong> · <strong>258 days</strong> mean dwell time · <strong>USD 2.2M</strong> saved by orgs using AI extensively in prevention · <strong>26.2%</strong> YoY cyber-skills shortage. <strong>Maine statute:</strong> Title 5 §95-C four retention criteria · §95-C patron-confidentiality · Title 1 §408-A 5-day clock · NIST SP 800-88 · Maine OIT BackUp + BC · WCAG 2.1 AA.</div>
 
 <!--
-SLIDE 4 — BLOCK 2: COMPLIANCE  (~2:30)
+SLIDE 4 — BLOCK 2: COMPLIANCE  (~3:00)
 
-Thesis: A record that isn't classified, isn't on a retention schedule, and can't be found is a liability. The system has to enforce the rules — you can't lean on archivist memory.
+Thesis: Block 1 gave hours back. Block 2 protects them. Rules live in the code — at the data layer — so they keep working after the person who knew them has left.
 
-The defense isn't trust us. It's six independent, third-party-audited frameworks aligned on the same architecture — every one named in your RFP or in published Maine OIT policy.
+ARG 1 — SCIENTIFIC + AUTHORITY (the cost of unenforced controls — and the standards that answer it):
 
-ONE — Encryption. TLS 1.3 in transit, AES-256 at rest, FIPS 140-validated KMS. TWO — Identity. SAML 2.0 or OpenID Connect against your Active Directory, role-based access, MFA, State-standard session timeouts. THREE — Audit. Every change appended to an immutable log, exportable to your SIEM.
+Start with what an unenforced control actually costs. IBM Cost of a Data Breach Report, 2024 edition. Six hundred and four organizations surveyed.
 
-FOUR, FIVE, SIX — third-party audit options. Your RFP accepts any one; we bring all three: FedRAMP, ISO/IEC 27001, SOC 2 Type II — through AWS shared-responsibility reports refreshed annually. On termination, State data is destroyed to NIST SP 800-88 media-sanitization standards. Backup and continuity conform to your Maine OIT BackUpRecoveryProcedures and BusinessContinuityDisasterRecoveryPolicy.
+Public sector. Average breach: two and a half million dollars. Two hundred and fifty-eight days — eight and a half months — from breach to containment. And the staffing side of the same report — cyber-skills shortage grew 26 percent year over year. Fewer people watching. More records. Longer dwell time. Same staffing curve we showed you in Block 1.
 
-And one more bar specifically for the State of Maine — accessibility. WCAG 2.1 Level AA, Maine's DigitalAccessibilityPolicy, designed in from day one. Because for a public-records system, a citizen who can't use the interface is a citizen the State has failed.
+One figure that decides which side of that line you sit on. Organizations using AI extensively in prevention saved 2.2 million per breach. That is the dollar value of putting rules in the code instead of in someone's head.
 
-SMB Loan Processing workload. Heading into a regulator audit, legal-hold list lived on a spreadsheet. Action: legal hold and audit logging into the API and the database itself. Once a record is on hold, the data layer refuses modification. Result: zero findings on document handling, audit-response time from weeks to hours. Same enforcement pattern in the system you'll see — including the agency self-service portal where a records officer can accession boxes, submit reference requests, and place a legal hold from their own desk — and circulation tracking with overdue notices for records that move between your three warehouse locations.
+So how do we put them in the code, in a way the State can audit? Two stacks.
 
-One more architectural commitment your security team will want named explicitly: State data is not used for AI model training, ever. That's a contractual guarantee from AWS Bedrock, not a promise from us — Maine's records stay Maine's records.
+First — the federal audit baseline. Your RFP accepts FedRAMP, ISO 27001, or SOC 2 Type II. We bring all three. Underneath: TLS 1.3, AES-256, FIPS-validated keys, SAML or OIDC, RBAC, MFA, an immutable audit log piped to your SIEM, NIST media sanitization on termination. Backup conforms to Maine OIT's own backup-and-recovery and continuity policies.
 
-PRESENTER NOTE: Three breath-pauses (encryption/identity/audit → audit reports → accessibility). Do NOT read the slide aloud.
+Second — Maine statute. Title 5 §95-C. The State Archivist's four retention criteria — administrative, legal, fiscal, historical — live in our schema as a first-class object. §95-C also makes patron-identifying information confidential by statute — enforced at the data layer, not in the UI. Title 1 §408-A. Five-day clock. "In the medium it was stored, at the requester's option." And WCAG 2.1 Level AA, per Maine's Digital Accessibility Policy.
+
+And the archival standards your team already works in — DACS for description, EAD for two-way ArchivesSpace export, PREMIS for preservation events, OAIS for the handoff to Libsafe — those aren't our innovation. They are baseline compatibility, built in from Day 1.
+
+Two stacks. Both audited externally. Both enforced in the code. That is the answer to the IBM number.
+
+ARG 2 — PRACTICAL (this is how those rules behave when a human tries to break them):
+
+Authority is not the same as enforcement. Here is how the rules actually behave when somebody — accidentally or otherwise — tries to break them.
+
+Once a record is on legal hold, you literally cannot modify it. The data layer refuses. And the refusal is logged with the user, the timestamp, and the reason. Same for unmatured retention dates. Same for unauthorized disposition.
+
+We have shipped this exact enforcement pattern before. Private-equity contract intelligence. 19 order-form fields plus line items extracted in under 10 seconds. 95% field accuracy. Multi-tenant row-level security. Controls in the data layer, not in the UI. Same architecture, applied to Maine legal hold and §95-C confidentiality.
+
+Three RFP-specific pieces you'll see in the demo. Agency self-service portal — records officers accession, request, place legal hold, and check the 5-day clock from their desk. No phone tag. Circulation tracking — check-in, check-out, custody history; automated overdue notices across your three warehouses; 8-digit location code on every box. Confidentiality enforcement — §95-C filtered by role at the API layer.
+
+And one for your security team. State data is never used to train AI models. Contractual guarantee from AWS Bedrock. Maine's records stay Maine's.
+
+PRESENTER NOTE: Three breath-pauses (IBM cost figures → federal audit baseline → Maine statute / WCAG). Do NOT read the slide aloud.
 
 >>> AFTER THIS SLIDE: DEMO MOMENT 2 — Records detail → toggle Legal Hold → attempt disposition → blocked → audit log shows the blocked attempt.
 
-DEMO CLOSE: The system refused. The refusal is logged. The user is logged. Five years from now, that line of audit history is the defense. Compliance is the default — not the discipline. Every unprocessed record is risk. This system turns risk into routine. That's the compliance case.
+DEMO CLOSE: What you're seeing is the accession workflow with transmittal forms, series-level description, and item-level circulation — archival vocabulary built into the data model, not bolted onto the UI. Disposition attempt on a record under legal hold. The system refuses. The refusal is logged with the user. Five years from now, that line of audit history is the defense. Compliance is the default — not the discipline. Every unprocessed record is risk. This system turns risk into routine — because the rules live in the code, not in someone's head. And the hours Block 1 gave back to the archivist stay there, instead of being eaten by the next compliance fire drill.
 -->
 
 ---
 
-<header>Block 3 · Differentiation</header>
+<header>Block 3 · AI + Migration</header>
 
-# AI is the architecture — <em style="font-family:'Fraunces',serif;color:var(--pine);font-weight:500;">mapped to NIST AI&nbsp;RMF&nbsp;1.0.</em>
+# Automation is not a feature.<br><em style="font-family:'Fraunces',serif;color:var(--pine);font-weight:500;">It is the system.</em>
 
 <div class="frame-band">
   <div class="frame-cite">
-    <div class="src">IDC Global DataSphere</div>
-    <p>Enterprise unstructured data growing at <strong>double-digit CAGR through the late 2020s</strong> — the curve hitting every public-records office. <strong>You can't hire your way out of it.</strong></p>
+    <div class="src">Library of Congress · Newspaper Navigator</div>
+    <p>ML across <strong>16M pages of Chronicling America</strong>. Bounded outputs · confidence-scored · cataloger on review. <strong>Keyboard work moved off the cataloger's desk. Appraisal stayed where it belongs.</strong></p>
   </div>
   <div class="frame-cite">
     <div class="src">NIST AI RMF 1.0 · Jan 2023</div>
@@ -676,52 +732,49 @@ DEMO CLOSE: The system refused. The refusal is logged. The user is logged. Five 
 </div>
 
 <div class="arch-foot">
-  <div class="integrations"><span>Integrations</span>Microsoft 365 · SharePoint · Dropbox · CRM · ArchivesSpace · <strong style="color:#fff;">Libsafe (preservation, retained)</strong></div>
-  <div class="substitutions"><strong>Production-hardening upgrades available Day 1:</strong> CloudFront/WAF · OpenSearch · QuickSight · Textract — your OIT's choice.</div>
+  <div class="integrations"><span>Two production deployments — same stack</span>Vital records · 40+ US state health departments · HIPAA · 80% time reduction · 98% success · 10× throughput / no headcount &nbsp;·&nbsp; <strong style="color:#fff;">EdTech catalogs · 4,000+ universities · 250K pages/yr · 98% accuracy · 100:1 ROI · $1.16M–$4.76M audited annual savings</strong></div>
 </div>
 
 <!--
-SLIDE 5 — BLOCK 3: DIFFERENTIATION  (~3:00)
+SLIDE 5 — BLOCK 3: AI + MIGRATION  (~3:25)
 
-Thesis: AI isn't a feature of this system. It is the system. Take it out and you've got a database with forms.
+Thesis: Automation is not a feature of this system — it is the system. Under controls a federal framework already named, alongside institutions the panel respects, with our own production work behind it.
 
-Two pieces of independent research frame this.
+ARG 1 — FRAMEWORK (NIST AI RMF, with a cultural-heritage proof point):
 
-ONE — IDC's Global DataSphere tracks enterprise unstructured data growing at double-digit CAGR through the late 2020s. That curve is hitting every public-records office in the country. You can't hire your way out of a curve like that — AI is non-optional. That part is settled.
+Block 1 gave the hours back. Block 2 wrote the rules into the data. Block 3 is what makes this a system, not a database — AI under controls a federal framework already named.
 
-TWO — what's not settled is how to put AI into a regulated workflow safely. The authoritative reference is NIST's AI Risk Management Framework — AI RMF 1.0, January 2023. Four trustworthiness controls: bounded outputs, uncertainty quantification with human escalation, traceability, accountability. Each component in our stack maps to one of those NIST controls.
+One precedent. The Library of Congress. The Newspaper Navigator project. Machine learning across 16 million pages of Chronicling America — bounded outputs, confidence-scored, cataloger on review. The keyboard work moved off the cataloger's desk. The appraisal stayed where it belongs.
 
-- Bounded outputs — Bedrock Claude Sonnet with the tool_use pattern. JSON matches our schema. Hallucination bounded by design.
-- Uncertainty + human escalation — 0.85 confidence threshold. Above auto, below routes to human review queue.
-- Traceability — Bedrock Claude Vision for OCR. Titan Embeddings v2 + pgvector + tsvector + pg_trgm. Sub-second across four search modes. Every result traces back to source page.
-- Accountability — EventBridge cron with 90/30/7-day windows. Append-only audit log the database itself refuses to update or delete.
+The framework that names those principles is NIST AI Risk Management Framework 1.0. January 2023. Four controls — each one maps to a named component in our stack.
 
-The claim isn't trust us, we built it well. The claim is: every AI control here maps to a federally-published framework, AND to your RFP's encryption, identity, and audit requirements. Integrates where your RFP requires — Microsoft 365, SharePoint, Dropbox, your CRM, ArchivesSpace — through documented APIs. Libsafe stays your digital-preservation layer.
+- Bounded outputs. Bedrock Claude `tool_use`. The model returns JSON to our schema. No free-text field to hallucinate into.
+- Uncertainty and escalation. Confidence score on every classification. Above 0.85, auto-classify. Below, into the human review queue.
+- Traceability. Bedrock Vision OCR. Titan embeddings with pgvector. Sub-second retrieval. Every result traces back to its source page.
+- Accountability. EventBridge enforces the retention cron. An append-only audit log the database itself refuses to update or delete.
 
-ARG 2 — PRACTICAL (ROI-first, single anchor stat):
+One framing point. This system is for tracking. OCR feeds searchable metadata. Record content stays under the access controls it had before. The system catalogs. It does not unlock.
 
-ONE NUMBER for the cost-evaluation side of the panel, the one to write down: 180% average ROI inside fourteen months across our SMB and mid-market work.
+ARG 2 — PRACTICAL (we have already done this — twice — in production):
 
-Fact: every one of those clients faced the same trade-off — accuracy vs. speed vs. cost. Action: we deployed exactly the stack you'll see today — Bedrock, Lambda, Step Functions, CDK. Result: the trade-off dissolved. 30–50% lower cost through serverless economics. 40% faster time-to-value through reusable CDK accelerators.
+Two production deployments already running on this exact stack. Both publicly disclosed. Both audited.
 
-Fixed-price commitment across the initial period and both renewal options: serverless scales with usage, not with seat count or per-record license fees. Infrastructure cost grows on a known curve, and we absorb that risk inside our fixed price.
+First. A vital-records platform that serves more than 40 US state health departments — the technology backbone behind their birth certificates, death certificates, and amendments. Strict HIPAA. 24-hour statutory deadlines on every Release-of-Information request. Numbers we delivered, against their previous Azure-based pipeline: 80 percent reduction in processing time. 98 percent business success rate on extracted fields. 10× throughput without one additional headcount. End-to-end p95 under 15 minutes. That is your Block 1 math, proved in a state-government workload.
 
-PASS/FAIL #1 — verbatim, one breath, slow:
-Two U.S. storage regions, more than 500 miles apart, assignable by AIP, live Day 1.
-That is not production hardening. That is exactly how we satisfy your Pass/Fail #1 eligibility requirement.
+Second. An EdTech data partner standardizing course catalogs from 4,000+ US higher-education institutions — Arizona State, Clarivate, the long tail. 250,000 PDF pages a year. 98 percent extraction accuracy. Catalog turnaround compressed from 3-6 months down to under 30 minutes. 100:1 ROI. Annual savings between 1.16 and 4.76 million dollars versus their manual baseline. Audited numbers.
 
-CLOSING SUMMARY (one sentence — do NOT re-list each item):
-Everything else the RFP names — phased migration with the 90-day parallel run, physical re-tagging across the initial period of performance, dedicated Project Manager, Help Topics, user community forum, three reference projects, CloudFront/WAF and OpenSearch promotion path — all detailed in File 3 and File 4, all priced into the proposal.
+Same Bedrock pipeline. Same `tool_use` pattern. Same human-in-loop review. Two live production deployments. Audited results. Statutory clocks held. Compliance held. Hours given back to the team.
 
->>> AFTER THIS SLIDE: DEMO MOMENT 3 — CLIMAX = 4-stop system tour (no upload — re-use the document from Demo 1):
-[1] /dashboard — total records, pending dispositions, open transfers, overdue checkouts, records-by-type chart, recent activity.
-[2] /analytics — backlog trend, throughput, confidence distribution, retention pipeline.
-[3] /records — list view of the corpus. Show the record from Demo 1 already classified, indexed, retention-scheduled, audit-logged. PROVENANCE LINE (do not skip): every record carries its accession source, its series assignment, its custody history through every state change. AI does the cognitive work; the archivist makes the appraisal and retention judgments.
-[4] /search — semantic-query a phrase that ONLY exists in the OCR'd text from Demo 1 → sub-second, found.
+That is the same system we built for Maine. And the best way to show it is to show it. Let me take you into it.
 
-DEMO CLOSE: AI isn't the icing here. It's the cake. With it — paired with human-in-loop review, a real migration plan, and trained archivists — you've got the only architecture that can close the gap. That's the differentiation case.
+>>> AFTER THIS SLIDE: DEMO MOMENT 3 — CLIMAX = 3-stop system tour (no upload — re-use the document from Demo 1):
+[1] /dashboard + /analytics — backlog trend, throughput by archivist, confidence distribution. "The chart your leadership sees when you tell them — the backlog shrank this year."
+[2] /records — list view of the corpus. Show the record from Demo 1 already classified, indexed, retention-scheduled, audit-logged. With Container, Umbrella, Series Title, Disposition date, and TR number on the box label. The system handles the repetitive cognitive work — keying, tagging, scheduling. The archivist keeps the appraisal judgment that requires human context — provenance, sensitivity, historical weight.
+[3] /search — semantic-query a phrase from the Demo 1 document → sub-second, found. The same OCR pipeline turns a 1923 letter and today's agency PDF into searchable metadata — content access stays under the rules it always had.
 
-HARD RULE: do NOT promise auto-population of location_code / series_title / disposition_date / TR number. Those are archivist-on-review fields.
+DEMO CLOSE: For the first time — a county court record from 1639 and a born-digital memo from 2026 sit in one catalog. One search bar. Block 1 gave the hours back. Block 2 protected them. Block 3 turns the inventory window you are already in into the moment the capacity multiplier switches on. AI isn't the icing — it's the cake.
+
+HARD RULE: do NOT promise auto-population of location_code / series_title / disposition_date / TR number. Those are archivist-on-review fields. Pass/Fail #1 (500+ miles cross-region), fixed-price economics, migration window, CoSA 32% turnover, legacy-barcode/batch-import — all in the Q&A bank if asked, not in the spoken deck.
 -->
 
 ---
@@ -735,19 +788,19 @@ Same team. New tools.<br><em>The backlog shrinks.</em>
 
 <div class="conclusion-three">
   <div class="conc-card">
-    <div class="num">01 / OPERATIONAL</div>
-    <h3>The backlog can't be hired away.</h3>
-    <p>AI takes out the linear bottleneck — classification stops being a person's job.</p>
+    <div class="num">01 / BLOCK 1</div>
+    <h3>Hours given back.</h3>
+    <p>The backlog shrinks when the repetitive work stops landing on the archivist's desk — the 5-day clock stops being a fire drill.</p>
   </div>
   <div class="conc-card">
-    <div class="num">02 / COMPLIANCE</div>
-    <h3>Rules live in the code.</h3>
-    <p>Legal hold, retention, FOAA response, accessibility, audit trail — enforced by the system, not archivist memory.</p>
+    <div class="num">02 / BLOCK 2</div>
+    <h3>Hours protected.</h3>
+    <p>Rules live in the code, not in someone's head. Compliance is the default — not the discipline.</p>
   </div>
   <div class="conc-card">
-    <div class="num">03 / DIFFERENTIATION</div>
-    <h3>AI is the architecture.</h3>
-    <p>Paired with human-in-loop review, a real migration plan, and trained archivists.</p>
+    <div class="num">03 / BLOCK 3</div>
+    <h3>It IS the system.</h3>
+    <p>NIST AI RMF. Library of Congress. Two of our own production deployments. 1639 → 2026, in one catalog, one search bar.</p>
   </div>
 </div>
 
@@ -756,26 +809,33 @@ Same team. New tools.<br><em>The backlog shrinks.</em>
 </div>
 
 <!--
-SLIDE 6 — CONCLUSION  (~1:30)
+SLIDE 6 — CONCLUSION  (~2:10)
 
-Three things we showed you today.
-One. The backlog can't be hired away. AI takes out the linear bottleneck.
-Two. Compliance lives in the code, not in someone's memory.
-Three. AI is the architecture, not a feature.
+Three things today.
 
-Same archivist team. No new hires. Three to five times the throughput. Architectural headroom up to ten. Full audit trail. Zero compliance lapses. Above 95% accuracy. 85% faster processing. Payback inside fourteen months.
+Block 1. The backlog does not shrink because you hire more people. It shrinks when the repetitive work stops landing on the archivist's desk — and the five-day clock stops being a fire drill.
 
-Picture an archivist on your team six months from now. She walks in, opens her dashboard, and what she sees isn't a backlog — it's a review queue. A handful of records the AI flagged because confidence was below 85%. By lunch, she's cleared them.
+Block 2. The hours Block 1 gave back stay there — because the rules live in the code, not in someone's head. Compliance is the default, not the discipline.
 
-Picture a citizen FOAA request that used to take three weeks, answered in three hours.
+Block 3. Automation is not a feature of this system — it is the system. Under NIST AI RMF controls. Beside Library of Congress and NARA. Behind two of our own production deployments. A 1639 county court record and a 2026 born-digital memo, in one catalog, behind one search bar.
 
-Picture, at the end of next legislative session, the Archives team telling leadership: the backlog shrank this year. For the first time in a decade.
+INDIRECT CALL TO ACTION (40 sec, memorized — do not read):
 
-That's what the system you just saw, deployed, does. The only question is how fast you want it to start.
+Picture an archivist, six months from now. She opens her dashboard. What she sees is not a backlog. It is a review queue — records the AI flagged below 85% confidence. By lunch, she's cleared them. Every other record from this week is already classified, indexed, retention-scheduled, and audit-logged — with a recommended location waiting for her sign-off.
 
-Thank you for the rigor of this RFP. It would be a privilege to deliver this for the State of Maine.
+Picture a citizen FOAA request — acknowledged inside the five days §408-A requires. And answered in three hours. Because semantic search found the record across four hundred years of holdings.
 
-PRESENTER NOTE: Memorize the three "Picture …" beats — do not read them.
+Picture, at the end of next legislative session, the Archives team telling leadership: the backlog shrank this year. For the first time in a decade. And every FOAA clock landed with margin to spare.
+
+The only question is how fast you want it to start.
+
+WABANAKI + THANKS (20 sec):
+
+One last note. We saw the Open to Collaborate notice on your homepage. Maine's records intersect with Wabanaki heritage, and your team's commitment to partnered stewardship is something we would build around — not over. The system supports access controls and descriptive practices that respect that work.
+
+Thank you for the rigor of this RFP — the most thorough records-management spec we've responded to this year. It would be a privilege to deliver this for the State of Maine. Happy to take questions.
+
+PRESENTER NOTE: Memorize the three "Picture …" beats — do not read them. Slow down on each. Let one sentence end before starting the next.
 -->
 
 ---

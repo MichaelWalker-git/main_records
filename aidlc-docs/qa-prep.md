@@ -97,6 +97,18 @@
 
 ---
 
+### Q12a. "Eight miles of paper records sitting in three warehouses — what's the realistic story for getting that into the system?"
+
+**A.** The inventory window is the leverage. Your team is already touching every box on the re-tagging cycle — that's the moment to capture once. Three pieces. **One** — legacy-barcode lookup endpoint: scan the existing label, the system pulls whatever metadata you already have for that container and pre-fills the new record. **Two** — batch-import endpoint: spreadsheet-to-record reconciliation for collections that have an index but not in our system. **Three** — Bedrock Vision OCR on the document itself when a box is opened for any reason — a FOAA pull, a transmittal, an accession review. Item-level metadata captured in the moment that box is already open. **You are not going to touch eight miles of paper twice.** The system is built to ride along with the work your archivists are already doing.
+
+---
+
+### Q12b. "How will your team handle institutional knowledge transfer? CoSA's 2023 survey says a third of state archivists were appointed after 2020."
+
+**A.** Two answers. **First** — the system is the institutional memory. Every classification, retention decision, location move, and archivist override is logged with the rationale and the prompt version. A new hire on Day 1 has a searchable record of *why* every record sits where it sits. That is not a substitute for mentorship, but it removes the "ask the person who's been here twenty years" bottleneck that turnover puts pressure on. **Second** — onboarding is in scope. Role-based training tracks for archivists, records officers, agency users, and admins. Recorded sessions, written runbooks, ticketed support during business hours, escalation path after. CoSA's number is exactly why we wrote training into the fixed price — because the next archivist hired in Maine should not have to learn this system the hard way.
+
+---
+
 ## SECTION 5 — Compliance & Security
 
 ### Q13. "Legal hold — exactly how is it enforced?"
@@ -134,6 +146,12 @@
 ### Q18. "Fixed price — what happens if our record volumes triple unexpectedly?"
 
 **A.** Two answers. **First** — the architecture is serverless. Aurora Serverless v2 scales storage and compute with usage, not with seat count or per-record licenses. We don't hit a per-seat or per-record license cliff. **Second** — the fixed price absorbs reasonable growth. That risk is on us, by design — that's the discipline a fixed price imposes. **Triple, double, even six times** — we've costed the buffer. If volumes grow by, say, ten times what was modeled, that's an unforeseeable scope change that we'd talk through with your contract administrator.
+
+---
+
+### Q18a. "Walk us through the economics — why does fixed price actually work here, when most state IT contracts blow up on volume?"
+
+**A.** The reason fixed price works on this stack and not on a per-seat or per-record license model is the architecture. Aurora Serverless v2 scales **with usage**, not with the seat count. Bedrock is **per-call**, not per-engineer. S3 is per-gigabyte. The cost lines move with the work, not with how many archivists you've got logged in. That means when the State legislature funds Maine for fifteen new agencies onto the system, our cost goes up proportionally with the records — but yours, under the fixed price, does not. The serverless cost model is what makes it underwriteable. That's not a discount. That's how the contract is engineered.
 
 ---
 
