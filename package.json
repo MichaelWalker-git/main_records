@@ -8,7 +8,8 @@
     "packages/infrastructure",
     "packages/backend",
     "packages/lambdas/*",
-    "packages/frontend"
+    "packages/frontend",
+    "packages/e2e"
   ],
   "scripts": {
     "build": "npm run build --workspaces",

@@ -21,6 +21,13 @@ export function EditRecordPage() {
   const [containerNumber, setContainerNumber] = useState('');
   const [boxNumber, setBoxNumber] = useState('');
   const [locationCode, setLocationCode] = useState('');
+  const [umbrella, setUmbrella] = useState('');
+  const [unit, setUnit] = useState('');
+  const [subunit, setSubunit] = useState('');
+  const [agency3, setAgency3] = useState('');
+  const [trNumber, setTrNumber] = useState('');
+  const [dispoDate, setDispoDate] = useState('');
+  const [rfidEnabled, setRfidEnabled] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -28,11 +35,18 @@ export function EditRecordPage() {
       setTitle(record.title || '');
       setDescription(record.description || '');
       setStatus(record.status || '');
-      setSeriesTitle((record as any).seriesTitle || '');
-      setMediaType((record as any).mediaType || '');
-      setContainerNumber((record as any).containerNumber || '');
-      setBoxNumber((record as any).boxNumber || '');
-      setLocationCode((record as any).locationCode || (record as any).location_code || '');
+      setSeriesTitle(record.seriesTitle || '');
+      setMediaType(record.mediaType || '');
+      setContainerNumber(record.containerNumber || '');
+      setBoxNumber(record.boxNumber || '');
+      setLocationCode(record.locationCode || (record as any).location_code || '');
+      setUmbrella(record.umbrella || '');
+      setUnit(record.unit || '');
+      setSubunit(record.subunit || '');
+      setAgency3(record.agency3 || '');
+      setTrNumber(record.trNumber || record.transmittalNumber || '');
+      setDispoDate((record.dispoDate || '').slice(0, 10));
+      setRfidEnabled(!!record.rfidEnabled);
     }
   }, [record]);
 
@@ -60,6 +74,13 @@ export function EditRecordPage() {
     if (containerNumber) payload.containerNumber = containerNumber;
     if (boxNumber) payload.boxNumber = boxNumber;
     if (locationCode) payload.locationCode = locationCode;
+    if (umbrella) payload.umbrella = umbrella;
+    if (unit) payload.unit = unit;
+    if (subunit) payload.subunit = subunit;
+    if (agency3) payload.agency3 = agency3;
+    if (trNumber) payload.trNumber = trNumber;
+    if (dispoDate) payload.dispoDate = dispoDate;
+    payload.rfidEnabled = rfidEnabled;
     mutation.mutate(payload);
   }
 
@@ -163,6 +184,88 @@ export function EditRecordPage() {
               </select>
             </div>
           </div>
+          <fieldset className="border-t border-slate-100 pt-4">
+            <legend className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Box Label (RFP Block 3)</legend>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="umbrella" className="block text-sm font-medium text-slate-700 mb-1">Umbrella</label>
+                <input
+                  id="umbrella"
+                  type="text"
+                  value={umbrella}
+                  onChange={(e) => setUmbrella(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  placeholder="e.g. Executive Branch"
+                />
+              </div>
+              <div>
+                <label htmlFor="unit" className="block text-sm font-medium text-slate-700 mb-1">Unit</label>
+                <input
+                  id="unit"
+                  type="text"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="subunit" className="block text-sm font-medium text-slate-700 mb-1">Subunit</label>
+                <input
+                  id="subunit"
+                  type="text"
+                  value={subunit}
+                  onChange={(e) => setSubunit(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              <div>
+                <label htmlFor="agency3" className="block text-sm font-medium text-slate-700 mb-1">Agency (3-letter)</label>
+                <input
+                  id="agency3"
+                  type="text"
+                  maxLength={10}
+                  value={agency3}
+                  onChange={(e) => setAgency3(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  placeholder="MSA"
+                />
+              </div>
+              <div>
+                <label htmlFor="trNumber" className="block text-sm font-medium text-slate-700 mb-1">Transmittal #</label>
+                <input
+                  id="trNumber"
+                  type="text"
+                  value={trNumber}
+                  onChange={(e) => setTrNumber(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="dispoDate" className="block text-sm font-medium text-slate-700 mb-1">Dispo Date</label>
+                <input
+                  id="dispoDate"
+                  type="date"
+                  value={dispoDate}
+                  onChange={(e) => setDispoDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={rfidEnabled}
+                  onChange={(e) => setRfidEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 text-navy-500 focus:ring-navy-500"
+                  data-testid="rfid-toggle"
+                />
+                RFID-tagged container (optional, RFP §VI)
+              </label>
+            </div>
+          </fieldset>
           <div>
             <label htmlFor="status" className="block text-sm font-medium text-slate-700 mb-1">Status</label>
             <select

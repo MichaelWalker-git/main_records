@@ -472,6 +472,56 @@ export function RecordDetailPage() {
             </dl>
           </div>
 
+          {/* Box Label (RFP Block 3 full set) */}
+          <div className="bg-white border border-slate-200 rounded-md p-5" data-testid="box-label-card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Box Label</h2>
+              {record.rfidEnabled && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-medium text-emerald-700" data-testid="rfid-indicator">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> RFID
+                </span>
+              )}
+            </div>
+            <dl className="grid grid-cols-3 gap-x-6 gap-y-4">
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Umbrella</dt>
+                <dd className="mt-0.5 text-sm text-slate-700">{record.umbrella || <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Unit</dt>
+                <dd className="mt-0.5 text-sm text-slate-700">{record.unit || <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Subunit</dt>
+                <dd className="mt-0.5 text-sm text-slate-700">{record.subunit || <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Agency (3)</dt>
+                <dd className="mt-0.5 text-sm text-slate-700 font-mono">{record.agency3 || <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Container #</dt>
+                <dd className="mt-0.5 text-sm text-slate-700 font-mono">{record.containerNumber || <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Box #</dt>
+                <dd className="mt-0.5 text-sm text-slate-700 font-mono">{record.boxNumber || <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Transmittal #</dt>
+                <dd className="mt-0.5 text-sm text-slate-700 font-mono">{record.trNumber || record.transmittalNumber || <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Dispo Date</dt>
+                <dd className="mt-0.5 text-sm text-slate-700">{record.dispoDate ? format(new Date(record.dispoDate), 'MMM d, yyyy') : <span className="text-slate-400">—</span>}</dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Location Code</dt>
+                <dd className="mt-0.5 text-sm text-slate-700 font-mono">{record.locationCode || <span className="text-slate-400">—</span>}</dd>
+              </div>
+            </dl>
+          </div>
+
           {/* Description */}
           {record.description && (
             <div className="bg-white border border-slate-200 rounded-md p-5">

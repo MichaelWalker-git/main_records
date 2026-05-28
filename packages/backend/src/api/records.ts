@@ -81,6 +81,13 @@ const updateRecordSchema = z.object({
   metadata: z.record(z.any()).optional(),
   tags: z.array(z.string()).optional(),
   retention_schedule_id: z.string().uuid().optional(),
+  umbrella: z.string().max(100).optional(),
+  unit: z.string().max(100).optional(),
+  subunit: z.string().max(100).optional(),
+  agency_3: z.string().max(50).optional(),
+  tr_number: z.string().max(50).optional(),
+  dispo_date: z.string().optional(),
+  rfid_enabled: z.boolean().optional(),
 }).strict();
 
 const batchImportSchema = z.object({
@@ -300,11 +307,16 @@ router.get('/:id/label', authorize('records:read'), async (req: Request, res: Re
 <div class="field"><span class="field-label">Container #</span><span class="field-value">${e(record.container_number)}</span></div>
 <div class="field"><span class="field-label">Location Code</span><span class="field-value">${e(record.location_code)}</span></div>
 <div class="field"><span class="field-label">Agency</span><span class="field-value">${e(record.agency_code)}</span></div>
+<div class="field"><span class="field-label">Agency (3)</span><span class="field-value">${e((record as any).agency_3)}</span></div>
+<div class="field"><span class="field-label">Umbrella</span><span class="field-value">${e((record as any).umbrella)}</span></div>
+<div class="field"><span class="field-label">Unit</span><span class="field-value">${e((record as any).unit)}</span></div>
+<div class="field"><span class="field-label">Subunit</span><span class="field-value">${e((record as any).subunit)}</span></div>
 <div class="field"><span class="field-label">Box #</span><span class="field-value">${e(record.box_number)}</span></div>
 <div class="field"><span class="field-label">Record Series</span><span class="field-value">${e(record.series_title)}</span></div>
 <div class="field"><span class="field-label">Date Range</span><span class="field-value">${e(record.date_from)} to ${e(record.date_to)}</span></div>
 <div class="field"><span class="field-label">Media Type</span><span class="field-value">${e(record.media_type)}</span></div>
-<div class="field"><span class="field-label">Transmittal #</span><span class="field-value">${e(record.transmittal_number)}</span></div>
+<div class="field"><span class="field-label">Transmittal #</span><span class="field-value">${e((record as any).tr_number, record.transmittal_number)}</span></div>
+<div class="field"><span class="field-label">Dispo Date</span><span class="field-value">${e((record as any).dispo_date)}</span></div>
 <div class="barcode">
   ${barcodeSvg}
   <div class="barcode-id">${e(record.container_number, record.id)}</div>
@@ -374,6 +386,11 @@ router.post('/batch-import', authorize('records:write'), async (req: Request, re
         description: row.description || '',
         agency_id: agencyId,
         series_title: row.series || null,
+        container_number: row.container_number || row.containerNumber || null,
+        tr_number: row.tr_number || row.trNumber || null,
+        umbrella: row.umbrella || null,
+        unit: row.unit || null,
+        subunit: row.subunit || null,
         media_type: 'PHYSICAL',
         status: 'active',
         created_by: req.user!.id,

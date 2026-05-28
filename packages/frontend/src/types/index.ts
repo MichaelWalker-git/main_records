@@ -39,6 +39,18 @@ export interface RMSRecord {
   hasDocument?: boolean;
   aiConfidence?: number;
   classificationStatus?: string;
+  containerNumber?: string;
+  boxNumber?: string;
+  locationCode?: string;
+  mediaType?: string;
+  transmittalNumber?: string;
+  umbrella?: string;
+  unit?: string;
+  subunit?: string;
+  agency3?: string;
+  trNumber?: string;
+  dispoDate?: string;
+  rfidEnabled?: boolean;
 }
 
 export type TransmittalStatus = 'draft' | 'submitted' | 'received' | 'approved' | 'rejected';

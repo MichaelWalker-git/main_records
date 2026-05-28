@@ -18,6 +18,8 @@ interface LocationFormState {
   parent_id: string;
   location_type: LocationType;
   capacity: string;
+  vacant_location: boolean;
+  rfid_enabled: boolean;
 }
 
 const EMPTY_FORM: LocationFormState = {
@@ -26,6 +28,8 @@ const EMPTY_FORM: LocationFormState = {
   parent_id: '',
   location_type: 'building',
   capacity: '100',
+  vacant_location: false,
+  rfid_enabled: false,
 };
 
 function flattenTree(locations: Location[]): Location[] {
@@ -78,6 +82,8 @@ export function InventoryPage() {
       parent_id: location.parentId ?? '',
       location_type: location.locationType as LocationType,
       capacity: String(location.capacity),
+      vacant_location: !!(location as any).vacantLocation,
+      rfid_enabled: !!(location as any).rfidEnabled,
     });
     setShowForm(true);
   }
@@ -107,6 +113,8 @@ export function InventoryPage() {
         location_type: form.location_type,
         capacity,
         parent_id: form.parent_id || undefined,
+        vacant_location: form.vacant_location,
+        rfid_enabled: form.rfid_enabled,
       };
       if (editingId) {
         await api.put(`/inventory/locations/${editingId}`, payload);
@@ -182,7 +190,20 @@ export function InventoryPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-800">{selectedLocation.name}</h2>
-                  <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{selectedLocation.locationType}</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded capitalize">{selectedLocation.locationType}</span>
+                    {(selectedLocation as any).vacantLocation && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-medium text-amber-700" data-testid="vacant-badge">
+                        Vacant
+                      </span>
+                    )}
+                    {(selectedLocation as any).rfidEnabled && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-medium text-emerald-700" data-testid="loc-rfid-indicator">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        RFID
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {canManage && (
                   <div className="flex items-center gap-1">
@@ -339,6 +360,28 @@ export function InventoryPage() {
               required
               data-testid="loc-capacity-input"
             />
+          </div>
+          <div className="flex items-center gap-6 pt-1">
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={form.vacant_location}
+                onChange={(e) => setForm({ ...form, vacant_location: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300 text-navy-500 focus:ring-navy-500"
+                data-testid="loc-vacant-toggle"
+              />
+              Vacant location
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={form.rfid_enabled}
+                onChange={(e) => setForm({ ...form, rfid_enabled: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300 text-navy-500 focus:ring-navy-500"
+                data-testid="loc-rfid-toggle"
+              />
+              RFID-enabled shelf
+            </label>
           </div>
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
             <button
