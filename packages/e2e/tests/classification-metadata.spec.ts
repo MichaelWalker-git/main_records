@@ -49,18 +49,12 @@ async function fillClassificationFieldset(page: any) {
 
 test.describe('Classification Metadata (digitalmaine.com)', () => {
   test('create -> edit -> save -> reload -> update preserves all eight fields', async ({ adminPage: page }) => {
-    // 1. Create a fresh record so we are not modifying seed data
+    // 1. Create a fresh record so we are not modifying seed data.
+    // CreateRecordPage opens in 'choose' mode (3 cards: Upload / Template /
+    // Manual). Click the Manual card to drop into the manual form.
     await page.goto('/records/new');
-    // CreateRecordPage starts in 'choose' mode then drops into manual; the
-    // submit button is rendered on the manual form so we can short-circuit.
-    const titleInput = page.getByTestId('record-title-input');
-    if (!(await titleInput.isVisible().catch(() => false))) {
-      // If the page is still on the choose step, click "Manual entry" if present
-      const manualBtn = page.getByRole('button', { name: /manual/i }).first();
-      if (await manualBtn.isVisible().catch(() => false)) {
-        await manualBtn.click();
-      }
-    }
+    await page.getByTestId('mode-manual').click();
+    await expect(page.getByTestId('record-title-input')).toBeVisible();
 
     const uniqueTitle = `Classification E2E Test ${process.env.PLAYWRIGHT_RUN_ID || 'run'}`;
     await page.getByTestId('record-title-input').fill(uniqueTitle);

@@ -73,11 +73,23 @@ export function EditRecordPage() {
 
   const mutation = useApiMutation<Record, object>(`/records/${id}`, 'put', {
     onSuccess: () => {
+      setError('');
       queryClient.invalidateQueries({ queryKey: ['record', id!] });
       queryClient.invalidateQueries({ queryKey: ['records'] });
       navigate(`/records/${id}`);
     },
-    onError: (err) => setError(err.message),
+    onError: (err) => {
+      // Translate the wire-level error into something a user can act on.
+      // useApiMutation already concatenated backend details; we strip the
+      // generic "Validation failed" prefix and the leading colon so the
+      // message reads as a sentence instead of a tech dump.
+      const raw = err.message || 'Could not save changes.';
+      const friendly = raw
+        .replace(/^Validation failed\s*[—:]?\s*/, 'Could not save: ')
+        .replace(/Unrecognized key\(s\) in object/, 'unsupported field')
+        .replace(/^:\s*/, '');
+      setError(friendly);
+    },
   });
 
   function handleSubmit(e: FormEvent) {

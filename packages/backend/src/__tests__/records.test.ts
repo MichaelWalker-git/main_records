@@ -290,6 +290,54 @@ describe('PUT /api/records/:id - digitalmaine.com classification metadata', () =
 
     expect(res.status).toBe(400);
   });
+
+  it('rejects camelCase keys with a structured details payload (so the UI can localise)', async () => {
+    jest.spyOn(repoProto, 'findById').mockResolvedValue({ id: VALID_UUID, agency_id: 'ag1' } as any);
+
+    // Frontend axios interceptor normally rewrites camelCase -> snake_case.
+    // If a regression bypasses that pipeline (e.g. raw fetch from a tool),
+    // the .strict() schema must fail loudly with the offending key listed.
+    const res = await request(app)
+      .put(`/api/records/${VALID_UUID}`)
+      .send({ contributingInstitution: 'Maine State Archives' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Validation failed');
+    expect(Array.isArray(res.body.details)).toBe(true);
+    const messages = res.body.details.map((d: any) => d.message).join(' ');
+    expect(messages).toMatch(/contributingInstitution/);
+  });
+
+  it('accepts every digitalmaine field together (full happy-path round trip)', async () => {
+    const recordId = VALID_UUID2;
+    const updated = {
+      id: recordId,
+      title: 'WWI Memo',
+      agency_id: 'ag1',
+    };
+    jest.spyOn(repoProto, 'findById').mockResolvedValue(updated as any);
+    const updateSpy = jest.spyOn(repoProto, 'update').mockResolvedValue(updated as any);
+
+    const res = await request(app)
+      .put(`/api/records/${recordId}`)
+      .send({
+        title: 'WWI Memo',
+        contributing_institution: 'Maine State Archives',
+        document_type_dm: 'Map',
+        dm_identifier: '15-28455-F026-I999',
+        exact_creation_date: '1918-11-11',
+        doc_language: 'English',
+        doc_location: 'Augusta, ME',
+        keywords: [],
+        recommended_citation: 'War Department (1918). "Memo."',
+      });
+
+    expect(res.status).toBe(200);
+    const payload = updateSpy.mock.calls[0][1] as any;
+    expect(payload.keywords).toEqual([]);
+    expect(payload.document_type_dm).toBe('Map');
+    expect(payload.exact_creation_date).toBe('1918-11-11');
+  });
 });
 
 describe('DELETE /api/records/:id', () => {
