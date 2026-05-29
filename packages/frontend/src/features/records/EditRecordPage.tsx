@@ -9,11 +9,13 @@ import {
   DIGITAL_MAINE_DOCUMENT_TYPES,
 } from '../../types';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { useToast } from '../../components/Toast';
 
 export function EditRecordPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: record, isLoading } = useApiQuery<Record>(['record', id!], `/records/${id}`);
   const { data: locationsRaw } = useApiQuery<any>(['locations'], '/inventory/locations');
   const locations: Location[] = locationsRaw?.data ?? locationsRaw ?? [];
@@ -76,6 +78,7 @@ export function EditRecordPage() {
       setError('');
       queryClient.invalidateQueries({ queryKey: ['record', id!] });
       queryClient.invalidateQueries({ queryKey: ['records'] });
+      toast('Record saved.', 'success');
       navigate(`/records/${id}`);
     },
     onError: (err) => {

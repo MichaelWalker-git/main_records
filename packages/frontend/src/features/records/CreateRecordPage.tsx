@@ -4,6 +4,7 @@ import { ArrowUpTrayIcon, DocumentIcon, CheckCircleIcon, PencilSquareIcon, Clipb
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Stepper } from '../../components/Stepper';
 import { useApiQuery } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
 import api from '../../services/api';
 
 interface TemplateField {
@@ -26,6 +27,7 @@ type Step = 'input' | 'processing' | 'done';
 
 export function CreateRecordPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [mode, setMode] = useState<Mode>('choose');
   const [step, setStep] = useState<Step>('input');
   const [file, setFile] = useState<File | null>(null);
@@ -103,9 +105,11 @@ export function CreateRecordPage() {
 
       setStatusMessage('Document uploaded! Redirecting...');
       setStep('done');
+      toast('Record created and document uploaded.', 'success');
       setTimeout(() => navigate(`/records/${recordId}`), 800);
     } catch (err: any) {
       setError(err?.message || 'Failed to process document. Please try again.');
+      toast('Upload failed.', 'error');
       setStep('input');
     }
   }
@@ -139,9 +143,11 @@ export function CreateRecordPage() {
         tags: tags.split(',').map((s) => s.trim()).filter(Boolean),
       });
       const record = createResp.data ?? createResp;
+      toast('Record created.', 'success');
       navigate(`/records/${record.id}`);
     } catch (err: any) {
       setError(err?.message || 'Failed to create record.');
+      toast('Could not create record.', 'error');
       setStep('input');
     }
   }
@@ -324,9 +330,11 @@ export function CreateRecordPage() {
           metadata: templateFields,
         });
         const record = createResp.data ?? createResp;
+        toast('Record created from template.', 'success');
         navigate(`/records/${record.id}`);
       } catch (err: any) {
         setError(err?.message || 'Failed to create record.');
+        toast('Could not create record from template.', 'error');
         setStep('input');
       }
     }

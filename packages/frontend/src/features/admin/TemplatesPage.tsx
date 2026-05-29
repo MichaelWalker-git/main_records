@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PlusIcon, TrashIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
 
 interface TemplateField {
   label: string;
@@ -42,9 +43,15 @@ export function TemplatesPage() {
   const [fields, setFields] = useState<TemplateField[]>([...DEFAULT_MAINE_FIELDS]);
 
   const { data: templates = [], refetch } = useApiQuery<Template[]>(['templates'], '/templates');
+  const { toast } = useToast();
 
   const createMutation = useApiMutation<Template, object>('/templates', 'post', {
-    onSuccess: () => { resetForm(); refetch(); },
+    onSuccess: () => {
+      resetForm();
+      refetch();
+      toast('Template saved.', 'success');
+    },
+    onError: (err) => toast(err.message || 'Could not save template.', 'error'),
   });
 
   function resetForm() {

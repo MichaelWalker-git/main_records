@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApiMutation, useApiQuery } from '../../hooks/useApi';
 import { StatusBadge } from '../../components/StatusBadge';
+import { useToast } from '../../components/Toast';
 
 interface ReferenceRequest {
   id: string;
@@ -21,12 +22,15 @@ export function ReferenceRequestPage() {
     '/agency/reference-requests'
   );
 
+  const { toast } = useToast();
   const mutation = useApiMutation<{ id: string }, object>('/agency/reference-requests', 'post', {
     onSuccess: () => {
       setSubject('');
       setDescription('');
       setUrgency('normal');
+      toast('Reference request submitted.', 'success');
     },
+    onError: (err) => toast(err.message || 'Could not submit request.', 'error'),
   });
 
   function handleSubmit(e: FormEvent) {

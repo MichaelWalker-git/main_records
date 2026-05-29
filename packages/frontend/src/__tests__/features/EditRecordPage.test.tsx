@@ -135,6 +135,18 @@ describe('EditRecordPage - save flow', () => {
     expect(banner.textContent).not.toContain('status code');
   });
 
+  it('shows a success toast and navigates away after saving', async () => {
+    mockPut.mockResolvedValueOnce({ data: { data: { ...baseRecord } } });
+    renderPage();
+    await waitFor(() => expect(screen.getByTestId('classification-metadata-fieldset')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    await waitFor(() => expect(mockPut).toHaveBeenCalled());
+    // ToastProvider renders the success toast as a sibling to the form
+    await waitFor(() => expect(screen.getByText('Record saved.')).toBeInTheDocument());
+  });
+
   it('clears the error banner after a successful save retry', async () => {
     // First submit fails with 400, second succeeds. The banner from the
     // first attempt must disappear once the retry lands.

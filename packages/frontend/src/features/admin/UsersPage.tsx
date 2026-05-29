@@ -4,6 +4,7 @@ import { DataTable } from '../../components/DataTable';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Modal } from '../../components/Modal';
 import { usePaginatedQuery, useApiMutation } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
 import { User } from '../../types';
 
 export function UsersPage() {
@@ -20,11 +21,14 @@ export function UsersPage() {
     { page, pageSize: 25 }
   );
 
+  const { toast } = useToast();
   const createMutation = useApiMutation<User, object>('/admin/users', 'post', {
     onSuccess: () => {
       setShowCreate(false);
       refetch();
+      toast('User created.', 'success');
     },
+    onError: (err) => toast(err.message || 'Could not create user.', 'error'),
   });
 
   const columns = [

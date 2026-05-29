@@ -3,6 +3,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { DataTable } from '../../components/DataTable';
 import { Modal } from '../../components/Modal';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
 import { RetentionSchedule } from '../../types';
 
 export function RetentionSchedulesPage() {
@@ -14,6 +15,7 @@ export function RetentionSchedulesPage() {
   const [method, setMethod] = useState<string>('destroy');
 
   const { data: schedules = [], refetch } = useApiQuery<RetentionSchedule[]>(['retention-schedules'], '/admin/retention-schedules');
+  const { toast } = useToast();
 
   const createMutation = useApiMutation<RetentionSchedule, object>('/admin/retention-schedules', 'post', {
     onSuccess: () => {
@@ -23,7 +25,9 @@ export function RetentionSchedulesPage() {
       setDescription('');
       setYears('');
       refetch();
+      toast('Retention schedule created.', 'success');
     },
+    onError: (err) => toast(err.message || 'Could not create schedule.', 'error'),
   });
 
   const columns = [
