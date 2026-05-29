@@ -105,12 +105,12 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
         classification.confidence >= 0.85 ? "CLASSIFIED" : "PENDING";
 
       // Update the record in PostgreSQL with classification results.
-      // We also enrich the digitalmaine.com-style fields here:
-      //   - keywords[] gets the deduped tag list when the column is empty
-      //     (OCR fills it first; this is a safety net for records uploaded
-      //     before OCR populated keywords).
-      //   - recommended_citation is built from title + year + agency when
-      //     the column is empty so every demo record has a citation string.
+      // Digitalmaine.com fields:
+      //   - keywords: union the deduped classifier tags with whatever OCR
+      //     already wrote, so both pipelines contribute and re-runs never
+      //     drop existing entries.
+      //   - recommended_citation: build a Chicago-style fallback from
+      //     title + year + agency when the column is empty.
       const dedupedTags = Array.from(
         new Set(
           (classification.tags || [])
@@ -133,10 +133,11 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
          SET classification_confidence = $1,
              classification_status = $2,
              category = $3,
-             keywords = CASE
-               WHEN keywords IS NULL OR array_length(keywords, 1) IS NULL THEN $5::text[]
-               ELSE keywords
-             END,
+             keywords = (
+               SELECT ARRAY(
+                 SELECT DISTINCT unnest(coalesce(keywords, '{}'::text[]) || $5::text[])
+               )
+             ),
              recommended_citation = COALESCE(recommended_citation, NULLIF($6, '')),
              updated_at = NOW()
          WHERE id = $4`,

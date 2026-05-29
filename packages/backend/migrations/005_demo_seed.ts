@@ -155,7 +155,7 @@ async function seed(knex: Knex.Transaction): Promise<void> {
       exact_creation_date: exactDate,
       doc_language: 'English',
       doc_location: location,
-      keywords: knex.raw('?::text[]', [`{${keywords.map((k) => `"${k.replace(/"/g, '\\"')}"`).join(',')}}`]),
+      keywords: keywords,
       recommended_citation: citation,
     });
   }

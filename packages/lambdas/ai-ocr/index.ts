@@ -279,7 +279,33 @@ async function extractFromImage(imageData: Buffer, contentType: string): Promise
   return parseToolResponse(response);
 }
 
-function parseToolResponse(response: any): ExtractionResult {
+export const ALLOWED_DM_DOCUMENT_TYPES = new Set(['Text', 'Image', 'Audio', 'Video', 'Map']);
+
+// Hard caps mirror the records table column widths; the AI sometimes returns
+// verbose strings ("Record Group 5 / Series 3 / Folder 12 ...") that would
+// otherwise blow past varchar(100) and reject the whole UPDATE.
+export const COLUMN_LIMITS = {
+  contributingInstitution: 255,
+  dmIdentifier: 100,
+  docLanguage: 50,
+  docLocation: 255,
+} as const;
+
+export function clampString(value: unknown, max: number): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.length > max ? trimmed.slice(0, max) : trimmed;
+}
+
+export function coerceDocumentTypeDm(value: unknown): 'Text' | 'Image' | 'Audio' | 'Video' | 'Map' | undefined {
+  if (typeof value !== 'string') return undefined;
+  return ALLOWED_DM_DOCUMENT_TYPES.has(value)
+    ? (value as 'Text' | 'Image' | 'Audio' | 'Video' | 'Map')
+    : undefined;
+}
+
+export function parseToolResponse(response: any): ExtractionResult {
   const responseBody = JSON.parse(new TextDecoder().decode(response.body));
   const toolUseBlock = responseBody.content.find(
     (block: { type: string }) => block.type === "tool_use"
@@ -300,16 +326,21 @@ function parseToolResponse(response: any): ExtractionResult {
       language: input.language,
     },
     digitalMaine: {
-      contributingInstitution: input.contributing_institution || 'Maine State Archives',
-      documentTypeDm: input.document_type_dm,
-      dmIdentifier: input.dm_identifier || undefined,
-      exactCreationDate: input.exact_creation_date || undefined,
-      docLanguage: input.doc_language || undefined,
-      docLocation: input.doc_location || undefined,
+      contributingInstitution:
+        clampString(input.contributing_institution, COLUMN_LIMITS.contributingInstitution) || 'Maine State Archives',
+      documentTypeDm: coerceDocumentTypeDm(input.document_type_dm),
+      dmIdentifier: clampString(input.dm_identifier, COLUMN_LIMITS.dmIdentifier),
+      exactCreationDate: typeof input.exact_creation_date === 'string' && input.exact_creation_date.trim()
+        ? input.exact_creation_date.trim()
+        : undefined,
+      docLanguage: clampString(input.doc_language, COLUMN_LIMITS.docLanguage),
+      docLocation: clampString(input.doc_location, COLUMN_LIMITS.docLocation),
       keywords: Array.isArray(input.keywords)
         ? Array.from(new Set(input.keywords.filter((k: unknown) => typeof k === 'string' && k.trim().length > 0)))
         : undefined,
-      recommendedCitation: input.recommended_citation || undefined,
+      recommendedCitation: typeof input.recommended_citation === 'string' && input.recommended_citation.trim()
+        ? input.recommended_citation.trim()
+        : undefined,
     },
   };
 }

@@ -16,6 +16,7 @@ import { useConfirm } from '../../components/ConfirmDialog';
 import api from '../../services/api';
 import { RMSRecord as Record, AuditEvent } from '../../types';
 import { format } from 'date-fns';
+import { formatDateOnly } from '../../utils/dates';
 
 // MIRRORS backend VALID_TRANSITIONS in packages/backend/src/api/records.ts.
 // Edit both copies together. The endpoint /api/records/status-transitions
@@ -513,7 +514,7 @@ export function RecordDetailPage() {
               </div>
               <div>
                 <dt className="text-[11px] text-slate-400 uppercase font-medium">Dispo Date</dt>
-                <dd className="mt-0.5 text-sm text-slate-700">{record.dispoDate ? format(new Date(record.dispoDate), 'MMM d, yyyy') : <span className="text-slate-400">—</span>}</dd>
+                <dd className="mt-0.5 text-sm text-slate-700">{formatDateOnly(record.dispoDate) ?? <span className="text-slate-400">—</span>}</dd>
               </div>
               <div>
                 <dt className="text-[11px] text-slate-400 uppercase font-medium">Location Code</dt>
@@ -549,9 +550,7 @@ export function RecordDetailPage() {
               <div>
                 <dt className="text-[11px] text-slate-400 uppercase font-medium">Exact Creation Date</dt>
                 <dd className="mt-0.5 text-sm text-slate-700" data-testid="dm-exact-creation-date">
-                  {record.exactCreationDate
-                    ? format(new Date(record.exactCreationDate), 'MMM d, yyyy')
-                    : <span className="text-slate-400">—</span>}
+                  {formatDateOnly(record.exactCreationDate) ?? <span className="text-slate-400">—</span>}
                 </dd>
               </div>
               <div>
