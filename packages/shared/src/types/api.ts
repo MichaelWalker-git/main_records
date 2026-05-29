@@ -19,7 +19,20 @@ export interface ApiError {
   path?: string;
 }
 
-export interface CreateRecordDto {
+export type DigitalMaineDocumentType = 'Text' | 'Image' | 'Audio' | 'Video' | 'Map';
+
+export interface DigitalMaineMetadata {
+  contributingInstitution?: string;
+  documentTypeDm?: DigitalMaineDocumentType;
+  dmIdentifier?: string;
+  exactCreationDate?: string;
+  docLanguage?: string;
+  docLocation?: string;
+  keywords?: string[];
+  recommendedCitation?: string;
+}
+
+export interface CreateRecordDto extends DigitalMaineMetadata {
   type: RecordType;
   title: string;
   description?: string;
@@ -33,7 +46,7 @@ export interface CreateRecordDto {
   customFields?: Record<string, string | number | boolean>;
 }
 
-export interface UpdateRecordDto {
+export interface UpdateRecordDto extends DigitalMaineMetadata {
   title?: string;
   description?: string;
   retentionScheduleId?: string;

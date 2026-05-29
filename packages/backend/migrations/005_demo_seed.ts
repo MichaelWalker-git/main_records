@@ -114,6 +114,52 @@ async function seed(knex: Knex.Transaction): Promise<void> {
 
   await knex('records').insert(records);
 
+  // --- Backfill digitalmaine.com-style classification metadata ---
+  // Mirrors the public Maine Digital Commons schema so the demo can show parity
+  // with how the State already publishes archival records.
+  const DM_DOC_TYPES = ['Text', 'Image', 'Audio', 'Video', 'Map'] as const;
+  const DM_LOCATIONS = [
+    'Augusta, ME', 'Portland, ME', 'Bangor, ME', 'Lewiston, ME', 'Biddeford, ME',
+    'Brunswick, ME', 'Waterville, ME', 'Rockland, ME',
+  ];
+  const DM_KEYWORD_POOL: Record<string, string[]> = {
+    MSA: ['Maine', 'State Archives', 'Government', 'Public Records'],
+    DHH: ['Maine', 'Health and Human Services', 'Public Health', 'Welfare'],
+    DOE: ['Maine', 'Education', 'Schools', 'Students'],
+    DOT: ['Maine', 'Transportation', 'Highways', 'Infrastructure'],
+    DEP: ['Maine', 'Environment', 'Conservation', 'Permits'],
+    DOL: ['Maine', 'Labor', 'Workforce', 'Compliance'],
+    DPS: ['Maine', 'Public Safety', 'Law Enforcement', 'Emergency'],
+    AGO: ['Maine', 'Attorney General', 'Litigation', 'Legal'],
+  };
+
+  for (let i = 1; i <= 50; i += 1) {
+    const r = records[i - 1];
+    const docType = (r.media_type === 'PHYSICAL' && (r.record_type || '').includes('map'))
+      ? 'Map'
+      : DM_DOC_TYPES[i % DM_DOC_TYPES.length];
+    const location = DM_LOCATIONS[i % DM_LOCATIONS.length];
+    const agencyKey = (r.agency_code || 'MSA') as keyof typeof DM_KEYWORD_POOL;
+    const baseKeywords = DM_KEYWORD_POOL[agencyKey] || DM_KEYWORD_POOL.MSA;
+    const seriesKeyword = (r.series_title || '').split(' ').slice(0, 2).join(' ');
+    const keywords = Array.from(new Set([...baseKeywords, seriesKeyword].filter(Boolean)));
+    const dmIdentifier = `${String(15 + (i % 10)).padStart(2, '0')}-${String(28000 + i).padStart(5, '0')}-F${String(i).padStart(3, '0')}-I${String((i * 7) % 100).padStart(3, '0')}`;
+    const exactDate = new Date(Date.now() - (60 + i) * 86400000).toISOString().slice(0, 10);
+    const createdYear = (r.created_at as Date).getFullYear();
+    const citation = `${(r.agency_code || 'MSA')} (${createdYear}). "${r.title}". Maine State Archives, Series: ${r.series_title || 'General'}. Identifier ${dmIdentifier}.`;
+
+    await knex('records').where({ id: r.id }).update({
+      contributing_institution: 'Maine State Archives',
+      document_type_dm: docType,
+      dm_identifier: dmIdentifier,
+      exact_creation_date: exactDate,
+      doc_language: 'English',
+      doc_location: location,
+      keywords: knex.raw('?::text[]', [`{${keywords.map((k) => `"${k.replace(/"/g, '\\"')}"`).join(',')}}`]),
+      recommended_citation: citation,
+    });
+  }
+
   // --- Transmittals at various stages ---
   const transmittals = [
     { id: tid(1), title: 'DOT Portland Office - Annual Records Transfer', description: 'Annual transfer of completed project files from Portland office', agency_id: AGENCIES.DOT, status: 'submitted', submitted_by: USERS.michael, submitted_at: daysAgo(5), created_by: USERS.michael, created_at: daysAgo(7) },

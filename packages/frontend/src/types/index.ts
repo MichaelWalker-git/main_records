@@ -51,7 +51,25 @@ export interface RMSRecord {
   trNumber?: string;
   dispoDate?: string;
   rfidEnabled?: boolean;
+  contributingInstitution?: string;
+  documentTypeDm?: DigitalMaineDocumentType;
+  dmIdentifier?: string;
+  exactCreationDate?: string;
+  docLanguage?: string;
+  docLocation?: string;
+  keywords?: string[];
+  recommendedCitation?: string;
 }
+
+export type DigitalMaineDocumentType = 'Text' | 'Image' | 'Audio' | 'Video' | 'Map';
+
+export const DIGITAL_MAINE_DOCUMENT_TYPES: DigitalMaineDocumentType[] = [
+  'Text',
+  'Image',
+  'Audio',
+  'Video',
+  'Map',
+];
 
 export type TransmittalStatus = 'draft' | 'submitted' | 'received' | 'approved' | 'rejected';
 

@@ -191,4 +191,52 @@ describe('RecordDetailPage', () => {
     });
     expect(screen.queryByTestId('delete-record-button')).not.toBeInTheDocument();
   });
+
+  describe('Classification Metadata (digitalmaine.com)', () => {
+    const dmRecord = {
+      ...mockRecord,
+      contributingInstitution: 'Maine State Archives',
+      documentTypeDm: 'Text',
+      dmIdentifier: '15-28455-F026-I016',
+      exactCreationDate: '1917-09-15T00:00:00Z',
+      docLanguage: 'English',
+      docLocation: 'Portland, ME',
+      keywords: ['Maine', 'World War I', 'National Guard'],
+      recommendedCitation: 'Grant, Giles C., "Letter to a Doctor..." (1917).',
+    };
+
+    it('renders the classification metadata card with all fields', async () => {
+      renderPage(dmRecord);
+      await waitFor(() => {
+        expect(screen.getByTestId('classification-metadata-card')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('dm-contributing-institution')).toHaveTextContent('Maine State Archives');
+      expect(screen.getByTestId('dm-document-type')).toHaveTextContent('Text');
+      expect(screen.getByTestId('dm-identifier')).toHaveTextContent('15-28455-F026-I016');
+      expect(screen.getByTestId('dm-exact-creation-date')).toHaveTextContent('Sep 15, 1917');
+      expect(screen.getByTestId('dm-language')).toHaveTextContent('English');
+      expect(screen.getByTestId('dm-location')).toHaveTextContent('Portland, ME');
+      expect(screen.getByTestId('recommended-citation')).toHaveTextContent('Grant, Giles C.');
+    });
+
+    it('renders one chip per keyword', async () => {
+      renderPage(dmRecord);
+      await waitFor(() => {
+        expect(screen.getAllByTestId('keyword-chip')).toHaveLength(3);
+      });
+      const chips = screen.getAllByTestId('keyword-chip').map((c) => c.textContent);
+      expect(chips).toEqual(['Maine', 'World War I', 'National Guard']);
+    });
+
+    it('shows em-dashes for missing fields', async () => {
+      renderPage(mockRecord);
+      await waitFor(() => {
+        expect(screen.getByTestId('classification-metadata-card')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('dm-contributing-institution')).toHaveTextContent('—');
+      expect(screen.getByTestId('dm-document-type')).toHaveTextContent('—');
+      expect(screen.queryAllByTestId('keyword-chip')).toHaveLength(0);
+      expect(screen.queryByTestId('recommended-citation')).not.toBeInTheDocument();
+    });
+  });
 });

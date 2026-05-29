@@ -53,6 +53,19 @@ export const VALID_TRANSITIONS: Record<string, string[]> = {
   destroyed: [],
 };
 
+const digitalMaineDocumentTypeEnum = z.enum(['Text', 'Image', 'Audio', 'Video', 'Map']);
+
+const digitalMaineFields = {
+  contributing_institution: z.string().max(255).optional(),
+  document_type_dm: digitalMaineDocumentTypeEnum.optional(),
+  dm_identifier: z.string().max(100).optional(),
+  exact_creation_date: z.string().optional(),
+  doc_language: z.string().max(50).optional(),
+  doc_location: z.string().max(255).optional(),
+  keywords: z.array(z.string().min(1).max(100)).max(50).optional(),
+  recommended_citation: z.string().max(2000).optional(),
+};
+
 const createRecordSchema = z.object({
   title: z.string().min(1).max(500),
   description: z.string().optional(),
@@ -64,6 +77,7 @@ const createRecordSchema = z.object({
   metadata: z.record(z.any()).optional(),
   tags: z.array(z.string()).optional(),
   location_id: z.string().uuid().optional(),
+  ...digitalMaineFields,
 });
 
 const updateRecordSchema = z.object({
@@ -88,6 +102,7 @@ const updateRecordSchema = z.object({
   tr_number: z.string().max(50).optional(),
   dispo_date: z.string().optional(),
   rfid_enabled: z.boolean().optional(),
+  ...digitalMaineFields,
 }).strict();
 
 const batchImportSchema = z.object({
@@ -128,7 +143,11 @@ router.get('/', authorize('records:read'), async (req: Request, res: Response, n
       query = query.where(function () {
         this.whereILike('records.title', term)
           .orWhereILike('records.tracking_number', term)
-          .orWhereILike('records.series_title', term);
+          .orWhereILike('records.series_title', term)
+          .orWhereILike('records.doc_location', term)
+          .orWhereILike('records.dm_identifier', term)
+          .orWhereILike('records.recommended_citation', term)
+          .orWhereRaw("array_to_string(coalesce(records.keywords, '{}'::text[]), ' ') ILIKE ?", [term]);
       });
     }
 
