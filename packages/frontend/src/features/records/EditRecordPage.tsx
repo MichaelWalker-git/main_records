@@ -2,13 +2,20 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
-import { RMSRecord as Record, Location } from '../../types';
+import {
+  RMSRecord as Record,
+  Location,
+  DigitalMaineDocumentType,
+  DIGITAL_MAINE_DOCUMENT_TYPES,
+} from '../../types';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { useToast } from '../../components/Toast';
 
 export function EditRecordPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { data: record, isLoading } = useApiQuery<Record>(['record', id!], `/records/${id}`);
   const { data: locationsRaw } = useApiQuery<any>(['locations'], '/inventory/locations');
   const locations: Location[] = locationsRaw?.data ?? locationsRaw ?? [];
@@ -28,6 +35,14 @@ export function EditRecordPage() {
   const [trNumber, setTrNumber] = useState('');
   const [dispoDate, setDispoDate] = useState('');
   const [rfidEnabled, setRfidEnabled] = useState(false);
+  const [contributingInstitution, setContributingInstitution] = useState('');
+  const [documentTypeDm, setDocumentTypeDm] = useState<DigitalMaineDocumentType | ''>('');
+  const [dmIdentifier, setDmIdentifier] = useState('');
+  const [exactCreationDate, setExactCreationDate] = useState('');
+  const [docLanguage, setDocLanguage] = useState('');
+  const [docLocation, setDocLocation] = useState('');
+  const [keywords, setKeywords] = useState('');
+  const [recommendedCitation, setRecommendedCitation] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -47,16 +62,37 @@ export function EditRecordPage() {
       setTrNumber(record.trNumber || record.transmittalNumber || '');
       setDispoDate((record.dispoDate || '').slice(0, 10));
       setRfidEnabled(!!record.rfidEnabled);
+      setContributingInstitution(record.contributingInstitution || '');
+      setDocumentTypeDm((record.documentTypeDm as DigitalMaineDocumentType) || '');
+      setDmIdentifier(record.dmIdentifier || '');
+      setExactCreationDate((record.exactCreationDate || '').slice(0, 10));
+      setDocLanguage(record.docLanguage || '');
+      setDocLocation(record.docLocation || '');
+      setKeywords(Array.isArray(record.keywords) ? record.keywords.join(', ') : '');
+      setRecommendedCitation(record.recommendedCitation || '');
     }
   }, [record]);
 
   const mutation = useApiMutation<Record, object>(`/records/${id}`, 'put', {
     onSuccess: () => {
+      setError('');
       queryClient.invalidateQueries({ queryKey: ['record', id!] });
       queryClient.invalidateQueries({ queryKey: ['records'] });
+      toast('Record saved.', 'success');
       navigate(`/records/${id}`);
     },
-    onError: (err) => setError(err.message),
+    onError: (err) => {
+      // Translate the wire-level error into something a user can act on.
+      // useApiMutation already concatenated backend details; we strip the
+      // generic "Validation failed" prefix and the leading colon so the
+      // message reads as a sentence instead of a tech dump.
+      const raw = err.message || 'Could not save changes.';
+      const friendly = raw
+        .replace(/^Validation failed\s*[—:]?\s*/, 'Could not save: ')
+        .replace(/Unrecognized key\(s\) in object/, 'unsupported field')
+        .replace(/^:\s*/, '');
+      setError(friendly);
+    },
   });
 
   function handleSubmit(e: FormEvent) {
@@ -81,6 +117,18 @@ export function EditRecordPage() {
     if (trNumber) payload.trNumber = trNumber;
     if (dispoDate) payload.dispoDate = dispoDate;
     payload.rfidEnabled = rfidEnabled;
+    if (contributingInstitution) payload.contributingInstitution = contributingInstitution;
+    if (documentTypeDm) payload.documentTypeDm = documentTypeDm;
+    if (dmIdentifier) payload.dmIdentifier = dmIdentifier;
+    if (exactCreationDate) payload.exactCreationDate = exactCreationDate;
+    if (docLanguage) payload.docLanguage = docLanguage;
+    if (docLocation) payload.docLocation = docLocation;
+    const parsedKeywords = keywords
+      .split(',')
+      .map((k) => k.trim())
+      .filter((k) => k.length > 0);
+    payload.keywords = parsedKeywords;
+    if (recommendedCitation) payload.recommendedCitation = recommendedCitation;
     mutation.mutate(payload);
   }
 
@@ -264,6 +312,117 @@ export function EditRecordPage() {
                 />
                 RFID-tagged container (optional, RFP §VI)
               </label>
+            </div>
+          </fieldset>
+          <fieldset
+            className="border-t border-slate-100 pt-4"
+            data-testid="classification-metadata-fieldset"
+          >
+            <legend className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+              Classification Metadata (digitalmaine.com)
+            </legend>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="contributingInstitution" className="block text-sm font-medium text-slate-700 mb-1">Contributing Institution</label>
+                <input
+                  id="contributingInstitution"
+                  type="text"
+                  value={contributingInstitution}
+                  onChange={(e) => setContributingInstitution(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  placeholder="Maine State Archives"
+                  data-testid="edit-contributing-institution"
+                />
+              </div>
+              <div>
+                <label htmlFor="documentTypeDm" className="block text-sm font-medium text-slate-700 mb-1">Document Type</label>
+                <select
+                  id="documentTypeDm"
+                  value={documentTypeDm}
+                  onChange={(e) => setDocumentTypeDm(e.target.value as DigitalMaineDocumentType | '')}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  data-testid="edit-document-type-dm"
+                >
+                  <option value="">—</option>
+                  {DIGITAL_MAINE_DOCUMENT_TYPES.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="dmIdentifier" className="block text-sm font-medium text-slate-700 mb-1">Identifier</label>
+                <input
+                  id="dmIdentifier"
+                  type="text"
+                  value={dmIdentifier}
+                  onChange={(e) => setDmIdentifier(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  placeholder="15-28455-F026-I016"
+                  data-testid="edit-dm-identifier"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4 mt-4">
+              <div>
+                <label htmlFor="exactCreationDate" className="block text-sm font-medium text-slate-700 mb-1">Exact Creation Date</label>
+                <input
+                  id="exactCreationDate"
+                  type="date"
+                  value={exactCreationDate}
+                  onChange={(e) => setExactCreationDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  data-testid="edit-exact-creation-date"
+                />
+              </div>
+              <div>
+                <label htmlFor="docLanguage" className="block text-sm font-medium text-slate-700 mb-1">Language</label>
+                <input
+                  id="docLanguage"
+                  type="text"
+                  value={docLanguage}
+                  onChange={(e) => setDocLanguage(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  placeholder="English"
+                  data-testid="edit-doc-language"
+                />
+              </div>
+              <div>
+                <label htmlFor="docLocation" className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                <input
+                  id="docLocation"
+                  type="text"
+                  value={docLocation}
+                  onChange={(e) => setDocLocation(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                  placeholder="Portland, ME"
+                  data-testid="edit-doc-location"
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <label htmlFor="keywords" className="block text-sm font-medium text-slate-700 mb-1">Keywords</label>
+              <input
+                id="keywords"
+                type="text"
+                value={keywords}
+                onChange={(e) => setKeywords(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500"
+                placeholder="Maine, World War I, National Guard"
+                data-testid="edit-keywords"
+              />
+              <p className="text-xs text-slate-400 mt-1">Comma-separated.</p>
+            </div>
+            <div className="mt-4">
+              <label htmlFor="recommendedCitation" className="block text-sm font-medium text-slate-700 mb-1">Recommended Citation</label>
+              <textarea
+                id="recommendedCitation"
+                value={recommendedCitation}
+                onChange={(e) => setRecommendedCitation(e.target.value)}
+                rows={2}
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-navy-500 font-mono text-xs"
+                placeholder='Grant, Giles C., "Letter to a Doctor..." (1917). Maine State Archives.'
+                data-testid="edit-recommended-citation"
+              />
             </div>
           </fieldset>
           <div>

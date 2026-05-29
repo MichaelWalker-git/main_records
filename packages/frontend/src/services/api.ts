@@ -1,14 +1,21 @@
 import axios from 'axios';
 
 function snakeToCamel(str: string): string {
-  return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+  // Match digits too so `agency_3` -> `agency3` round-trips with camelToSnake.
+  return str.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase());
 }
 
 function camelToSnake(str: string): string {
-  return str.replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
+  // Insert `_` both at lowercase->Uppercase boundaries (camelCase) AND at
+  // letter->digit boundaries so `agency3` becomes `agency_3` to match the
+  // backend column / zod schema. Without the second pass, the original regex
+  // skipped digits and the API rejected the field as "Unrecognized key".
+  return str
+    .replace(/([a-zA-Z])([0-9])/g, '$1_$2')
+    .replace(/[A-Z]/g, (c) => '_' + c.toLowerCase());
 }
 
-function transformKeys(obj: unknown): unknown {
+export function transformKeys(obj: unknown): unknown {
   if (Array.isArray(obj)) return obj.map(transformKeys);
   if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
     return Object.fromEntries(
@@ -21,7 +28,7 @@ function transformKeys(obj: unknown): unknown {
   return obj;
 }
 
-function transformKeysToSnake(obj: unknown): unknown {
+export function transformKeysToSnake(obj: unknown): unknown {
   if (Array.isArray(obj)) return obj.map(transformKeysToSnake);
   if (obj !== null && typeof obj === 'object' && !(obj instanceof Date)) {
     return Object.fromEntries(

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PlusIcon, TrashIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import { useApiMutation } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../components/Toast';
 
 interface BoxItem {
   id: string;
@@ -22,11 +23,14 @@ export function SubmitTransmittalPage() {
   ]);
   const [submitted, setSubmitted] = useState(false);
 
+  const { toast } = useToast();
   const mutation = useApiMutation<any, object>('/transmittals', 'post', {
     onSuccess: (resp) => {
       const t = resp?.data ?? resp;
+      toast('Transmittal submitted.', 'success');
       navigate(`/transmittals/${t.id}`);
     },
+    onError: (err) => toast(err.message || 'Could not submit transmittal.', 'error'),
   });
 
   function addItem() {

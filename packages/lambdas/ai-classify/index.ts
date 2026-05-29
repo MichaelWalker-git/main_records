@@ -104,12 +104,41 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
       const status =
         classification.confidence >= 0.85 ? "CLASSIFIED" : "PENDING";
 
-      // Update the record in PostgreSQL with classification results
+      // Update the record in PostgreSQL with classification results.
+      // Digitalmaine.com fields:
+      //   - keywords: union the deduped classifier tags with whatever OCR
+      //     already wrote, so both pipelines contribute and re-runs never
+      //     drop existing entries.
+      //   - recommended_citation: build a Chicago-style fallback from
+      //     title + year + agency when the column is empty.
+      const dedupedTags = Array.from(
+        new Set(
+          (classification.tags || [])
+            .map((t) => (typeof t === 'string' ? t.trim() : ''))
+            .filter((t) => t.length > 0)
+        )
+      );
+      const recordTitle = (recordMetadata as any).title as string | undefined;
+      const agencyCode = (recordMetadata as any).agency_code as string | undefined;
+      const createdAt = (recordMetadata as any).created_at as Date | string | undefined;
+      const year = createdAt
+        ? new Date(createdAt).getFullYear()
+        : new Date().getFullYear();
+      const fallbackCitation = recordTitle
+        ? `${agencyCode || 'Maine State Archives'} (${year}). "${recordTitle}". Maine State Archives.`
+        : '';
+
       await db.query(
         `UPDATE records
          SET classification_confidence = $1,
              classification_status = $2,
              category = $3,
+             keywords = (
+               SELECT ARRAY(
+                 SELECT DISTINCT unnest(coalesce(keywords, '{}'::text[]) || $5::text[])
+               )
+             ),
+             recommended_citation = COALESCE(recommended_citation, NULLIF($6, '')),
              updated_at = NOW()
          WHERE id = $4`,
         [
@@ -117,11 +146,13 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
           status,
           classification.category,
           message.recordId,
+          dedupedTags,
+          fallbackCitation,
         ]
       );
 
       // Store AI-generated tags
-      for (const tag of classification.tags) {
+      for (const tag of dedupedTags) {
         await db.query(
           `INSERT INTO record_tags (record_id, tag)
            VALUES ($1, $2)

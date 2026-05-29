@@ -55,12 +55,16 @@ export class SearchService {
       .map(term => term + ':*')
       .join(' & ');
 
+    // Shared SQL fragment that flattens digitalmaine metadata into the search
+    // vector so location/keywords/citation match alongside title/description.
+    const dmVectorFragment = `coalesce(records.doc_location, '') || ' ' || coalesce(records.dm_identifier, '') || ' ' || coalesce(records.recommended_citation, '') || ' ' || array_to_string(coalesce(records.keywords, '{}'::text[]), ' ')`;
+
     let searchQuery;
     if (type === 'metadata') {
-      // Search title, series_title, media_type
+      // Search title, series_title, media_type, and digitalmaine fields
       searchQuery = baseQuery.clone()
         .whereRaw(
-          `to_tsvector('english', coalesce(records.title, '') || ' ' || coalesce(records.series_title, '') || ' ' || coalesce(records.media_type, '')) @@ to_tsquery('english', ?)`,
+          `to_tsvector('english', coalesce(records.title, '') || ' ' || coalesce(records.series_title, '') || ' ' || coalesce(records.media_type, '') || ' ' || ${dmVectorFragment}) @@ to_tsquery('english', ?)`,
           [tsQuery]
         );
     } else if (type === 'ocr') {
@@ -93,10 +97,10 @@ export class SearchService {
         facets: { record_types: [], agencies: [], date_histogram: [] },
       };
     } else {
-      // fulltext — search across all text fields
+      // fulltext — search across all text fields including digitalmaine metadata
       searchQuery = baseQuery.clone()
         .whereRaw(
-          `to_tsvector('english', coalesce(records.title, '') || ' ' || coalesce(records.description, '') || ' ' || coalesce(records.series_title, '')) @@ to_tsquery('english', ?)`,
+          `to_tsvector('english', coalesce(records.title, '') || ' ' || coalesce(records.description, '') || ' ' || coalesce(records.series_title, '') || ' ' || ${dmVectorFragment}) @@ to_tsquery('english', ?)`,
           [tsQuery]
         );
     }

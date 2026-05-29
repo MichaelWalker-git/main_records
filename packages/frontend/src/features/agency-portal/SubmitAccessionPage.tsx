@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApiMutation } from '../../hooks/useApi';
+import { useToast } from '../../components/Toast';
 
 interface FormErrors {
   title?: string;
@@ -21,8 +22,13 @@ export function SubmitAccessionPage() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
+  const { toast } = useToast();
   const mutation = useApiMutation<{ id: string }, object>('/agency/accessions', 'post', {
-    onSuccess: () => navigate('/agency'),
+    onSuccess: () => {
+      toast('Accession submitted.', 'success');
+      navigate('/agency');
+    },
+    onError: (err) => toast(err.message || 'Could not submit accession.', 'error'),
   });
 
   function validate(): FormErrors {

@@ -223,6 +223,123 @@ describe('GET /api/records/:id/download', () => {
   });
 });
 
+describe('PUT /api/records/:id - digitalmaine.com classification metadata', () => {
+  it('accepts and persists all 8 digitalmaine fields', async () => {
+    const updated = {
+      id: VALID_UUID,
+      title: 'WWI Letter',
+      agency_id: 'ag1',
+      contributing_institution: 'Maine State Archives',
+      document_type_dm: 'Text',
+      dm_identifier: '15-28455-F026-I016',
+      exact_creation_date: '1917-09-15',
+      doc_language: 'English',
+      doc_location: 'Portland, ME',
+      keywords: ['Maine', 'World War I', 'National Guard'],
+      recommended_citation: 'Grant, Giles C., "Letter to a Doctor..." (1917).',
+    };
+    jest.spyOn(repoProto, 'findById').mockResolvedValue(updated as any);
+    const updateSpy = jest.spyOn(repoProto, 'update').mockResolvedValue(updated as any);
+
+    // The frontend axios interceptor transforms camelCase -> snake_case before
+    // hitting the API, so the backend zod schema accepts snake_case keys.
+    const res = await request(app)
+      .put(`/api/records/${VALID_UUID}`)
+      .send({
+        title: 'WWI Letter',
+        contributing_institution: 'Maine State Archives',
+        document_type_dm: 'Text',
+        dm_identifier: '15-28455-F026-I016',
+        exact_creation_date: '1917-09-15',
+        doc_language: 'English',
+        doc_location: 'Portland, ME',
+        keywords: ['Maine', 'World War I', 'National Guard'],
+        recommended_citation: 'Grant, Giles C., "Letter to a Doctor..." (1917).',
+      });
+
+    expect(res.status).toBe(200);
+    expect(updateSpy).toHaveBeenCalled();
+    const updatePayload = updateSpy.mock.calls[0][1] as any;
+    expect(updatePayload.contributing_institution).toBe('Maine State Archives');
+    expect(updatePayload.document_type_dm).toBe('Text');
+    expect(updatePayload.dm_identifier).toBe('15-28455-F026-I016');
+    expect(updatePayload.exact_creation_date).toBe('1917-09-15');
+    expect(updatePayload.doc_language).toBe('English');
+    expect(updatePayload.doc_location).toBe('Portland, ME');
+    expect(updatePayload.keywords).toEqual(['Maine', 'World War I', 'National Guard']);
+    expect(updatePayload.recommended_citation).toContain('Grant');
+  });
+
+  it('rejects an invalid documentTypeDm value', async () => {
+    jest.spyOn(repoProto, 'findById').mockResolvedValue({ id: VALID_UUID, agency_id: 'ag1' } as any);
+
+    const res = await request(app)
+      .put(`/api/records/${VALID_UUID}`)
+      .send({ document_type_dm: 'NotAllowed' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects keywords that exceed the 50-item limit', async () => {
+    jest.spyOn(repoProto, 'findById').mockResolvedValue({ id: VALID_UUID, agency_id: 'ag1' } as any);
+    const tooMany = Array.from({ length: 51 }, (_, i) => `kw-${i}`);
+
+    const res = await request(app)
+      .put(`/api/records/${VALID_UUID}`)
+      .send({ keywords: tooMany });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects camelCase keys with a structured details payload (so the UI can localise)', async () => {
+    jest.spyOn(repoProto, 'findById').mockResolvedValue({ id: VALID_UUID, agency_id: 'ag1' } as any);
+
+    // Frontend axios interceptor normally rewrites camelCase -> snake_case.
+    // If a regression bypasses that pipeline (e.g. raw fetch from a tool),
+    // the .strict() schema must fail loudly with the offending key listed.
+    const res = await request(app)
+      .put(`/api/records/${VALID_UUID}`)
+      .send({ contributingInstitution: 'Maine State Archives' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Validation failed');
+    expect(Array.isArray(res.body.details)).toBe(true);
+    const messages = res.body.details.map((d: any) => d.message).join(' ');
+    expect(messages).toMatch(/contributingInstitution/);
+  });
+
+  it('accepts every digitalmaine field together (full happy-path round trip)', async () => {
+    const recordId = VALID_UUID2;
+    const updated = {
+      id: recordId,
+      title: 'WWI Memo',
+      agency_id: 'ag1',
+    };
+    jest.spyOn(repoProto, 'findById').mockResolvedValue(updated as any);
+    const updateSpy = jest.spyOn(repoProto, 'update').mockResolvedValue(updated as any);
+
+    const res = await request(app)
+      .put(`/api/records/${recordId}`)
+      .send({
+        title: 'WWI Memo',
+        contributing_institution: 'Maine State Archives',
+        document_type_dm: 'Map',
+        dm_identifier: '15-28455-F026-I999',
+        exact_creation_date: '1918-11-11',
+        doc_language: 'English',
+        doc_location: 'Augusta, ME',
+        keywords: [],
+        recommended_citation: 'War Department (1918). "Memo."',
+      });
+
+    expect(res.status).toBe(200);
+    const payload = updateSpy.mock.calls[0][1] as any;
+    expect(payload.keywords).toEqual([]);
+    expect(payload.document_type_dm).toBe('Map');
+    expect(payload.exact_creation_date).toBe('1918-11-11');
+  });
+});
+
 describe('DELETE /api/records/:id', () => {
   it('returns 404 for non-existent record', async () => {
     jest.spyOn(repoProto, 'findById').mockResolvedValue(null as any);

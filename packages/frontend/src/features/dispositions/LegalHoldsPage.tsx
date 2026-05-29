@@ -4,6 +4,7 @@ import { DataTable } from '../../components/DataTable';
 import { Modal } from '../../components/Modal';
 import { useApiQuery, useApiMutation } from '../../hooks/useApi';
 import { useAuth } from '../../hooks/useAuth';
+import { useToast } from '../../components/Toast';
 import { LegalHold } from '../../types';
 import { format } from 'date-fns';
 
@@ -14,6 +15,7 @@ export function LegalHoldsPage() {
   const [reason, setReason] = useState('');
 
   const { data: holds = [], refetch } = useApiQuery<LegalHold[]>(['legal-holds'], '/dispositions/legal-holds');
+  const { toast } = useToast();
 
   const createMutation = useApiMutation<LegalHold, object>('/dispositions/legal-holds', 'post', {
     onSuccess: () => {
@@ -21,7 +23,9 @@ export function LegalHoldsPage() {
       setRecordId('');
       setReason('');
       refetch();
+      toast('Legal hold placed.', 'success');
     },
+    onError: (err) => toast(err.message || 'Could not place legal hold.', 'error'),
   });
 
   const columns = [

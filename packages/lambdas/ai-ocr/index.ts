@@ -28,6 +28,17 @@ interface ExtractionResult {
     hasHandwriting: boolean;
     language: string;
   };
+  // digitalmaine.com classification metadata extracted from document content
+  digitalMaine: {
+    contributingInstitution?: string;
+    documentTypeDm?: 'Text' | 'Image' | 'Audio' | 'Video' | 'Map';
+    dmIdentifier?: string;
+    exactCreationDate?: string;
+    docLanguage?: string;
+    docLocation?: string;
+    keywords?: string[];
+    recommendedCitation?: string;
+  };
 }
 
 const MODEL_ID = process.env.BEDROCK_MODEL_ID || "us.anthropic.claude-sonnet-4-20250514-v1:0";
@@ -58,6 +69,18 @@ Also determine:
 - Whether it contains handwriting
 - Primary language
 - Estimated page count
+
+## Digital Maine Classification (mirror of digitalmaine.com schema)
+Additionally extract publication-style metadata so this record can be cataloged
+the same way the State already publishes its public archive on digitalmaine.com:
+- contributing_institution: usually "Maine State Archives" unless another agency is named on the document
+- document_type_dm: one of Text, Image, Audio, Video, Map (broad media classification — distinct from document_type above)
+- dm_identifier: any printed accession/file/box identifier visible on the document (formats like "15-28455-F026-I016", "BOX-1234", "RG-5/Series-3"). Empty string if none visible
+- exact_creation_date: the date written on the document itself (ISO yyyy-MM-dd). Empty string if not present
+- doc_language: full language name ("English", "French", etc.)
+- doc_location: city/place mentioned in the document body (e.g. "Portland, ME", "Augusta, ME"). Empty string if not present
+- keywords: 3–8 short subject keywords drawn from document content (proper nouns, topics, programs)
+- recommended_citation: a Chicago-style citation built from author + title + year + institution. Empty string if author or year unknown
 
 Use the extract_document_content tool to return structured results.`;
 
@@ -96,8 +119,46 @@ const TOOL_SCHEMA = {
         type: "string",
         description: "Primary language (e.g., en, fr)",
       },
+      contributing_institution: {
+        type: "string",
+        description: "Institution that contributed/owns the document. Default 'Maine State Archives' unless another is printed on the document.",
+      },
+      document_type_dm: {
+        type: "string",
+        enum: ["Text", "Image", "Audio", "Video", "Map"],
+        description: "digitalmaine.com-style broad media classification.",
+      },
+      dm_identifier: {
+        type: "string",
+        description: "Accession/file/box identifier printed on the document. Empty string if none.",
+      },
+      exact_creation_date: {
+        type: "string",
+        description: "Date written on the document, ISO yyyy-MM-dd. Empty string if not visible.",
+      },
+      doc_language: {
+        type: "string",
+        description: "Full language name, e.g. 'English'. Same content as `language` but full word.",
+      },
+      doc_location: {
+        type: "string",
+        description: "City/place mentioned in the document body. Empty string if not present.",
+      },
+      keywords: {
+        type: "array",
+        items: { type: "string" },
+        description: "3-8 short subject keywords drawn from document content.",
+      },
+      recommended_citation: {
+        type: "string",
+        description: "Chicago-style citation built from author + title + year + institution. Empty string if author/year unknown.",
+      },
     },
-    required: ["extracted_text", "document_type", "confidence", "page_count", "has_handwriting", "language"],
+    required: [
+      "extracted_text", "document_type", "confidence", "page_count", "has_handwriting", "language",
+      "contributing_institution", "document_type_dm", "dm_identifier", "exact_creation_date",
+      "doc_language", "doc_location", "keywords", "recommended_citation",
+    ],
   },
 };
 
@@ -218,7 +279,33 @@ async function extractFromImage(imageData: Buffer, contentType: string): Promise
   return parseToolResponse(response);
 }
 
-function parseToolResponse(response: any): ExtractionResult {
+export const ALLOWED_DM_DOCUMENT_TYPES = new Set(['Text', 'Image', 'Audio', 'Video', 'Map']);
+
+// Hard caps mirror the records table column widths; the AI sometimes returns
+// verbose strings ("Record Group 5 / Series 3 / Folder 12 ...") that would
+// otherwise blow past varchar(100) and reject the whole UPDATE.
+export const COLUMN_LIMITS = {
+  contributingInstitution: 255,
+  dmIdentifier: 100,
+  docLanguage: 50,
+  docLocation: 255,
+} as const;
+
+export function clampString(value: unknown, max: number): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  return trimmed.length > max ? trimmed.slice(0, max) : trimmed;
+}
+
+export function coerceDocumentTypeDm(value: unknown): 'Text' | 'Image' | 'Audio' | 'Video' | 'Map' | undefined {
+  if (typeof value !== 'string') return undefined;
+  return ALLOWED_DM_DOCUMENT_TYPES.has(value)
+    ? (value as 'Text' | 'Image' | 'Audio' | 'Video' | 'Map')
+    : undefined;
+}
+
+export function parseToolResponse(response: any): ExtractionResult {
   const responseBody = JSON.parse(new TextDecoder().decode(response.body));
   const toolUseBlock = responseBody.content.find(
     (block: { type: string }) => block.type === "tool_use"
@@ -237,6 +324,23 @@ function parseToolResponse(response: any): ExtractionResult {
       pageCount: input.page_count,
       hasHandwriting: input.has_handwriting,
       language: input.language,
+    },
+    digitalMaine: {
+      contributingInstitution:
+        clampString(input.contributing_institution, COLUMN_LIMITS.contributingInstitution) || 'Maine State Archives',
+      documentTypeDm: coerceDocumentTypeDm(input.document_type_dm),
+      dmIdentifier: clampString(input.dm_identifier, COLUMN_LIMITS.dmIdentifier),
+      exactCreationDate: typeof input.exact_creation_date === 'string' && input.exact_creation_date.trim()
+        ? input.exact_creation_date.trim()
+        : undefined,
+      docLanguage: clampString(input.doc_language, COLUMN_LIMITS.docLanguage),
+      docLocation: clampString(input.doc_location, COLUMN_LIMITS.docLocation),
+      keywords: Array.isArray(input.keywords)
+        ? Array.from(new Set(input.keywords.filter((k: unknown) => typeof k === 'string' && k.trim().length > 0)))
+        : undefined,
+      recommendedCitation: typeof input.recommended_citation === 'string' && input.recommended_citation.trim()
+        ? input.recommended_citation.trim()
+        : undefined,
     },
   };
 }
@@ -289,12 +393,19 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
           documentType: "other",
           confidence: 0,
           metadata: { pageCount: 0, hasHandwriting: false, language: "en" },
+          digitalMaine: {},
         };
       }
 
       // Store extracted text in PostgreSQL (indexed by search_vector tsvector).
       // Idempotent: a re-run replaces any prior OCR block instead of appending it again.
+      // Digital Maine fields are filled with COALESCE(existing, extracted) so a
+      // re-run never wipes a value the user has manually edited.
       const marker = '\n\n--- Extracted Content ---\n';
+      const dm = result.digitalMaine || {};
+      const exactDate = dm.exactCreationDate && /^\d{4}-\d{2}-\d{2}$/.test(dm.exactCreationDate)
+        ? dm.exactCreationDate
+        : null;
       await db.query(
         `UPDATE records
          SET description = CASE
@@ -304,9 +415,33 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
            ELSE description || $4 || $1
          END,
          media_type = COALESCE(NULLIF(media_type, ''), $2),
+         contributing_institution = COALESCE(contributing_institution, $5),
+         document_type_dm = COALESCE(document_type_dm, $6),
+         dm_identifier = COALESCE(dm_identifier, NULLIF($7, '')),
+         exact_creation_date = COALESCE(exact_creation_date, $8::date),
+         doc_language = COALESCE(doc_language, NULLIF($9, '')),
+         doc_location = COALESCE(doc_location, NULLIF($10, '')),
+         keywords = CASE
+           WHEN keywords IS NULL OR array_length(keywords, 1) IS NULL THEN $11::text[]
+           ELSE keywords
+         END,
+         recommended_citation = COALESCE(recommended_citation, NULLIF($12, '')),
          updated_at = NOW()
          WHERE id = $3`,
-        [result.extractedText, result.documentType, message.recordId, marker]
+        [
+          result.extractedText,
+          result.documentType,
+          message.recordId,
+          marker,
+          dm.contributingInstitution || 'Maine State Archives',
+          dm.documentTypeDm || null,
+          dm.dmIdentifier || '',
+          exactDate,
+          dm.docLanguage || '',
+          dm.docLocation || '',
+          dm.keywords && dm.keywords.length > 0 ? dm.keywords : [],
+          dm.recommendedCitation || '',
+        ]
       );
 
       // Generate embedding for semantic search

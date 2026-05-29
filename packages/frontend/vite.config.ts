@@ -12,8 +12,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // Default to the local backend on :3000 so dev iterations hit the same
+      // database we just migrated. Set VITE_API_PROXY to point at the deployed
+      // ALB for staging/prod testing.
       '/api': {
-        target: 'http://maine--alb16-kxi3dpqk8uzt-480421270.us-east-1.elb.amazonaws.com',
+        target: process.env.VITE_API_PROXY || 'http://localhost:3000',
         changeOrigin: true,
       },
     },

@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { ArrowUpTrayIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { DataTable } from '../../components/DataTable';
+import { useToast } from '../../components/Toast';
 import { useApiMutation } from '../../hooks/useApi';
 
 const TARGET_FIELDS = [
@@ -50,7 +51,14 @@ export function BatchImportPage() {
   const [fileName, setFileName] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const mutation = useApiMutation<{ imported: number }, { rows: any[] }>('/records/batch-import', 'post');
+  const { toast } = useToast();
+  const mutation = useApiMutation<{ imported: number }, { rows: any[] }>('/records/batch-import', 'post', {
+    onSuccess: (res) => {
+      const count = (res as any)?.imported ?? (res as any)?.data?.imported ?? 0;
+      toast(`Imported ${count} record${count === 1 ? '' : 's'}.`, 'success');
+    },
+    onError: (err) => toast(err.message || 'Batch import failed.', 'error'),
+  });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

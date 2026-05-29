@@ -30,6 +30,14 @@ export interface Record {
   tr_number?: string;
   dispo_date?: string;
   rfid_enabled?: boolean;
+  contributing_institution?: string;
+  document_type_dm?: 'Text' | 'Image' | 'Audio' | 'Video' | 'Map';
+  dm_identifier?: string;
+  exact_creation_date?: string;
+  doc_language?: string;
+  doc_location?: string;
+  keywords?: string[];
+  recommended_citation?: string;
   metadata: any;
   custom_metadata?: any;
   tags: string[];

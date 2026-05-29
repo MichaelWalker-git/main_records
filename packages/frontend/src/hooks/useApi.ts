@@ -62,8 +62,25 @@ export function useApiMutation<TData, TVariables>(
 ) {
   return useMutation<TData, Error, TVariables>({
     mutationFn: async (variables) => {
-      const response = await api[method]<TData>(url, variables);
-      return response.data;
+      try {
+        const response = await api[method]<TData>(url, variables);
+        return response.data;
+      } catch (err: any) {
+        // Surface backend validation details so callers can show "field X — message Y"
+        // instead of the generic "Request failed with status code 400" wrapper.
+        const data = err?.response?.data;
+        if (data?.error) {
+          const details: Array<{ path: string; message: string }> = data.details || [];
+          const summary = details.length
+            ? details.map((d) => `${d.path}: ${d.message}`).join('; ')
+            : data.error;
+          const wrapped = new Error(`${data.error}${summary && summary !== data.error ? ` — ${summary}` : ''}`);
+          (wrapped as any).status = err?.response?.status;
+          (wrapped as any).details = details;
+          throw wrapped;
+        }
+        throw err;
+      }
     },
     ...options,
   });

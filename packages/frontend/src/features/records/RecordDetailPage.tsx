@@ -16,6 +16,7 @@ import { useConfirm } from '../../components/ConfirmDialog';
 import api from '../../services/api';
 import { RMSRecord as Record, AuditEvent } from '../../types';
 import { format } from 'date-fns';
+import { formatDateOnly } from '../../utils/dates';
 
 // MIRRORS backend VALID_TRANSITIONS in packages/backend/src/api/records.ts.
 // Edit both copies together. The endpoint /api/records/status-transitions
@@ -513,11 +514,89 @@ export function RecordDetailPage() {
               </div>
               <div>
                 <dt className="text-[11px] text-slate-400 uppercase font-medium">Dispo Date</dt>
-                <dd className="mt-0.5 text-sm text-slate-700">{record.dispoDate ? format(new Date(record.dispoDate), 'MMM d, yyyy') : <span className="text-slate-400">—</span>}</dd>
+                <dd className="mt-0.5 text-sm text-slate-700">{formatDateOnly(record.dispoDate) ?? <span className="text-slate-400">—</span>}</dd>
               </div>
               <div>
                 <dt className="text-[11px] text-slate-400 uppercase font-medium">Location Code</dt>
                 <dd className="mt-0.5 text-sm text-slate-700 font-mono">{record.locationCode || <span className="text-slate-400">—</span>}</dd>
+              </div>
+            </dl>
+          </div>
+
+          {/* Classification Metadata (digitalmaine.com publication schema) */}
+          <div className="bg-white border border-slate-200 rounded-md p-5" data-testid="classification-metadata-card">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+              Classification Metadata
+            </h2>
+            <dl className="grid grid-cols-3 gap-x-6 gap-y-4">
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Contributing Institution</dt>
+                <dd className="mt-0.5 text-sm text-slate-700" data-testid="dm-contributing-institution">
+                  {record.contributingInstitution || <span className="text-slate-400">—</span>}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Document Type</dt>
+                <dd className="mt-0.5 text-sm text-slate-700" data-testid="dm-document-type">
+                  {record.documentTypeDm || <span className="text-slate-400">—</span>}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Identifier</dt>
+                <dd className="mt-0.5 text-sm text-slate-700 font-mono" data-testid="dm-identifier">
+                  {record.dmIdentifier || <span className="text-slate-400">—</span>}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Exact Creation Date</dt>
+                <dd className="mt-0.5 text-sm text-slate-700" data-testid="dm-exact-creation-date">
+                  {formatDateOnly(record.exactCreationDate) ?? <span className="text-slate-400">—</span>}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Language</dt>
+                <dd className="mt-0.5 text-sm text-slate-700" data-testid="dm-language">
+                  {record.docLanguage || <span className="text-slate-400">—</span>}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Location</dt>
+                <dd className="mt-0.5 text-sm text-slate-700" data-testid="dm-location">
+                  {record.docLocation || <span className="text-slate-400">—</span>}
+                </dd>
+              </div>
+              <div className="col-span-3">
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Keywords</dt>
+                <dd className="mt-1 flex flex-wrap gap-1.5">
+                  {record.keywords && record.keywords.length > 0 ? (
+                    record.keywords.map((kw) => (
+                      <span
+                        key={kw}
+                        data-testid="keyword-chip"
+                        className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px]"
+                      >
+                        {kw}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-slate-400 text-sm">—</span>
+                  )}
+                </dd>
+              </div>
+              <div className="col-span-3">
+                <dt className="text-[11px] text-slate-400 uppercase font-medium">Recommended Citation</dt>
+                <dd className="mt-1">
+                  {record.recommendedCitation ? (
+                    <blockquote
+                      data-testid="recommended-citation"
+                      className="border-l-2 border-slate-200 pl-3 text-xs font-mono text-slate-600"
+                    >
+                      {record.recommendedCitation}
+                    </blockquote>
+                  ) : (
+                    <span className="text-slate-400 text-sm">—</span>
+                  )}
+                </dd>
               </div>
             </dl>
           </div>
